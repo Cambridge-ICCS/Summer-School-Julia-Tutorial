@@ -29,6 +29,7 @@ begin
 	using ForwardDiff
 	using OrdinaryDiffEq
 	using Statistics
+	using Markdown
 end
 
 # ╔═╡ e8f7cad1-65a6-4814-9a06-5c90c87ec297
@@ -51,7 +52,30 @@ begin
 	# see https://github.com/JuliaLang/julia/blob/master/src/julia-parser.scm for the symbols that can be defined as infix binary operators
 end
 
-# ╔═╡ 91dccb48-ef9e-4a03-9375-b21af2b344f5
+# ╔═╡ 78ed1373-b51c-43c2-9227-9d9785848d69
+function factorize(n)
+	# n <= 0 && throw(DomainError("cannot factorize nonpositive integer"))
+	# factors = Dict()
+	# for p in prime_sieve(n)
+	# 	while n % p == 0
+	# 		n ÷= p
+	# 		factors[p] = get(factors, p, 0) + 1
+	# 	end
+	# 	if n <= 1
+	# 		break
+	# 	end
+	# end
+	# return factors
+end
+
+# ╔═╡ a4e6194b-5cfd-4968-8d22-6d7ed4e15523
+begin
+	sum_numbers(s::String) = sum(parse(Int, m.match) for m in eachmatch(r"[\d]+", s))
+	fruits = "5 apples, 12 oranges, 4 bananas"
+	println(sum_numbers(fruits), " fruits in total!")
+end
+
+# ╔═╡ 004aab75-ad77-4ea0-a335-71476f31ed94
 # begin
 # 	function decode_chars(s::String)
 # 		foldl((n, a) -> UInt8(a) + (n << 8), s, init=0)
@@ -67,13 +91,6 @@ end
 # 		reverse(join(s))
 # 	end
 # end
-
-# ╔═╡ a4e6194b-5cfd-4968-8d22-6d7ed4e15523
-begin
-	sum_numbers(s::String) = sum(parse(Int, m.match) for m in eachmatch(r"[\d]+", s))
-	fruits = "5 apples, 12 oranges, 4 bananas"
-	println(sum_numbers(fruits), " fruits in total!")
-end
 
 # ╔═╡ 132467b1-315f-40e1-b6fb-a56537d54f27
 # begin
@@ -95,123 +112,14 @@ end
 # 	knapsack([3 => 4, 2 => 5, 4 => 8, 1 => 3, 3 => 2], 10)
 # end
 
-# ╔═╡ c7c67354-296f-4858-878d-81243ebfa32b
-# begin
-# 	Base.Pair(p::Bool, q::Bool) = !p || q  # operator overloading
-# 	table = ["| p | q | p ⇒ q | ¬q ⇒ ¬p", "| --- | --- | --- | --- |"]
-# 	for p in [true, false]
-# 		for q in [true, false]
-# 			push!(table, "| $p | $q | $(p => q) | $(!q => !p)")
-# 			@assert (p => q) == (!q => !p)
-# 		end
-# 	end
-# 	Markdown.parse(join(table, '\n'))
-# end
-
 # ╔═╡ 8cbd2f0f-cfd9-418a-9333-e49596c81c06
 Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, x)
 
 # ╔═╡ b700e215-3ba4-45e7-bea2-89f6f7ff73f7
 # Task: implement multi-threaded version
 
-# ╔═╡ 521a5ff0-44b6-4065-8fb6-6dd3c1b1689a
-let
-
 # ╔═╡ 1a78c085-cd37-4e62-a6a4-aeeb2c689b94
 run(`ls /tmp`)
-
-# ╔═╡ 7e0fc6d8-b9af-4743-a634-bac7fdc6ff5d
-# begin
-# 	is_prime(n) = let m = Int(floor(sqrt(n)))
-# 		all(gcd(n, k) == 1 for k ∈ 2:m)
-# 	end
-# 	P(n) = n^2 + n + 41
-# 	findfirst(!is_prime ∘ P, 1:100)
-# end
-
-# ╔═╡ 03ca5540-a071-4139-9c6d-af42e036be6b
-# prime_sieve(100)
-
-# ╔═╡ 8e05724b-943c-43a2-8319-3815ed65e4ab
-# @bind N Slider(10:20_000_000, show_value=true)
-
-# ╔═╡ 1e8ebf68-08df-4426-9a14-5a2748023ce0
-# let π(n) = length(prime_sieve(n))
-# 	π(N), π(N) / (N / log(N))
-# end
-
-# ╔═╡ f98aefcb-58f4-4721-af1c-7171951362d9
-# function plotJulia(c, xRng = [-1.25, 1.25], yRng = [-1.25, 1.25])
-#     # Array of iteration counts
-#     nx = 500
-#     ny = 500
-#     iterCounts = zeros(nx,ny)
-#     # Locations 
-#     xLocs = range(minimum(xRng),stop = maximum(xRng),length = nx)
-#     yLocs = range(minimum(yRng),stop = maximum(yRng),length = ny)
-#     # Loop over x,y locations iterating until maxIter reached, or |z|² > 4
-#     maxIters = 200
-#     for j = 1:nx
-#         for k = 1:ny
-#             z = xLocs[j] + yLocs[k]im
-#             while iterCounts[j,k] < maxIters && norm(z) < 2
-#                 z = z^2 + c
-#                 iterCounts[j,k] += 1
-#             end
-#         end
-#     end
-
-#     # Display Julia set as a heatmap
-#     heatmap(iterCounts', size=(1000, 800))
-# end
-
-# ╔═╡ 178afdd9-a049-4d91-bdd9-66cbde48fc7d
-# @gif for θ=LinRange(0.88π, 0.89π, 200)
-# 	plotJulia(0.6*(sin(θ)+im*cos(θ)))
-# end fps=30
-
-# ╔═╡ badf8efb-114b-459b-9de4-3cb6c2b3849a
-# begin
-# 	# define the Lorenz attractor
-# 	Base.@kwdef mutable struct Lorenz
-# 	    dt::Float64 = 0.02
-# 	    σ::Float64 = 10
-# 	    ρ::Float64 = 28
-# 	    β::Float64 = 8/3
-# 	    x::Float64 = 1
-# 	    y::Float64 = 1
-# 	    z::Float64 = 1
-# 	end
-	
-# 	function step!(l::Lorenz)
-# 	    dx = l.σ * (l.y - l.x)
-# 	    dy = l.x * (l.ρ - l.z) - l.y
-# 	    dz = l.x * l.y - l.β * l.z
-# 	    l.x += l.dt * dx
-# 	    l.y += l.dt * dy
-# 	    l.z += l.dt * dz
-# 	end
-	
-# 	attractor = Lorenz()
-	
-	
-# 	# initialize a 3D plot with 1 empty series
-# 	plt = plot3d(
-# 	    1,
-# 	    xlim = (-30, 30),
-# 	    ylim = (-30, 30),
-# 	    zlim = (0, 60),
-# 	    title = "Lorenz Attractor",
-# 	    legend = false,
-# 	    marker = 2,
-# 	)
-	
-# 	# build an animated gif by pushing new points to the plot, saving every 10th frame
-# 	@gif for i=1:1500
-# 	    step!(attractor)
-# 	    push!(plt, attractor.x, attractor.y, attractor.z)
-# 	end every 10
-# end
 
 # ╔═╡ 1806ebc4-ab49-4d29-821e-886784f3c2ed
 [1 2 3
@@ -241,6 +149,16 @@ methods(!)
 
 # ╔═╡ b51a452a-38b0-42f7-94b7-201a8c5e24c1
 names(Statistics)
+
+# ╔═╡ 5d56739d-f972-4839-a92e-ce2cc869f08e
+# let p1 = Normal([1.0, 3.0], [1.0, 1.0]), p2 = Normal([-2.0, -1.0], [0.5, 2.0])
+# 	@show mean(p1), var(p1)
+# 	@show mean(p2), var(p2)
+# 	x1, y1 = eachrow(rand(p1, 200))
+# 	x2, y2 = eachrow(rand(p2, 200))
+# 	scatter(x1, y1, label="class 1")
+# 	scatter!(x2, y2, label="class 2")
+# end
 
 # ╔═╡ ee0e9437-428f-420c-8733-7b0a00a94670
 # Task: solve the integer partition problem with @memoize
@@ -430,7 +348,7 @@ begin
 end;
 
 # ╔═╡ eba461a3-2026-47c8-8a4a-78dbf8975a3c
-let
+begin
 	sq(x) = x ^ 2
 	double(f) = x -> f(f(x))  # anonymous function
 	@show map(double(sq), [3, "3"])
@@ -444,55 +362,24 @@ let
 	(@show g ∘ f)(1.23)
 end
 
-# ╔═╡ 2013bc4d-0891-4985-abee-493066cfe4b0
-begin
-	function prime_sieve(n)
-		mask = trues(n)
-		mask[1] = false
-		m = Int(floor(sqrt(n)))
-		for i in 2:m
-			mask[2i:i:end] .= false
-		end
-		findall(mask)
+# ╔═╡ 768ea165-199f-4106-bcab-d476ebf7dea6
+function prime_sieve(n)
+	mask = trues(n)
+	mask[1] = false
+	m = Int(floor(sqrt(n)))
+	for i in 2:m
+		mask[2i:i:end] .= false
 	end
-
-	# function ζ(s, n=10000)
-	# 	real(s) <= 1 && throw(DomainError("ζ(s) was called with real(s) <= 1"))
-	# 	sum(k^-s for k ∈ 1:n)
-	# end
-
-	function ζ(s, n=10000; cache=Dict())
-		# real(s) <= 1 && throw(DomainError("ζ(s) was called with real(s) <= 1"))
-		p = get!(cache, n) do
-			println("calculating primes!")
-			prime_sieve(n)
-		end
-		prod(@. 1 / (1 - p^-s))
-	end
-
-	ζ.(0.5 .+ im*(-10:0.1:10))
+	findall(mask)
 end
 
-# ╔═╡ fe402f42-0d4a-46fe-ad6d-57eb578d2cf4
-begin
-	function newton_method_iter(f, x, max_iter=10000, tol=1e-8)
-		Channel() do ch
-			for _ in 1:max_iter
-				dx = f(x) / f'(x)
-				x -= dx
-				push!(ch, x)
-				if abs(dx) < tol
-					return x
-				end
-			end
-			@warn "root not found after $max_iter iterations"
-		end
-	end
-	Base.last(c::Channel) = foldl((_, x) -> x, c)
-	@time last(newton_method_iter(sin, 2))
+# ╔═╡ 9865e00a-0c32-419e-a8cc-0b4cb35b7031
+let π(n) = length(prime_sieve(n)), N = 1000_000
+	@show π(N)
+	π(N) / (N / log(N))
 end
 
-# ╔═╡ 175d7472-4a23-4715-a39e-4a434cac46b1
+# ╔═╡ 57f8919a-aadd-4e3b-9a24-cdca7870caa9
 @time let N = 100_000_000
 	# generator (laze evaluation)
 	fracs = ((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 2:N)
@@ -500,31 +387,50 @@ end
 	2 * prod(fracs)
 end
 
-# ╔═╡ 37396c37-0291-4ce6-92c6-defb547f94f5
-@time foldr(∘, fill(x -> sin(x) + x, 5))(1)
-
-# ╔═╡ cd635cc3-c4fc-4da7-9f75-960a2aa118f4
-begin
-	myfun(x) = sin(3x + 4cos(2x))
-	let x = range(0, 2π, 1000)
-		plot(x, myfun.(x), label="f(x)", title="My Function Plot")
-		plot!(x, myfun'.(x), label="f'(x)")
+# ╔═╡ 175d7472-4a23-4715-a39e-4a434cac46b1
+@time let N = 100_000_000, k = Threads.nthreads()
+	a = ones(k)
+	@Threads.threads for i in 1:k
+		a[i] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+i:k:N)
 	end
+	2 * prod(a)
+end
+
+# ╔═╡ fe402f42-0d4a-46fe-ad6d-57eb578d2cf4
+begin
+	function newton_method(f, x; max_iter=10000, tol=1e-12, buf=nothing)
+		for _ in 1:max_iter
+			dx = f(x) / f'(x)
+			x -= dx
+			if buf != nothing
+				push!(buf, x)
+			end
+			if abs(dx) < tol
+				return x
+			end
+		end
+		@warn "root not found after $max_iter iterations"
+	end
+	@time newton_method(sin, 2)
 end
 
 # ╔═╡ cc982bfb-8147-4e69-be5c-c75c053e8e33
-let f = myfun, x = range(-2, 2, 1000)
+let f = sin, x = range(-1, 5, 1000)
 	y = f.(x)
-	x0 = 0
-	# x0 = -1
-	@gif for x1 in newton_method_iter(f, x0, 30)
+	x0 = 2
+	xs = []
+	newton_method(f, x0, max_iter=30, buf=xs)
+	@gif for x1 in xs
 		plot(x, y, label="f(x)", title="Newton's method")
-		plot!([x0, x1], [f(x0), 0], label="x₀", markershape=:circle)
+		plot!([x0, x1], [f(x0), 0], label="tagent line", markershape=:circle)
 		plot!([x1, x1], [0, f(x1)], label=nothing, linestyle=:dash)
 		annotate!(x0, f(x0), ("x = $(Float16(x0))", 8, :top))
 		x0 = x1
 	end fps=2
 end
+
+# ╔═╡ 37396c37-0291-4ce6-92c6-defb547f94f5
+@time nfold(x -> sin(x) + x, 5)(1)
 
 # ╔═╡ a29da296-cbde-4004-8022-ef5888509b38
 [i + j*im for i in 1:3, j in 1:3]
@@ -559,7 +465,7 @@ end
 @which 2im
 
 # ╔═╡ f057d9db-8c17-49a9-a910-c6c9553e9c93
-struct Normal
+struct Normal  # try adding and removing type declarations and see the difference
 	μ :: Float64
 	σ :: Float64
 
@@ -568,20 +474,17 @@ struct Normal
 	(p::Normal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √2π)
 end
 
-
-# ╔═╡ 5b8a7560-097c-41c6-aae8-f41246e2667f
-begin
-	@show Normal()
-	p = @show Normal(0.0, 4.0)
-	let x = range(-10, 10, 100)
-		y = p.(x)
-		plot(x, y, legend=false)
-	end
+# ╔═╡ bbf11fd6-4a18-4f4e-9022-6801ec387df9
+let p = Normal()
+	@code_warntype p(1)
 end
+
+# ╔═╡ c8c3b967-ddb1-406b-8393-3fee26054d93
+@code_llvm Normal()(1)
 
 # ╔═╡ d3d0a9d6-4540-4d87-9254-489a9335a322
 begin
-	Base.rand(P::Normal, dims...) = randn(dims) * P.σ + P.μ
+	Base.rand(P::Normal, dims::Integer...) = randn(dims...) .* P.σ .+ P.μ
 	Statistics.mean(P::Normal) = P.μ
 	Statistics.std(P::Normal) = P.σ
 	Statistics.var(P::Normal) = P.σ ^ 2
@@ -605,11 +508,17 @@ function estimate_pi_mc(n=100_000_000)
 end
 
 # ╔═╡ 9a379335-9430-4fa2-9b84-15e192ace090
-@time estimate_pi_mc(400_000_000)
+@time estimate_pi_mc(300_000_000)
+
+# ╔═╡ 34d06f6b-5e8e-4823-98e7-e3707feb528d
+let task = Threads.@spawn estimate_pi_mc()
+	@show task
+	fetch(task)
+end
 
 # ╔═╡ 697828f5-2e3b-4c25-86e0-cc97cfdb8432
-@time let N = 400_000_000, k = Threads.nthreads()
-	sum(fetch.(Threads.@spawn estimate_pi_mc(N÷k) for _ in 1:k)) / k
+@time let N = 300_000_000, k = @show Threads.nthreads()
+	mean(fetch.(Threads.@spawn estimate_pi_mc(N÷k) for _ in 1:k))
 end
 
 # ╔═╡ d7bdb281-a363-476a-893b-4b7392f5c993
@@ -667,8 +576,22 @@ end
 # ╔═╡ dc849525-f3af-44e9-9ae9-bcb9c19512b7
 mean(M), mean(M, 1), mean(M, 2), mean(M, 1, 2)
 
-# ╔═╡ 19c55267-769d-4540-a633-3455dfeebdb4
-mean(p), std(p)
+# ╔═╡ 0c593b1c-e74a-46ed-8f66-47d1456b3636
+let p1 = Normal()
+	p2 = Normal(-4.0, 0.7)
+	@show mean(p1)
+	@show var(p1)
+	@show mean(p2)
+	@show var(p2)
+	xs = rand(p1, 10000)
+	m = @show mean(xs)
+	@show mean((xs .- m) .^ 2)
+	histogram(xs, label=false, normalize=:true)
+	let x = range(-10, 10, 1000)
+		plot!(x, p1.(x), label="N$((p1.μ, p1.σ))")
+		plot!(x, p2.(x), label="N$((p2.μ, p2.σ))")
+	end
+end
 
 # ╔═╡ b0a5af7c-235f-47c1-b3c8-a3f635ef53f1
 begin
@@ -708,6 +631,12 @@ begin
 	fields(t)
 end
 
+# ╔═╡ 09c383f2-f209-418a-9a39-70f56b8bfe53
+begin
+	@show t[0]
+	@show t[-1]
+end
+
 # ╔═╡ 0a58b720-ea82-48e2-aa5c-ab0e9c530b41
 begin
 	t[3] = 4
@@ -717,63 +646,21 @@ begin
 end
 
 # ╔═╡ f2fce8ac-7800-4153-b0fa-21168300984e
-begin
-	function Base.getindex(t::BST, key)
-		if t.key == nothing  # empty tree
-			throw(KeyError("key $key not found"))
-		end
-		if t.key == key
-			return t.val
-		end
-
-		c = key < t.key ? t.left : t.right
-
-		if c == nothing
-			throw(KeyError("key $key not found"))
-		else
-			return c[key]
-		end
+function Base.getindex(t::BST, key)
+	if t.key == nothing  # empty tree
+		throw(KeyError(key))
+	end
+	if t.key == key
+		return t.val
 	end
 
-	function Base.setindex!(t::BST, val, key)
-		if t.key == nothing  # empty tree
-			t.key = key
-		end
-		if t.key == key
-			return t.val = val
-		end
+	c = key < t.key ? t.left : t.right
 
-		s = key < t.key ? :left : :right
-		c = getfield(t, s)
-
-		if c == nothing
-			return setfield!(t, s, BST(key => val))
-		else
-			return c[key] = val
-		end
+	if c == nothing
+		throw(KeyError(key))
+	else
+		return c[key]
 	end
-
-	# function get!(f, t::BST{K,V}, key) :: V where {K,V}
-	# 	if t.key == nothing  # empty tree
-	# 		t.key = key
-	# 		t.val = f()
-	# 	end
-
-	# 	if key == t.key
-	# 		return t.val
-	# 	end
-
-	# 	d = key < t.key ? :left : :right
-	# 	c = getfield(t, d)  # child node
-
-	# 	if c == nothing
-	# 		c = BST{K,V}(key => f())
-	# 		setfield!(t, d, c)
-	# 		return c.val
-	# 	else
-	# 		return get!(f, c, key)
-	# 	end
-	# end
 end
 
 # ╔═╡ 0e8fcc58-1f93-48ef-9c74-f5abdcdecbd3
@@ -787,8 +674,11 @@ md"Higher order functions"
 # ╔═╡ ab836649-d896-487f-b47f-a4ab6b8e2a3f
 md"Some logic"
 
-# ╔═╡ 401a719e-4c3d-4423-be3d-e9545e0f42ed
-md"Riemann zeta function"
+# ╔═╡ 768bfdcc-11b6-4fd9-9b0b-42035ef89664
+md"""
+!!! danger "Task"
+	Implement prime factorization
+"""
 
 # ╔═╡ 55d77b19-e600-4ce8-9dc1-8d2458c99da2
 md"Estimate π using Monte Carlo"
@@ -819,6 +709,12 @@ md"""Estimate π using continued fraction ([source](https://en.wikipedia.org/wik
 
 `` \pi = \frac{4}{1+\frac{1^2}{2+\frac{3^2}{2+\frac{5^2}{2+\ldots}}}} ``
 
+"""
+
+# ╔═╡ 521a5ff0-44b6-4065-8fb6-6dd3c1b1689a
+md"""
+!!! danger "Task"
+	Estimate π using the formula above
 """
 
 # ╔═╡ 551603af-23fc-49b6-a3c0-f15c199452dc
@@ -854,6 +750,34 @@ end
 # ╔═╡ a1eaec8f-3527-43f6-b3e6-360c64b156e5
 md"""# Type System"""
 
+# ╔═╡ 7407b03b-df7d-499e-81b5-bba4120f1c82
+md"Mutable Struct"
+
+# ╔═╡ 665deac0-1268-429c-8d75-d2bd0fdde0a3
+md"""
+!!! danger "Task"
+	Implement `setindex!` for BST
+"""
+
+# ╔═╡ 6596f025-c158-4c87-bd2f-a5026b027d6d
+function Base.setindex!(t::BST, val, key)
+	if t.key == nothing  # empty tree
+		t.key = key
+	end
+	if t.key == key
+		return t.val = val
+	end
+
+	s = key < t.key ? :left : :right
+	c = getfield(t, s)
+
+	if c == nothing
+		return setfield!(t, s, BST(key => val))
+	else
+		return c[key] = val
+	end
+end
+
 # ╔═╡ 26dd8486-fce6-457f-b435-6190fc6bb2bf
 methodswith(BST)
 
@@ -882,7 +806,7 @@ begin
 	
 		# modify the function definition to make it use caching
 		def_dict[:body] = quote
-			try
+			try  # not efficient (search the tree for twice), just for demo
 				$fcache[$(vars...)]
 			catch e
 				if e isa KeyError
@@ -962,8 +886,8 @@ end
 
 # ╔═╡ 331ceecb-53e4-41f9-b8de-2aece6d1eea8
 begin
-	p1 = PolySpace(5, (-2, 2))
-	v1 = p1[1,1,1,1,1]
+	p1 = PolySpace(7, (-2, 2))
+	v1 = p1[1:7]
 	s1 = FuncSpace(orthogonalize(v1.space))
 	s1 \ v1
 end
@@ -971,7 +895,7 @@ end
 # ╔═╡ 25319673-99ff-436d-bf5d-34c540f4faf1
 begin
 	p2 = FourierSpace(4, (-2, 2))
-	v2 = p2[0:0.5:1.5]
+	v2 = p2[1, 2, 3, 4]
 	s2 = FuncSpace(orthogonalize(v2.space))
 	s2 \ v2
 end
@@ -987,7 +911,7 @@ end
 
 # ╔═╡ 2a5009df-5e84-4b50-b819-c19333eb4a8b
 let
-	f(x) = cos(-2x^2)
+	f(x) = cos(2x^2)
 	g = value(p1 \ f)
 	println(g)
 	compare_plots(f, g, -2.2:0.1:2.2, label="polynomial")
@@ -995,7 +919,7 @@ end
 
 # ╔═╡ a116db18-a4c5-4661-aa0b-5098114d201e
 let
-	f(x) = cos(-2x^2)
+	f(x) = cos(2x^2)
 	g = value(p2 \ f)
 	println(g)
 	compare_plots(f, g, -2.2:0.1:2.2, label="Fourier")
@@ -1109,6 +1033,34 @@ end;
 	Real <: Number
 end
 
+# ╔═╡ 672fb2ff-5782-4411-85d0-ca83506372c8
+begin
+	almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
+	still_missing(text=md"Replace `missing` with your answer.") = Markdown.MD(Markdown.Admonition("warning", "Here we go!", [text]))
+	keep_working(text=md"The answer is not quite right.") = Markdown.MD(Markdown.Admonition("danger", "Keep working on it!", [text]))
+	yays = [md"Fantastic!", md"Splendid!", md"Great!", md"Yay ❤", md"Great! 🎉", md"Well done!", md"Keep it up!", md"Good job!", md"Awesome!", md"You got the right answer!", md"Let's move on to the next section."]
+	correct(text=rand(yays)) = Markdown.MD(Markdown.Admonition("correct", "Got it!", [text]))
+end
+
+# ╔═╡ 04ea591e-bd74-4926-82a6-d6a09f242a71
+let
+	result = all([
+		factorize(66) == Dict(2=>1, 3=>1, 11=>1),
+		factorize(1) == Dict(),
+		factorize(2) == Dict(2=>1),
+		factorize(9) == Dict(3=>2),
+	])
+	if ismissing(result)
+		still_missing()
+	elseif isnothing(result)
+		keep_working(md"Did you forget to write `return`?")
+	elseif result
+		correct()
+	else
+		keep_working()
+	end
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -1119,6 +1071,7 @@ Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 LazyGrids = "7031d0ef-c40d-4431-b2f8-61a8d2f650db"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 PartialFunctions = "570af359-4316-4cb7-8c74-252c00c2016b"
@@ -1150,7 +1103,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.3"
 manifest_format = "2.0"
-project_hash = "34b4cfc93bc4dda4a7b5d387b94a0858fa1b1592"
+project_hash = "478716e0462d80bde317329cd7a2129832c1a259"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "016833eb52ba2d6bea9fcb50ca295980e728ee24"
@@ -3547,39 +3500,35 @@ version = "1.4.1+1"
 # ╠═eba461a3-2026-47c8-8a4a-78dbf8975a3c
 # ╟─ab836649-d896-487f-b47f-a4ab6b8e2a3f
 # ╠═d941f8a7-35d8-4e7d-85b7-1b72af32453a
-# ╟─401a719e-4c3d-4423-be3d-e9545e0f42ed
-# ╠═2013bc4d-0891-4985-abee-493066cfe4b0
 # ╠═4532b560-a6b2-4364-a548-ffb5d25b0d5c
+# ╠═768ea165-199f-4106-bcab-d476ebf7dea6
+# ╠═9865e00a-0c32-419e-a8cc-0b4cb35b7031
+# ╟─768bfdcc-11b6-4fd9-9b0b-42035ef89664
+# ╠═78ed1373-b51c-43c2-9227-9d9785848d69
+# ╟─04ea591e-bd74-4926-82a6-d6a09f242a71
 # ╠═90808947-4a59-4903-8912-5e43839f91e0
-# ╠═91dccb48-ef9e-4a03-9375-b21af2b344f5
 # ╠═a4e6194b-5cfd-4968-8d22-6d7ed4e15523
+# ╠═004aab75-ad77-4ea0-a335-71476f31ed94
 # ╠═132467b1-315f-40e1-b6fb-a56537d54f27
-# ╠═c7c67354-296f-4858-878d-81243ebfa32b
 # ╠═8cbd2f0f-cfd9-418a-9333-e49596c81c06
 # ╠═dddf76d2-dd8e-4c17-9cc0-256e20db0abe
 # ╟─55d77b19-e600-4ce8-9dc1-8d2458c99da2
 # ╠═db5d41fc-ea93-4abc-9efa-b232ef7f37e2
 # ╠═9a379335-9430-4fa2-9b84-15e192ace090
+# ╠═34d06f6b-5e8e-4823-98e7-e3707feb528d
 # ╠═697828f5-2e3b-4c25-86e0-cc97cfdb8432
 # ╟─e47e0b0a-377a-451e-93f8-d4430706ef19
-# ╠═175d7472-4a23-4715-a39e-4a434cac46b1
+# ╠═57f8919a-aadd-4e3b-9a24-cdca7870caa9
 # ╠═b700e215-3ba4-45e7-bea2-89f6f7ff73f7
+# ╠═175d7472-4a23-4715-a39e-4a434cac46b1
 # ╟─7f0583b7-8d5c-4660-ad47-5f64aa6f57bb
 # ╠═fe402f42-0d4a-46fe-ad6d-57eb578d2cf4
+# ╠═cc982bfb-8147-4e69-be5c-c75c053e8e33
+# ╠═1a78c085-cd37-4e62-a6a4-aeeb2c689b94
 # ╟─36305f0a-a02d-4ba0-8a4b-12a645a6cf39
 # ╠═37396c37-0291-4ce6-92c6-defb547f94f5
 # ╟─89143850-3a09-4407-abf6-066087d180ef
-# ╠═521a5ff0-44b6-4065-8fb6-6dd3c1b1689a
-# ╠═cd635cc3-c4fc-4da7-9f75-960a2aa118f4
-# ╠═cc982bfb-8147-4e69-be5c-c75c053e8e33
-# ╠═1a78c085-cd37-4e62-a6a4-aeeb2c689b94
-# ╠═7e0fc6d8-b9af-4743-a634-bac7fdc6ff5d
-# ╠═03ca5540-a071-4139-9c6d-af42e036be6b
-# ╠═8e05724b-943c-43a2-8319-3815ed65e4ab
-# ╠═1e8ebf68-08df-4426-9a14-5a2748023ce0
-# ╠═f98aefcb-58f4-4721-af1c-7171951362d9
-# ╠═178afdd9-a049-4d91-bdd9-66cbde48fc7d
-# ╠═badf8efb-114b-459b-9de4-3cb6c2b3849a
+# ╟─521a5ff0-44b6-4065-8fb6-6dd3c1b1689a
 # ╟─551603af-23fc-49b6-a3c0-f15c199452dc
 # ╠═1806ebc4-ab49-4d29-821e-886784f3c2ed
 # ╠═496aa019-b453-4dcb-9ebb-c01a1c5b14b3
@@ -3616,13 +3565,19 @@ version = "1.4.1+1"
 # ╠═c26855e0-ec65-4c63-a4dc-134af368aaa9
 # ╠═b51a452a-38b0-42f7-94b7-201a8c5e24c1
 # ╠═f057d9db-8c17-49a9-a910-c6c9553e9c93
-# ╠═5b8a7560-097c-41c6-aae8-f41246e2667f
+# ╠═bbf11fd6-4a18-4f4e-9022-6801ec387df9
+# ╠═c8c3b967-ddb1-406b-8393-3fee26054d93
 # ╠═d3d0a9d6-4540-4d87-9254-489a9335a322
-# ╠═19c55267-769d-4540-a633-3455dfeebdb4
+# ╠═0c593b1c-e74a-46ed-8f66-47d1456b3636
+# ╠═5d56739d-f972-4839-a92e-ce2cc869f08e
+# ╟─7407b03b-df7d-499e-81b5-bba4120f1c82
 # ╠═b0a5af7c-235f-47c1-b3c8-a3f635ef53f1
 # ╠═c92826c1-61f0-44e6-b333-c60deae80f68
 # ╠═d7f3b4a4-99db-4a6d-a744-1b9e5a3f9360
 # ╠═f2fce8ac-7800-4153-b0fa-21168300984e
+# ╠═09c383f2-f209-418a-9a39-70f56b8bfe53
+# ╟─665deac0-1268-429c-8d75-d2bd0fdde0a3
+# ╠═6596f025-c158-4c87-bd2f-a5026b027d6d
 # ╠═26dd8486-fce6-457f-b435-6190fc6bb2bf
 # ╠═0a58b720-ea82-48e2-aa5c-ab0e9c530b41
 # ╟─fb7b8d5e-0a75-4139-a1fd-e8f5f3b7db98
@@ -3644,5 +3599,6 @@ version = "1.4.1+1"
 # ╠═23123586-648e-4187-829f-aba7f4114bd5
 # ╠═49bd7e05-aaa6-48ca-a6b8-0f5c22e6ae1a
 # ╟─9e4e4f8d-1d34-4c35-b814-b8d6708bf2ab
+# ╟─672fb2ff-5782-4411-85d0-ca83506372c8
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
