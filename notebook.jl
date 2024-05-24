@@ -22,7 +22,7 @@ begin
 	using Plots
 	using Images
 	using PlutoUI
-	using LazyGrids
+	using Symbolics
 	using BenchmarkTools
 	using PartialFunctions
 	using OffsetArrays
@@ -40,7 +40,7 @@ begin
 end
 
 # ╔═╡ 0a34b4fe-9ca8-42ad-a0f7-a1f29b234ff0
-log2(2), log(ℯ), log10(1e4), log(4, 1024), sqrt(4), exp(2)
+log2(4), log(ℯ), log10(1e4), log(4, 1024), sqrt(4), exp(4), factorial(4)
 
 # ╔═╡ d941f8a7-35d8-4e7d-85b7-1b72af32453a
 begin
@@ -50,22 +50,6 @@ begin
 	# equivalence of contrapositive statements
 	all((p ⟹ q) ⟺ (!q ⟹ !p) for p ∈ bools, q ∈ bools)
 	# see https://github.com/JuliaLang/julia/blob/master/src/julia-parser.scm for the symbols that can be defined as infix binary operators
-end
-
-# ╔═╡ 78ed1373-b51c-43c2-9227-9d9785848d69
-function factorize(n)
-	# n <= 0 && throw(DomainError("cannot factorize nonpositive integer"))
-	# factors = Dict()
-	# for p in prime_sieve(n)
-	# 	while n % p == 0
-	# 		n ÷= p
-	# 		factors[p] = get(factors, p, 0) + 1
-	# 	end
-	# 	if n <= 1
-	# 		break
-	# 	end
-	# end
-	# return factors
 end
 
 # ╔═╡ a4e6194b-5cfd-4968-8d22-6d7ed4e15523
@@ -112,14 +96,29 @@ end
 # 	knapsack([3 => 4, 2 => 5, 4 => 8, 1 => 3, 3 => 2], 10)
 # end
 
-# ╔═╡ 8cbd2f0f-cfd9-418a-9333-e49596c81c06
-Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, x)
-
 # ╔═╡ b700e215-3ba4-45e7-bea2-89f6f7ff73f7
 # Task: implement multi-threaded version
 
-# ╔═╡ 1a78c085-cd37-4e62-a6a4-aeeb2c689b94
-run(`ls /tmp`)
+# ╔═╡ dd861e69-2c98-49e1-9970-f5e898048d04
+# begin
+# 	using KernelAbstractions
+
+# 	@kernel function estimate_pi_kernel(a, n)
+# 		i = @index(Global)
+# 		k = prod(@groupsize())
+# 		@inbounds a[i] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+i:k:n)
+# 	end
+
+# 	device = CPU()
+
+# 	@time let N = 300_000_000, K = 64
+# 		A = ones(K)
+# 		run! = estimate_pi_kernel(device, K)
+# 		run!(A, N, ndrange=size(A))
+# 		synchronize(device)
+# 		2 * prod(A)
+# 	end
+# end
 
 # ╔═╡ 1806ebc4-ab49-4d29-821e-886784f3c2ed
 [1 2 3
@@ -129,8 +128,10 @@ run(`ls /tmp`)
 # ╔═╡ 496aa019-b453-4dcb-9ebb-c01a1c5b14b3
 zeros(3, 3)
 
-# ╔═╡ b17c985c-3869-482b-8199-23b1500893fe
-img = "https://images.fineartamerica.com/images-medium-large-5/1-earth-from-space-kevin-a-horganscience-photo-library.jpg" |> download |> load
+# ╔═╡ 4cd08b52-0848-458a-8b92-9909015d8edd
+img = let url = "https://images.fineartamerica.com/images-medium-large-5/1-earth-from-space-kevin-a-horganscience-photo-library.jpg"
+	load(@show download(url))
+end
 
 # ╔═╡ f0edaa1c-cd6d-4722-9d3f-0f6328095c48
 typeof(img)
@@ -141,6 +142,14 @@ SVD_results = [svd(f.(img)) for f in [red, green, blue]];
 # ╔═╡ 4149ce52-2e86-4c6b-92ca-d66fd9b8348d
 @bind K Slider(1:60, show_value=true, default=30)
 
+# ╔═╡ 818de785-c18d-4b35-9a16-4453b7c9ade7
+let kernel = centered([1 2 -1; 2 0 -2; -1 -2 1])
+	imfilter(load("/tmp/my_earth.png"), kernel)
+end
+
+# ╔═╡ 5d477221-6c4a-409a-98aa-4373b7e05bce
+run(`ls -l /tmp/`)
+
 # ╔═╡ 023ccc34-42aa-4bbe-a127-3fdc48eec87a
 subtypes(Integer), supertypes(Integer)
 
@@ -150,15 +159,12 @@ methods(!)
 # ╔═╡ b51a452a-38b0-42f7-94b7-201a8c5e24c1
 names(Statistics)
 
-# ╔═╡ 5d56739d-f972-4839-a92e-ce2cc869f08e
-# let p1 = Normal([1.0, 3.0], [1.0, 1.0]), p2 = Normal([-2.0, -1.0], [0.5, 2.0])
-# 	@show mean(p1), var(p1)
-# 	@show mean(p2), var(p2)
-# 	x1, y1 = eachrow(rand(p1, 200))
-# 	x2, y2 = eachrow(rand(p2, 200))
-# 	scatter(x1, y1, label="class 1")
-# 	scatter!(x2, y2, label="class 2")
-# end
+# ╔═╡ 5c5a7195-6278-4ed8-9355-3617135fd210
+function fastfib(n)
+    z = BigInt()
+    ccall((:__gmpz_fib_ui, :libgmp), Cvoid, (Ref{BigInt}, Culong), z, n)
+    return z
+end
 
 # ╔═╡ ee0e9437-428f-420c-8733-7b0a00a94670
 # Task: solve the integer partition problem with @memoize
@@ -181,7 +187,7 @@ begin
 	end
 
 	Base.length(v::Vect) = length(v.coefs)
-	value(v::Vect) = sum(v.coefs .* basis(v.space))
+	vec(v::Vect) = sum(c * b for (b, c) in zip(basis(v.space), v.coefs))
 
 	abstract type InnerProdSpace{T, D, F} <: VectorSpace{T, D, F} end
 
@@ -192,33 +198,39 @@ begin
 			new{D,F}(SMatrix{D,D,F}(basis))
 		end
 		
-		function EuclideanSpace(s::InnerProdSpace{T,D,F}) where {T,D,F}
-			new{D,F}([u ⋅ v for u in basis(s), v in basis(s)])
-		end
+		# function EuclideanSpace(s::InnerProdSpace{T,D,F}) where {T,D,F}
+		# 	new{D,F}([u ⋅ v for u in basis(s), v in basis(s)])
+		# end
 	end
 
 	basis(s::EuclideanSpace) = eachcol(s.basis)
-	value(v::Vect{<:Any,<:Number,<:EuclideanSpace}) = v.space.basis * v.coefs
+	basis(s::EuclideanSpace, i::Integer) = s.basis[:, i]
+
+	function space_type(x::AbstractArray{T,N}) where {T<:Number,N}
+		EuclideanSpace{size(x, 1), T <: Real ? Float64 : ComplexF64}
+	end
 
 	const ℝ{N} = EuclideanSpace{N, Float64}
 	const ℂ{N} = EuclideanSpace{N, ComplexF64}
 
-	function space_type(x::AbstractArray{T,N}) where {T<:Number,N}
-		T <: Real ? ℝ{size(x, 1)} : ℂ{size(x, 1)}
+	Vect(coefs::AbstractVector; basis=I) = let
+		T = space_type(basis isa AbstractArray ? basis : coefs)
+		Vect(coefs, T(basis))
 	end
+	
+	VectorSpace(basis::AbstractMatrix) = space_type(basis)(basis)
 
-	Vect(coefs::AbstractVector; basis=I) = Vect(coefs, space_type(coefs)(basis))
-	vecspace(basis::AbstractMatrix) = space_type(basis)(basis)
+	Base.in(x::Vect, V::Type{<:VectorSpace}) = x.space isa V
 
 	function Base.getindex(s::VectorSpace, x::T...) where {T}
 		Vect(T <: AbstractVector && length(x) == 1 ? x[1] : collect(x), s)
 	end
 
-	function Base.:+(u::Vect{D,F,V}, v::Vect{D,F,V}) where {D,F,V}
-		if basis(u.space) == basis(v.space)
+	function Base.:+(u::Vect{D,<:Number,V}, v::Vect{D,<:Number,V}) where {D,V}
+		if u.space == v.space
 			Vect(u.coefs .+ v.coefs, u.space)
 		else
-			u + u.space \ v  # project v into the space of u
+			vec(u) + vec(v)
 		end
 	end
 	
@@ -227,27 +239,24 @@ begin
 	Base.:*(x::Vect, y::Number) = y * x
 	Base.:-(x, y) = x + (-y)
 	Base.:/(x, y::Number) = (1/y) * x
-	Base.:\(s::EuclideanSpace, v::AbstractVector) = Vect(s.basis \ v, s)
-	Base.:\(s::InnerProdSpace, v::Vect) = s \ value(v)  # project v into s
-
-	# abstract type LinMap{VectorSpace, VectorSpace} end
-
-	# struct Operator{N,F} <: LinMap{EuclideanSpace{N,F}, EuclideanSpace{N,F}}
-	# 	mat::SMatrix{N,N,F}
-
-	# 	Operator(s::EuclideanSpace{N,F}, t::EuclideanSpace{N,F}) where {N,F} =
-	# 		new{N,F}(t.basis * s.basis ^ -1)
 	
-	# 	(L::Operator)(s::T) where {T<:EuclideanSpace} = T(L.mat * s.basis)
-	# end
+	proj(v::Vect, s::VectorSpace) = proj(vec(v), s)
 
-	# matrix(L::LinMap) = L.mat
-
-	# abstract type Functional{V<:VectorSpace, F<:Field} end
+	function proj(x::T, s::VectorSpace{T,D,F}) where {T,D,F}
+		B = basis(s)
+		if !(x isa AbstractVector) && s isa InnerProdSpace
+			x = [x ⋅ v for v in B]
+			B = [u ⋅ v for u in B, v in B]
+		end
+		Vect(B \ x, s)
+	end
 end
 
-# ╔═╡ dddf76d2-dd8e-4c17-9cc0-256e20db0abe
-sin'(0), cos'(π/2)
+# ╔═╡ 7a2baa7c-af89-478f-99ee-f5e9fca9f871
+begin
+	Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, x)
+	sin'(0), cos'(π/2)
+end
 
 # ╔═╡ 68617bc1-8d21-4df7-8e1b-6751059e732e
 function Statistics.mean(A::Array, dims::Integer...)
@@ -259,11 +268,6 @@ function Statistics.mean(A::Array, dims::Integer...)
 	end
 	return A
 end
-
-# ╔═╡ 5f07854d-0d4c-4de6-8d4a-4b319f372bc4
-# let L = Operator(u.space, v.space)
-# 	@assert L(u.space) == (v.space \ u).coefs
-# end
 
 # ╔═╡ e96c765f-5f5f-41db-8191-1a0d444bcde2
 begin
@@ -288,27 +292,29 @@ begin
 	end
 
 	basis(s::FuncSpace{D,F,L,H}) where {D,F,L,H} = Func{L,H}.(s.basis, s.var)
-	value(v::Vect{D,F,<:FuncSpace}) where {D,F} = sum(v.coefs .* basis(v.space)).exp
-	(v::Vect{D,F,FuncSpace})(x) where {D,F} = value(v)(x)
+	vec(v::Vect{D,F,<:FuncSpace}) where {D,F} = sum(v.coefs .* basis(v.space)).exp
+	(v::Vect{D,F,FuncSpace})(x) where {D,F} = vec(v)(x)
 
-	function PolySpace(D, range=(0, 1), field=Real, var=:x)
-		basis = symbols(var, real=true) .^ (0:(D-1))
+	function PolySpace(deg, range=(0, 1), field=Real, var=:x)
+		basis = symbols(var, real=true) .^ (0:deg)
 		FuncSpace(basis, range, field)
 	end
 
-	function FourierSpace(D, range=(0, 2π), field=Real, var=:x)
+	function FourierSpace(deg, range=(0, 2π), field=Real, var=:x)
 		a, b = range
 		T = b - a
 		t = symbols(var, real=true) - a
-		basis = [exp(-im*2π*k*t/T) for k = 0:(D-1)]
+		basis = [exp(-im*PI*k*t/T) for k = 0:deg]
 		basis = field <: Real ? real.(basis) : basis
 		FuncSpace(basis, range, field)
 	end
 
-	Base.:\(s::FuncSpace, f::Function) = s \ f(s.var)
 	Base.:*(a, f::T) where {T<:Func} = T(a * f.exp, f.var)
 	Base.:+(f::T, g::T) where {T<:Func} = T(f.exp + g.exp, f.var)
 	Base.:-(f::T) where {T<:Func} = T(-f.exp, f.var)
+
+	proj(f::Func, s::FuncSpace) = proj(f.exp, s)
+	proj(f::Function, s::FuncSpace) = proj(f(s.var), s)
 end
 
 # ╔═╡ 6d3c390d-7e2c-401f-b313-31975874e657
@@ -347,19 +353,42 @@ begin
 	@show fact.(1:10)
 end;
 
+# ╔═╡ a81fb830-e417-488e-a16d-d1f8c37c7218
+function hanoi(n)
+	n < 0 && error("negative input")
+	n == 0 ? 0 : 2hanoi(n-1) + 1
+end
+
+# ╔═╡ 44adb584-f004-4229-a20d-7d8412720e15
+hanoi.(0:11)
+
+# ╔═╡ 575a1d7f-3b08-42ec-bfd2-7b1210eb94df
+hanoi_big(n) = big(1) << n - 1
+
+# ╔═╡ e799b22a-c975-4819-aa06-5a662d67c35c
+hanoi_big.(0:10:100)
+
 # ╔═╡ eba461a3-2026-47c8-8a4a-78dbf8975a3c
 begin
 	sq(x) = x ^ 2
 	double(f) = x -> f(f(x))  # anonymous function
 	@show map(double(sq), [3, "3"])
 	triple(f) = f ∘ f ∘ f
+	inc = Base.Fix1(+, 1)  # inc = x -> 1 + x
+	@show triple(double)(inc)(0)  # applies inc for 2^3 times
 	nfold(f, n) = foldr(∘, fill(f, n))
-	inc = Base.Fix1(+, 1)  # inc = x -> x + 1
-	@show nfold(triple, 4)(inc)(0)
-	sqfold(f, n) = double(Base.Fix2(nfold, n))(f) # applies f for a^2 times
-	f = sqfold(cos, 4)
-	g = sqfold(acos, 4)
-	(@show g ∘ f)(1.23)
+	nfold(triple, 3)(cos)
+end
+
+# ╔═╡ 8a241ac1-ce09-403f-a05b-c6ca02db6209
+let f = g -> n -> (n == 0 ? 0 : 2g(n-1) + 1)
+	partial_hanoi(i) = nfold(f, i)(x -> NaN)
+	for i in 1:8
+		println(partial_hanoi(i).(1:8))
+	end
+	Y = f -> (x -> f(y -> x(x)(y)))(x -> f(y -> x(x)(y)))  # Y combinator
+	Y_hanoi = Y(f)  # f(f(f(f(...))))
+	Y_hanoi.(1:8)
 end
 
 # ╔═╡ 768ea165-199f-4106-bcab-d476ebf7dea6
@@ -373,27 +402,55 @@ function prime_sieve(n)
 	findall(mask)
 end
 
-# ╔═╡ 9865e00a-0c32-419e-a8cc-0b4cb35b7031
-let π(n) = length(prime_sieve(n)), N = 1000_000
-	@show π(N)
-	π(N) / (N / log(N))
+# ╔═╡ 78ed1373-b51c-43c2-9227-9d9785848d69
+function factorize(n)
+	n <= 0 && throw(DomainError("cannot factorize nonpositive integer"))
+	factors = Dict()
+	for p in prime_sieve(n)
+		while n % p == 0
+			n ÷= p
+			factors[p] = get(factors, p, 0) + 1
+		end
+		if n <= 1
+			break
+		end
+	end
+	return factors
 end
 
+# ╔═╡ 9865e00a-0c32-419e-a8cc-0b4cb35b7031
+lucas_lehmer(n, m) = n == 0 ? 4 : (lucas_lehmer(n-1, m)^2 - 2) % m
+
+# ╔═╡ a306cd12-7218-4767-8650-7034dcb6e303
+function perfect_numers(N)
+	primes = prime_sieve(N)
+	mersennes = hanoi_big.(primes)
+	[big(2)^(p-1) * m for (p, m) in zip(primes, mersennes) 
+	 if p < 3 || lucas_lehmer(p-2, m) == 0]
+end
+
+# ╔═╡ 9f457e6d-ce3e-41fa-b3ce-eb3c4993286e
+perfect_numers(100)
+
+# ╔═╡ 11d02c6a-a28b-4b6e-9b2a-83ea20e01c28
+function is_perfect_number(n)
+	pfs, degs = zip(pairs(factorize(n))...)
+	factors = []
+	for ds in Iterators.product([0:d for d in degs]...)
+		push!(factors, prod(p ^ d for (p, d) in zip(pfs, ds)))
+	end
+	sum(factors) == 2n
+end
+
+# ╔═╡ 64ee1549-b481-49a1-88d6-1961b9b82a91
+[(n, is_perfect_number(n)) for n in perfect_numers(15)]
+
 # ╔═╡ 57f8919a-aadd-4e3b-9a24-cdca7870caa9
-@time let N = 100_000_000
+@time let N = 300_000_000
 	# generator (laze evaluation)
 	fracs = ((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 2:N)
 	# fracs = [(i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 2:N]
 	2 * prod(fracs)
-end
-
-# ╔═╡ 175d7472-4a23-4715-a39e-4a434cac46b1
-@time let N = 100_000_000, k = Threads.nthreads()
-	a = ones(k)
-	@Threads.threads for i in 1:k
-		a[i] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+i:k:N)
-	end
-	2 * prod(a)
 end
 
 # ╔═╡ fe402f42-0d4a-46fe-ad6d-57eb578d2cf4
@@ -433,7 +490,9 @@ end
 @time nfold(x -> sin(x) + x, 5)(1)
 
 # ╔═╡ a29da296-cbde-4004-8022-ef5888509b38
-[i + j*im for i in 1:3, j in 1:3]
+let m = [i + j*im for i in 1:3, j in 1:3]
+	m, m'  # adjoint
+end
 
 # ╔═╡ 672ee9e6-1928-4eab-b2d9-b34179cf99fc
 begin
@@ -465,7 +524,7 @@ end
 @which 2im
 
 # ╔═╡ f057d9db-8c17-49a9-a910-c6c9553e9c93
-struct Normal  # try adding and removing type declarations and see the difference
+struct Normal
 	μ :: Float64
 	σ :: Float64
 
@@ -502,7 +561,7 @@ end
 
 # ╔═╡ db5d41fc-ea93-4abc-9efa-b232ef7f37e2
 function estimate_pi_mc(n=100_000_000)
-	count(1:n) do _
+	mean(1:n) do _
 		rand()^2 + rand()^2 < 1
 	end / n * 4
 end
@@ -521,6 +580,21 @@ end
 	mean(fetch.(Threads.@spawn estimate_pi_mc(N÷k) for _ in 1:k))
 end
 
+# ╔═╡ 175d7472-4a23-4715-a39e-4a434cac46b1
+let N = 300_000_000, K = 120
+	times = [Float64[] for _ in 1:Threads.nthreads()]
+	@time let
+		A = ones(K)
+		@Threads.threads for i in 1:K
+			t0 = time()
+			A[i] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+i:K:N)
+			push!(times[Threads.threadid()], time() - t0)
+		end
+		@show 2 * prod(A)
+	end
+	[f(ts) for ts in times, f in [length, mean]]
+end
+
 # ╔═╡ d7bdb281-a363-476a-893b-4b7392f5c993
 A = rand(Float64, (3, 4))
 
@@ -529,7 +603,7 @@ size(A), size(A, 1)
 
 # ╔═╡ 2b7e66ad-731d-4074-867a-66c54fabfd71
 let B = @show similar(A)
-	fill!(B, 1)
+	fill!(B, 3)
 end
 
 # ╔═╡ 9c1c8163-71ba-4261-bda2-d39ff729606c
@@ -554,13 +628,22 @@ let B = reshape(A, 2, 6)
 end
 
 # ╔═╡ f31efc51-cf0c-4093-af7a-b4e3a2e84b2f
-M = A * A'  # adjoint
+M = A * A'
 
 # ╔═╡ 91d47e62-3207-48ec-a255-c1f1ece56d5b
 M ^ 2
 
 # ╔═╡ d1d6309d-ccf8-4799-b09b-8405d3f8c302
 exp(M)
+
+# ╔═╡ 8bcc990c-18b4-4a0d-87fc-4ba8963d81ce
+maximum(M, dims=1)
+
+# ╔═╡ 9e1cdf98-5b5d-4b46-a779-560b6f552d3c
+let b = [3, 2, 1]
+	x = @show M \ b  # inv(M) * b
+	M * x
+end
 
 # ╔═╡ 0d33e716-36c0-4a74-b30a-7ee19aeb26d3
 rank(M), tr(M), det(M), diag(M)
@@ -579,14 +662,11 @@ mean(M), mean(M, 1), mean(M, 2), mean(M, 1, 2)
 # ╔═╡ 0c593b1c-e74a-46ed-8f66-47d1456b3636
 let p1 = Normal()
 	p2 = Normal(-4.0, 0.7)
-	@show mean(p1)
-	@show var(p1)
-	@show mean(p2)
-	@show var(p2)
-	xs = rand(p1, 10000)
-	m = @show mean(xs)
-	@show mean((xs .- m) .^ 2)
-	histogram(xs, label=false, normalize=:true)
+	@show mean(p1), var(p1), mean(p2), var(p2)
+	xs = vcat(rand(p1, 2000), rand(p2, 2000))
+	@show mean(xs)
+	@show mean((xs .- mean(xs)) .^ 2)
+	histogram(xs, label=false, normalize=true, nbin=80)
 	let x = range(-10, 10, 1000)
 		plot!(x, p1.(x), label="N$((p1.μ, p1.σ))")
 		plot!(x, p2.(x), label="N$((p2.μ, p2.σ))")
@@ -631,11 +711,11 @@ begin
 	fields(t)
 end
 
-# ╔═╡ 09c383f2-f209-418a-9a39-70f56b8bfe53
-begin
-	@show t[0]
-	@show t[-1]
-end
+# ╔═╡ 724dd2bd-3863-46fb-acaa-1b9b5768a73a
+t[0]
+
+# ╔═╡ 64df9eb5-e63c-45f1-a1af-5df300e05a0b
+t[-1]
 
 # ╔═╡ 0a58b720-ea82-48e2-aa5c-ab0e9c530b41
 begin
@@ -662,102 +742,6 @@ function Base.getindex(t::BST, key)
 		return c[key]
 	end
 end
-
-# ╔═╡ 0e8fcc58-1f93-48ef-9c74-f5abdcdecbd3
-md"""
-# Julia Fundamentals
-"""
-
-# ╔═╡ 8fc20559-3ebe-478a-a96a-d0b2f9ca7e6a
-md"Higher order functions"
-
-# ╔═╡ ab836649-d896-487f-b47f-a4ab6b8e2a3f
-md"Some logic"
-
-# ╔═╡ 768bfdcc-11b6-4fd9-9b0b-42035ef89664
-md"""
-!!! danger "Task"
-	Implement prime factorization
-"""
-
-# ╔═╡ 55d77b19-e600-4ce8-9dc1-8d2458c99da2
-md"Estimate π using Monte Carlo"
-
-# ╔═╡ e47e0b0a-377a-451e-93f8-d4430706ef19
-md"""Estimate π using
-
-$$π = \frac{2\cdot2\cdot4\cdot4\cdot6\cdot6\ldots}
-		   {1\cdot3\cdot3\cdot5\cdot5\cdot7\ldots}$$
-"""
-
-# ╔═╡ 7f0583b7-8d5c-4660-ad47-5f64aa6f57bb
-md"""Estimate π using Newton's method:
-
-``\pi`` is a root of ``sin(x)``.
-"""
-
-# ╔═╡ 36305f0a-a02d-4ba0-8a4b-12a645a6cf39
-md"Estimate π using fixed point iteration:
-
-``f(x), f(f(x)), \ldots`` converges to a fixed point ``x_0`` of ``f`` , i.e. ``f(x_0) = x_0``. 
-
-``\pi`` is a fixed point of ``sin(x) + x``, since ``sin(\pi) + \pi = \pi``."
-
-# ╔═╡ 89143850-3a09-4407-abf6-066087d180ef
-md"""Estimate π using continued fraction ([source](https://en.wikipedia.org/wiki/Euler%27s_continued_fraction_formula#A_continued_fraction_for_%CF%80
-)):
-
-`` \pi = \frac{4}{1+\frac{1^2}{2+\frac{3^2}{2+\frac{5^2}{2+\ldots}}}} ``
-
-"""
-
-# ╔═╡ 521a5ff0-44b6-4065-8fb6-6dd3c1b1689a
-md"""
-!!! danger "Task"
-	Estimate π using the formula above
-"""
-
-# ╔═╡ 551603af-23fc-49b6-a3c0-f15c199452dc
-md"""
-# Linear Algebra
-"""
-
-# ╔═╡ aae002c8-7160-40f2-a01b-dc1192dbd6d2
-@bind T PlutoUI.combine() do Child
-	θ = Child("θ", Slider(0:5:360, show_value=true))
-	ϕ = Child("ϕ", Slider(0:5:360, show_value=true))
-	x = Child("x", Slider(0.1:0.02:1, show_value=true, default=0.5))
-	y = Child("y", Slider(0.1:0.02:1, show_value=true, default=0.5))
-	md"""
-	1. rotation: $θ
-	1. horizontal scale: $x
-	1. vertical scale: $y
-	1. rotation: $ϕ
-	"""
-end
-
-# ╔═╡ 8a565363-d3bb-423d-ab43-642f781925e4
-begin
-	rotate(θ) = [cos(θ) -sin(θ); sin(θ) cos(θ)]
-	scaley(a) = [a 0; 0 1]
-	scalex(a) = [1 0; 0 a]
-	kernel = centered([0 2 0; 0 0 0; 0 -2 0])
-
-	trans = rotate(-T.ϕ * π/180) * scalex(T.x) * scaley(T.y) * rotate(T.θ * π/180)
-	transform_image(img, trans) |> Base.Fix2(imfilter, kernel)
-end
-
-# ╔═╡ a1eaec8f-3527-43f6-b3e6-360c64b156e5
-md"""# Type System"""
-
-# ╔═╡ 7407b03b-df7d-499e-81b5-bba4120f1c82
-md"Mutable Struct"
-
-# ╔═╡ 665deac0-1268-429c-8d75-d2bd0fdde0a3
-md"""
-!!! danger "Task"
-	Implement `setindex!` for BST
-"""
 
 # ╔═╡ 6596f025-c158-4c87-bd2f-a5026b027d6d
 function Base.setindex!(t::BST, val, key)
@@ -831,31 +815,48 @@ let
 	fib(n) = n < 2 ? big(n) : fib(n-2) + fib(n-1)
 	@time @show mfib(32)
 	@time @show fib(32)
-end;
-
-# ╔═╡ 6fda8490-fdab-43a1-84c7-217d7bcf12d2
-begin
-	u = Vect([-3, 4])
-	v = Vect([2, -1], basis=[3 2; 1 0])
-	2u + v
+	mfib.(1:32)
 end
+
+# ╔═╡ f4d90ecb-5389-4f86-aa67-2a78a904d346
+@time fastfib(32)
+
+# ╔═╡ 248c304c-de63-4523-b334-e201ed5f07f2
+begin
+	u = Vect([3, 4])
+	v = Vect([3, 4], basis=[1 2; 3 4])
+	@show v ∈ ℝ{2}
+	u + v
+end
+
+# ╔═╡ 3f880785-c0ef-447c-b5ee-db258fc9db16
+"Linear recurrence of the form ``x_{n+D} = \\sum_{k=0}^{D-1} c_k x_{n+k}``"
+struct LinearRecurrence{D} <: VectorSpace{Vector, D, Float64}
+	coefs::SVector{D, <:Number}
+	roots::SVector{D, <:Number}  # roots of characteristic polynomial
+
+	function LinearRecurrence(coefs...)
+		D = length(coefs)
+		v = collect(coefs)
+		m = vcat(v', I(D)[1:end-1, :])
+		new{D}(v, eigvals(m))
+	end
+end
+
+# ╔═╡ 6b847bf5-87df-4e87-8b1c-fb9da5da0d54
+basis(lr::LinearRecurrence{D}) where {D} = hcat([r .^ (1:D) for r in lr.roots]...)
 
 # ╔═╡ 8e4eb2c7-20d3-4aa0-8c09-34fdb8293a9c
 begin
 	import LinearAlgebra: dot  # to overload the '⋅' operator
-	
-	function Base.:\(s::InnerProdSpace{T,D,F}, x::T) where {T,D,F}
-		A = EuclideanSpace(s).basis
-		v = [x ⋅ b for b in basis(s)]
-		Vect(A \ v, s)
-	end
 
+	dot(A::StaticMatrix, x::StaticVector) = A * x
 	dot(u::Vect, v::Vect) = 
 		sum(a * (u ⋅ x) for (a, x) in zip(v.coefs, basis(v.space)))
 	dot(u::Vect, x) = sum(a * (x ⋅ y) for (a, y) in zip(u.coefs, basis(u.space)))
 	dot(f::Func, g::Func) = dot(f, g.exp)
 	dot(f::Func{L,H}, g) where {L,H} =
-		integrate(simplify(real(f.exp * conj(g))), (f.var, L, H))
+		integrate(SymPy.simplify(real(f.exp * conj(g))), (f.var, L, H))
 	dot(x, u::Union{Vect, Func}) = dot(u, x)
 
 	norm(v) = sqrt(v ⋅ v)
@@ -871,105 +872,212 @@ begin
 	end
 end
 
-# ╔═╡ 9e1cdf98-5b5d-4b46-a779-560b6f552d3c
-let b = [3, 2, 1]
-	x = @show M \ b  # inv(M) * b
-	M * x
+# ╔═╡ 0462c099-18ee-415d-b06a-7bb8eafa360f
+let
+	m = hcat(orthogonalize(v.space)...)
+	w = Vect([3, -4], basis=@show m)
+	norm(w)
 end
-
-# ╔═╡ 298154d2-03b1-4062-a26e-c259ad979221
-# let
-# 	m = hcat(orthogonalize(v.space)...)
-# 	w = Vect([3, -4], basis=m)
-# 	norm(w)
-# end
 
 # ╔═╡ 331ceecb-53e4-41f9-b8de-2aece6d1eea8
 begin
-	p1 = PolySpace(7, (-2, 2))
+	p1 = @show PolySpace(6, (-2, 2))
 	v1 = p1[1:7]
-	s1 = FuncSpace(orthogonalize(v1.space))
-	s1 \ v1
+	s1 = FuncSpace(orthogonalize(p1))
+	u1 = proj(v1, s1)
+	@show vec(u1).evalf()
+	u1
 end
 
 # ╔═╡ 25319673-99ff-436d-bf5d-34c540f4faf1
 begin
-	p2 = FourierSpace(4, (-2, 2))
-	v2 = p2[1, 2, 3, 4]
-	s2 = FuncSpace(orthogonalize(v2.space))
-	s2 \ v2
-end
-
-# ╔═╡ 752d42d4-bc56-4b0d-a457-c4dbf32b27f8
-function compare_plots(f, g, xvalues; title="", label="", d=0.001)
-	rng = xvalues[1]:d:xvalues[end]
-	p = plot(f, rng, label="function", legend = :outertopright, title=title)
-	plot!(g, rng, label=label)
-	# scatter!(xvalues, zeros(length(xvalues)), label=false, color=:grey, markersize=1)
-	return p
+	p2 = @show FourierSpace(6, (-2, 2))
+	v2 = p2[1, -1, 1, -1, 1, -1, 1]
+	s2 = FuncSpace(orthogonalize(p2))
+	u2 = proj(v2, s2)
+	@show vec(u2).evalf()
+	u2
 end
 
 # ╔═╡ 2a5009df-5e84-4b50-b819-c19333eb4a8b
 let
 	f(x) = cos(2x^2)
-	g = value(p1 \ f)
-	println(g)
-	compare_plots(f, g, -2.2:0.1:2.2, label="polynomial")
+	g = @show vec(proj(f, p1))
+	h = @show vec(proj(f, p2))
+	xs = -2.2:0.001:2.2
+	plot(f, xs, label="function", legend = :outertopright)
+	plot!(g, xs, label="polynomial")
+	plot!(h, xs, label="fourier")
 end
 
-# ╔═╡ a116db18-a4c5-4661-aa0b-5098114d201e
-let
-	f(x) = cos(2x^2)
-	g = value(p2 \ f)
-	println(g)
-	compare_plots(f, g, -2.2:0.1:2.2, label="Fourier")
+# ╔═╡ 9510e0c5-c658-4358-871f-3c433a8f183d
+begin
+	Base.getindex(x::Vect{<:Any,<:Number,<:LinearRecurrence}, i::Integer) = 
+		(x.space.roots .^ i) ⋅ x.coefs
+	Base.getindex(x::Vect{<:Any,<:Number,<:LinearRecurrence}, i) = (j -> x[j]).(i)
 end
 
-# ╔═╡ 4abe4232-ca33-4d07-b20a-de2f0dc68591
-# typeof(Differential(Sym(:x), 2))
+# ╔═╡ 907a813d-945d-40b2-9262-cc2975b8a436
+let R = LinearRecurrence(1, 1)  # x[n+2] = x[n+1] + x[n]
+	@show basis(R)
+	x = R[1, 1]
+	@show x[1:5]
+	fib = proj([1, 1], R)
+	@show fib.coefs
+	@time fib[1:32]
+end
 
 # ╔═╡ 2eded938-c85c-4bf4-95aa-8d8b02c6cbbb
-# begin
-# 	struct DiffEqSystem{F, D} <: VectorSpace{Vector{Differential}, D, F}
-# 		coefs::Matrix{Sym}
-# 		fun::Sym
-# 		var::Sym
+"Solutions of homogeneous ODE of the form ``\\sum_{k=0}^Dc_k\\frac{d^k}{dt^k}x(t)=0``"
+struct ODESolutions{D} <: VectorSpace{Vector, D, Float64}
+	eq::Vector
+	basis::Vector
+	var::Sym
 
-# 		function DiffEqSystem(coefs::Matrix{<:Sym}, var::Sym)
-# 			fun = only(free_symbols(vec(coefs)))
-# 			new{ComplexF64,size(coefs,1)}(coefs, fun, var)
-# 		end
-# 	end
-	
-# 	basis(s::DiffEqSystem{F,D}) where {F,D} = [Differential(s.var, i) for i in 0:D]
-# 	# Base.:*(x::Sym, d::Differential) = d(x)
-# end
+	function ODESolutions(coefs...; var=symbols(:t, real=true))
+		v = collect(coefs)
+		ord = length(v) - 1
+		eq = dot(v, var .^ (0:ord))
+		new{ord}(v, exp.(solve(eq, var) .* var), var)
+	end
+end
 
-# ╔═╡ 23123586-648e-4187-829f-aba7f4114bd5
-# let
-# 	@syms x t
-# 	eqs = DiffEqSystem([x 1 x; x+1 x 3], t)
-# 	basis(eqs)
-# end
+# ╔═╡ fb1ad4f2-5b02-4080-bb0f-94a1bf918562
+function Base.getindex(ode::ODESolutions, inivals::Pair...)
+	ts, xs = collect.(zip(inivals...))
+	A = [subs(b, ode.var => t) for t in ts, b in basis(ode)]
+	ode[A \ xs]
+end
 
-# ╔═╡ 49bd7e05-aaa6-48ca-a6b8-0f5c22e6ae1a
-# begin
-# 	#Half-life of Carbon-14 is 5730 years.
-# 	c = 5.730 ± 2
-	
-# 	#Setup
-# 	u0 = 1.0 ± 0.1
-# 	tspan = (0.0, 1.0)
-	
-# 	#Define the problem
-# 	radioactivedecay(u,p,t) = -c*u
-	
-# 	#Pass to solver
-# 	prob = ODEProblem(radioactivedecay,u0,tspan)
-# 	sol = solve(prob, Tsit5(), reltol=1e-8, abstol=1e-8);
-	
-# 	plot(sol.t, sol.u, ylabel="u(t)", xlabel="t", lw=2, legend=false, frame=:box)
-# end
+# ╔═╡ 0e8fcc58-1f93-48ef-9c74-f5abdcdecbd3
+md"""
+# Julia Fundamentals
+"""
+
+# ╔═╡ b19177be-bbb7-4c2c-b3c5-b48a181f61cb
+md"""
+!!! danger "Task"
+	Hanoi Tower Problem
+"""
+
+# ╔═╡ 8fc20559-3ebe-478a-a96a-d0b2f9ca7e6a
+md"Higher order functions"
+
+# ╔═╡ ab836649-d896-487f-b47f-a4ab6b8e2a3f
+md"Some logic"
+
+# ╔═╡ 768bfdcc-11b6-4fd9-9b0b-42035ef89664
+md"""
+!!! danger "Task"
+	Implement prime factorization
+"""
+
+# ╔═╡ 4121fd34-e7ae-4a04-a32f-69660e3b85ca
+md"Euclid-Euler Theorem"
+
+# ╔═╡ f646fd23-beeb-48d8-80d2-503442371d83
+md"""
+!!! danger "Task"
+	Implement perfect number test
+"""
+
+# ╔═╡ 3aaa3e84-9cec-4797-bc1d-4d7c456bb8b3
+md"Task"
+
+# ╔═╡ 55d77b19-e600-4ce8-9dc1-8d2458c99da2
+md"Estimate π using Monte Carlo"
+
+# ╔═╡ e47e0b0a-377a-451e-93f8-d4430706ef19
+md"""Estimate π using
+
+$$π = \frac{2\cdot2\cdot4\cdot4\cdot6\cdot6\ldots}
+		   {1\cdot3\cdot3\cdot5\cdot5\cdot7\ldots}$$
+"""
+
+# ╔═╡ 7f0583b7-8d5c-4660-ad47-5f64aa6f57bb
+md"""Estimate π using Newton's method:
+
+``\pi`` is a root of ``sin(x)``.
+"""
+
+# ╔═╡ 36305f0a-a02d-4ba0-8a4b-12a645a6cf39
+md"Estimate π using fixed point iteration:
+
+``f(x), f(f(x)), \ldots`` converges to a fixed point ``x_0`` of ``f`` , i.e. ``f(x_0) = x_0``. 
+
+``\pi`` is a fixed point of ``sin(x) + x``, since ``sin(\pi) + \pi = \pi``."
+
+# ╔═╡ 89143850-3a09-4407-abf6-066087d180ef
+md"""Estimate π using continued fraction ([source](https://en.wikipedia.org/wiki/Euler%27s_continued_fraction_formula#A_continued_fraction_for_%CF%80
+)):
+
+`` \pi = \frac{4}{1+\frac{1^2}{2+\frac{3^2}{2+\frac{5^2}{2+\ldots}}}} ``
+
+"""
+
+# ╔═╡ 521a5ff0-44b6-4065-8fb6-6dd3c1b1689a
+md"""
+!!! danger "Task"
+	Estimate π using the formula above
+"""
+
+# ╔═╡ 551603af-23fc-49b6-a3c0-f15c199452dc
+md"""
+# Linear Algebra
+"""
+
+# ╔═╡ aae002c8-7160-40f2-a01b-dc1192dbd6d2
+@bind T PlutoUI.combine() do Child
+	θ = Child("θ", Slider(0:5:360, show_value=true))
+	ϕ = Child("ϕ", Slider(0:5:360, show_value=true))
+	x = Child("x", Slider(0.1:0.02:1, show_value=true, default=0.5))
+	y = Child("y", Slider(0.1:0.02:1, show_value=true, default=0.5))
+	md"""
+	1. rotation: $θ
+	1. horizontal scale: $x
+	1. vertical scale: $y
+	1. rotation: $ϕ
+	"""
+end
+
+# ╔═╡ 8a565363-d3bb-423d-ab43-642f781925e4
+begin
+	rotate(θ) = [cos(θ) -sin(θ); sin(θ) cos(θ)]
+	scaley(a) = [a 0; 0 1]
+	scalex(a) = [1 0; 0 a]
+
+	trans = rotate(-T.ϕ * π/180) * scalex(T.x) * scaley(T.y) * rotate(T.θ * π/180)
+	img2 = transform_image(img, trans)
+end
+
+# ╔═╡ af195cbb-058e-429f-a2a8-0635b827d54f
+save("/tmp/my_earth.png", img2)
+
+# ╔═╡ a1eaec8f-3527-43f6-b3e6-360c64b156e5
+md"""# Type System"""
+
+# ╔═╡ dafb5973-8bf9-4436-b7e2-cd9fe29e1d2c
+md"Try adding and removing the type declarations in `Normal` to see the difference of generated bitcodes."
+
+# ╔═╡ 7407b03b-df7d-499e-81b5-bba4120f1c82
+md"Mutable Struct"
+
+# ╔═╡ 665deac0-1268-429c-8d75-d2bd0fdde0a3
+md"""
+!!! danger "Task"
+	Implement `setindex!` for BST
+"""
+
+# ╔═╡ 5ec44966-09ca-4e09-b087-38fc3adb2453
+md"A faster option: calling C function."
+
+# ╔═╡ cd139cca-0b06-40da-b2b7-f49e3b3bcd52
+let ode = ODESolutions(1, 2, -3)  # x + 2x' - 3x'' = 0
+	x = vec(ode[0=>2, 1=>1])
+	D = SymPy.Differential(ode.var)
+	@show x + 2D(x) - 3(D^2)(x)
+	x(0).evalf(), x(1).evalf()
+end
 
 # ╔═╡ 9e4e4f8d-1d34-4c35-b814-b8d6708bf2ab
 macro show_all(block)
@@ -991,9 +1099,9 @@ end
 # ╔═╡ f722fd52-3f0c-4546-90c9-9b885c10a3a5
 @show_all begin
 	3 + 4; 3 * 4; 3 / 4; 3 \ 4; 3 ÷ 4; 3 ^ 4
-end
+end;
 
-# ╔═╡ 4532b560-a6b2-4364-a548-ffb5d25b0d5c
+# ╔═╡ 2ba441e8-0d84-4bf4-b25a-cc17a64cb554
 @show_all let a = -6:3:6, b = [1, 2, 3], c = Iterators.cycle([0, 1])
 	length(a)
 	reverse(a)
@@ -1013,16 +1121,16 @@ end
 	map(+, a, b, c)
 end;
 
-# ╔═╡ 90808947-4a59-4903-8912-5e43839f91e0
+# ╔═╡ 7c8e42d5-e18f-4be9-9df8-7eee8ff6da41
 @show_all let s = "Hello world!", t = 'a':'z'
 	reverse(s)
-	join(split(s, 'l'), '1')
+	join(split(s), "...")
 	"$(s[1:5]) Julia " * "😃" ^ 3
 	count(isletter, s)
-	prod(filter(islowercase, s))
-	replace(s, r"([aeiou])" => s"\1\1")  # regex
-	join(sort([c for c in t if occursin(c, s)]))
-	p = join(rand(t, 5))
+	join(filter(islowercase, s))
+	replace(s, r"([aeiou])" => s"\1\1")  # Regex and SubstitutionString
+	join([c for c in t if occursin(c, s)])
+	join(sort(rand(t, 10)))
 end;
 
 # ╔═╡ 03b33f2d-2139-423b-9324-362068885db1
@@ -1068,7 +1176,6 @@ AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
-LazyGrids = "7031d0ef-c40d-4431-b2f8-61a8d2f650db"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
@@ -1080,13 +1187,13 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
 AbstractTrees = "~0.4.5"
 BenchmarkTools = "~1.5.0"
 ForwardDiff = "~0.10.36"
 Images = "~0.26.1"
-LazyGrids = "~0.5.0"
 MacroTools = "~0.5.13"
 OffsetArrays = "~1.14.0"
 OrdinaryDiffEq = "~6.75.0"
@@ -1095,6 +1202,7 @@ Plots = "~1.40.4"
 PlutoUI = "~0.7.59"
 StaticArrays = "~1.9.3"
 SymPy = "~2.0.1"
+Symbolics = "~5.28.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1103,7 +1211,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.3"
 manifest_format = "2.0"
-project_hash = "478716e0462d80bde317329cd7a2129832c1a259"
+project_hash = "6f35d5359336138e8a90a4a59d99c0be86caa913"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "016833eb52ba2d6bea9fcb50ca295980e728ee24"
@@ -1162,6 +1270,12 @@ weakdeps = ["StaticArrays"]
 
     [deps.Adapt.extensions]
     AdaptStaticArraysExt = "StaticArrays"
+
+[[deps.AliasTables]]
+deps = ["Random"]
+git-tree-sha1 = "07591db28451b3e45f4c0088a2d5e986ae5aa92d"
+uuid = "66dad0bd-aa9a-41b7-9441-69ab47430ed8"
+version = "1.1.1"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -1235,6 +1349,11 @@ git-tree-sha1 = "f1dff6729bc61f4d49e140da1af55dcd1ac97b2f"
 uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 version = "1.5.0"
 
+[[deps.Bijections]]
+git-tree-sha1 = "c9b163bd832e023571e86d0b90d9de92a9879088"
+uuid = "e2ed5e7c-b2de-5872-ae92-c73ca462fb04"
+version = "0.1.6"
+
 [[deps.BitFlags]]
 git-tree-sha1 = "2dc09997850d68179b69dafb58ae806167a32b1b"
 uuid = "d1d4a3ce-64b1-5f1a-9ba4-7e7e69966f35"
@@ -1268,6 +1387,12 @@ deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jl
 git-tree-sha1 = "a4c43f59baa34011e303e76f5c8c91bf58415aaf"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.18.0+1"
+
+[[deps.Calculus]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
+uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
+version = "0.5.1"
 
 [[deps.CatIndices]]
 deps = ["CustomUnitRanges", "OffsetArrays"]
@@ -1331,6 +1456,11 @@ git-tree-sha1 = "fc08e5930ee9a4e03f84bfb5211cb54e7769758a"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.10"
 
+[[deps.Combinatorics]]
+git-tree-sha1 = "08c8b6831dc00bfea825826be0bc8336fc369860"
+uuid = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+version = "1.0.2"
+
 [[deps.CommonEq]]
 git-tree-sha1 = "6b0f0354b8eb954cdba708fb262ef00ee7274468"
 uuid = "3709ef60-1bee-4518-9f2f-acd86f176c50"
@@ -1361,6 +1491,11 @@ weakdeps = ["Dates", "LinearAlgebra"]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.1.1+0"
+
+[[deps.CompositeTypes]]
+git-tree-sha1 = "bce26c3dab336582805503bed209faab1c279768"
+uuid = "b152e2b5-7a66-4b01-a709-34e65c35f657"
+version = "0.1.4"
 
 [[deps.CompositionsBase]]
 git-tree-sha1 = "802bb88cd69dfd1509f6670416bd4434015693ad"
@@ -1509,16 +1644,56 @@ weakdeps = ["ChainRulesCore", "SparseArrays"]
 deps = ["Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
+[[deps.Distributions]]
+deps = ["AliasTables", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
+git-tree-sha1 = "22c595ca4146c07b16bcf9c8bea86f731f7109d2"
+uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
+version = "0.25.108"
+
+    [deps.Distributions.extensions]
+    DistributionsChainRulesCoreExt = "ChainRulesCore"
+    DistributionsDensityInterfaceExt = "DensityInterface"
+    DistributionsTestExt = "Test"
+
+    [deps.Distributions.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    DensityInterface = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
+    Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
 git-tree-sha1 = "2fb1e02f2b635d0845df5d7c167fec4dd739b00d"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.9.3"
 
+[[deps.DomainSets]]
+deps = ["CompositeTypes", "IntervalSets", "LinearAlgebra", "Random", "StaticArrays"]
+git-tree-sha1 = "f300614d950439b5501e4198b0440c7e8b511894"
+uuid = "5b8099bc-c8ec-5219-889f-1d9e522a28bf"
+version = "0.7.13"
+
+    [deps.DomainSets.extensions]
+    DomainSetsMakieExt = "Makie"
+
+    [deps.DomainSets.weakdeps]
+    Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
+
+[[deps.DualNumbers]]
+deps = ["Calculus", "NaNMath", "SpecialFunctions"]
+git-tree-sha1 = "5837a837389fccf076445fce071c8ddaea35a566"
+uuid = "fa6b7ba4-c1ee-5f82-b5fc-ecf0adba8f74"
+version = "0.6.8"
+
+[[deps.DynamicPolynomials]]
+deps = ["Future", "LinearAlgebra", "MultivariatePolynomials", "MutableArithmetics", "Pkg", "Reexport", "Test"]
+git-tree-sha1 = "30a1848c4f4fc35d1d4bbbd125650f6a11b5bc6c"
+uuid = "7c1d4256-1411-5781-91ec-d7bc3513ac07"
+version = "0.5.7"
 
 [[deps.EnumX]]
 git-tree-sha1 = "bdb1942cd4c45e3c678fd11569d5cccd80976237"
@@ -1624,16 +1799,12 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "0653c0a2396a6da5bc4766c43041ef5fd3efbe57"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
 version = "1.11.0"
+weakdeps = ["PDMats", "SparseArrays", "Statistics"]
 
     [deps.FillArrays.extensions]
     FillArraysPDMatsExt = "PDMats"
     FillArraysSparseArraysExt = "SparseArrays"
     FillArraysStatisticsExt = "Statistics"
-
-    [deps.FillArrays.weakdeps]
-    PDMats = "90014a1f-27ba-587c-ab20-58faa44d9150"
-    SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-    Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[deps.FiniteDiff]]
 deps = ["ArrayInterface", "LinearAlgebra", "Requires", "Setfield", "SparseArrays"]
@@ -1799,6 +1970,12 @@ deps = ["BitTwiddlingConvenienceFunctions", "IfElse", "Libdl", "Static"]
 git-tree-sha1 = "eb8fed28f4994600e29beef49744639d985a04b2"
 uuid = "3e5b6fbb-0976-4d2c-9146-d79de83f2fb0"
 version = "0.1.16"
+
+[[deps.HypergeometricFunctions]]
+deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
+git-tree-sha1 = "f218fe3736ddf977e0e772bc9a586b2383da2685"
+uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
+version = "0.3.23"
 
 [[deps.Hyperscript]]
 deps = ["Test"]
@@ -2086,6 +2263,17 @@ git-tree-sha1 = "50901ebc375ed41dbf8058da26f9de442febbbec"
 uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 version = "1.3.1"
 
+[[deps.LabelledArrays]]
+deps = ["ArrayInterface", "ChainRulesCore", "ForwardDiff", "LinearAlgebra", "MacroTools", "PreallocationTools", "RecursiveArrayTools", "StaticArrays"]
+git-tree-sha1 = "e459fda6b68ea8684b3fcd513d2fd1e5130c4402"
+uuid = "2ee39098-c373-598a-b85f-a56591580800"
+version = "1.16.0"
+
+[[deps.LambertW]]
+git-tree-sha1 = "c5ffc834de5d61d00d2b0e18c96267cffc21f648"
+uuid = "984bce1d-4616-540c-a9ee-88d1112d94c9"
+version = "0.4.6"
+
 [[deps.Latexify]]
 deps = ["Format", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "OrderedCollections", "Requires"]
 git-tree-sha1 = "e0b5cd21dc1b44ec6e64f351976f961e6f31d6c4"
@@ -2119,12 +2307,6 @@ weakdeps = ["StaticArrays"]
 [[deps.LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
 uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
-
-[[deps.LazyGrids]]
-deps = ["Statistics"]
-git-tree-sha1 = "f43d10fea7e448a60e92976bbd8bfbca7a6e5d09"
-uuid = "7031d0ef-c40d-4431-b2f8-61a8d2f650db"
-version = "0.5.0"
 
 [[deps.LazyModules]]
 git-tree-sha1 = "a560dd966b386ac9ae60bdd3a3d3a326062d3c3e"
@@ -2384,6 +2566,18 @@ git-tree-sha1 = "cac9cc5499c25554cba55cd3c30543cff5ca4fab"
 uuid = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
 version = "0.2.4"
 
+[[deps.MultivariatePolynomials]]
+deps = ["ChainRulesCore", "DataStructures", "LinearAlgebra", "MutableArithmetics"]
+git-tree-sha1 = "769c9175942d91ed9b83fa929eee4fe6a1d128ad"
+uuid = "102ac46a-7ee4-5c85-9060-abc95bfdeaa3"
+version = "0.5.4"
+
+[[deps.MutableArithmetics]]
+deps = ["LinearAlgebra", "SparseArrays", "Test"]
+git-tree-sha1 = "a3589efe0005fc4718775d8641b2de9060d23f73"
+uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
+version = "1.4.4"
+
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
 git-tree-sha1 = "a0b464d183da839699f4c79e7606d9d186ec172c"
@@ -2526,6 +2720,12 @@ version = "6.75.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
 version = "10.42.0+1"
+
+[[deps.PDMats]]
+deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
+git-tree-sha1 = "949347156c25054de2db3b166c52ac4728cbad65"
+uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
+version = "0.11.31"
 
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
@@ -2707,6 +2907,12 @@ git-tree-sha1 = "0c03844e2231e12fda4d0086fd7cbe4098ee8dc5"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
 version = "5.15.3+2"
 
+[[deps.QuadGK]]
+deps = ["DataStructures", "LinearAlgebra"]
+git-tree-sha1 = "9b23c31e76e333e6fb4c1595ae6afa74966a729e"
+uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+version = "2.9.4"
+
 [[deps.Quaternions]]
 deps = ["LinearAlgebra", "Random", "RealDot"]
 git-tree-sha1 = "994cc27cdacca10e68feb291673ec3a76aa2fae9"
@@ -2806,6 +3012,18 @@ deps = ["UUIDs"]
 git-tree-sha1 = "838a3a4188e2ded87a4f9f184b4b0d78a1e91cb7"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.3.0"
+
+[[deps.Rmath]]
+deps = ["Random", "Rmath_jll"]
+git-tree-sha1 = "f65dcb5fa46aee0cf9ed6274ccbd597adc49aa7b"
+uuid = "79098fc4-a85e-5d69-aa6a-4863f24498fa"
+version = "0.7.1"
+
+[[deps.Rmath_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "6ed52fdd3382cf21947b15e8870ac0ddbff736da"
+uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
+version = "0.4.0+0"
 
 [[deps.Rotations]]
 deps = ["LinearAlgebra", "Quaternions", "Random", "StaticArrays"]
@@ -3055,6 +3273,17 @@ git-tree-sha1 = "5cf7606d6cef84b543b483848d4ae08ad9832b21"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.34.3"
 
+[[deps.StatsFuns]]
+deps = ["HypergeometricFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
+git-tree-sha1 = "cef0472124fab0695b58ca35a77c6fb942fdab8a"
+uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
+version = "1.3.1"
+weakdeps = ["ChainRulesCore", "InverseFunctions"]
+
+    [deps.StatsFuns.extensions]
+    StatsFunsChainRulesCoreExt = "ChainRulesCore"
+    StatsFunsInverseFunctionsExt = "InverseFunctions"
+
 [[deps.StrideArraysCore]]
 deps = ["ArrayInterface", "CloseOpenIntervals", "IfElse", "LayoutPointers", "LinearAlgebra", "ManualMemory", "SIMDTypes", "Static", "StaticArrayInterface", "ThreadingUtilities"]
 git-tree-sha1 = "25349bf8f63aa36acbff5e3550a86e9f5b0ef682"
@@ -3081,18 +3310,46 @@ deps = ["CommonEq", "CommonSolve", "Latexify", "LinearAlgebra", "Markdown", "Rec
 git-tree-sha1 = "d2e8b52c18ad76cc8827eb134b9ba4bb7699ec59"
 uuid = "458b697b-88f0-4a86-b56b-78b75cfb3531"
 version = "0.1.18"
+weakdeps = ["SymbolicUtils"]
 
     [deps.SymPyCore.extensions]
     SymPyCoreSymbolicUtilsExt = "SymbolicUtils"
-
-    [deps.SymPyCore.weakdeps]
-    SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
 
 [[deps.SymbolicIndexingInterface]]
 deps = ["Accessors", "ArrayInterface", "RuntimeGeneratedFunctions", "StaticArraysCore"]
 git-tree-sha1 = "b479c7a16803f08779ac5b7f9844a42621baeeda"
 uuid = "2efcf032-c050-4f8e-a9bb-153293bab1f5"
 version = "0.3.21"
+
+[[deps.SymbolicLimits]]
+deps = ["SymbolicUtils"]
+git-tree-sha1 = "89aa6b25a75418c8fffc42073b2e7dce69847394"
+uuid = "19f23fe9-fdab-4a78-91af-e7b7767979c3"
+version = "0.2.0"
+
+[[deps.SymbolicUtils]]
+deps = ["AbstractTrees", "Bijections", "ChainRulesCore", "Combinatorics", "ConstructionBase", "DataStructures", "DocStringExtensions", "DynamicPolynomials", "IfElse", "LabelledArrays", "LinearAlgebra", "MultivariatePolynomials", "NaNMath", "Setfield", "SparseArrays", "SpecialFunctions", "StaticArrays", "SymbolicIndexingInterface", "TimerOutputs", "Unityper"]
+git-tree-sha1 = "669e43e90df46fcee4aa859b587da7a7948272ac"
+uuid = "d1185830-fcd6-423d-90d6-eec64667417b"
+version = "1.5.1"
+
+[[deps.Symbolics]]
+deps = ["ArrayInterface", "Bijections", "ConstructionBase", "DataStructures", "DiffRules", "Distributions", "DocStringExtensions", "DomainSets", "DynamicPolynomials", "ForwardDiff", "IfElse", "LaTeXStrings", "LambertW", "Latexify", "Libdl", "LinearAlgebra", "LogExpFunctions", "MacroTools", "Markdown", "NaNMath", "PrecompileTools", "RecipesBase", "Reexport", "Requires", "RuntimeGeneratedFunctions", "SciMLBase", "Setfield", "SparseArrays", "SpecialFunctions", "StaticArrays", "SymbolicIndexingInterface", "SymbolicLimits", "SymbolicUtils"]
+git-tree-sha1 = "4104548fff14d7370b278ee767651d6ec61eb195"
+uuid = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+version = "5.28.0"
+
+    [deps.Symbolics.extensions]
+    SymbolicsGroebnerExt = "Groebner"
+    SymbolicsLuxCoreExt = "LuxCore"
+    SymbolicsPreallocationToolsExt = "PreallocationTools"
+    SymbolicsSymPyExt = "SymPy"
+
+    [deps.Symbolics.weakdeps]
+    Groebner = "0b43b601-686d-58a3-8a1c-6623616c7cd4"
+    LuxCore = "bb33d45b-7691-41d6-9220-0943567d0623"
+    PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
+    SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 
 [[deps.TOML]]
 deps = ["Dates"]
@@ -3215,6 +3472,12 @@ deps = ["LaTeXStrings", "Latexify", "Unitful"]
 git-tree-sha1 = "e2d817cc500e960fdbafcf988ac8436ba3208bfd"
 uuid = "45397f5d-5981-4c77-b2b3-fc36d6e9b728"
 version = "1.6.3"
+
+[[deps.Unityper]]
+deps = ["ConstructionBase"]
+git-tree-sha1 = "25008b734a03736c41e2a7dc314ecb95bd6bbdb0"
+uuid = "a7c27f48-0311-42f6-a7f8-2c11e75eb415"
+version = "0.1.6"
 
 [[deps.Unzip]]
 git-tree-sha1 = "ca0969166a028236229f63514992fc073799bb78"
@@ -3495,23 +3758,34 @@ version = "1.4.1+1"
 # ╠═6d3c390d-7e2c-401f-b313-31975874e657
 # ╠═e1012abe-dbce-4210-936b-8ed214ed8cb7
 # ╠═54b587e9-566c-494a-839d-5f916911ba32
+# ╠═2ba441e8-0d84-4bf4-b25a-cc17a64cb554
+# ╠═7c8e42d5-e18f-4be9-9df8-7eee8ff6da41
 # ╠═efdd7069-ed37-496b-bf55-03cd91e74a53
+# ╟─b19177be-bbb7-4c2c-b3c5-b48a181f61cb
+# ╠═a81fb830-e417-488e-a16d-d1f8c37c7218
+# ╠═44adb584-f004-4229-a20d-7d8412720e15
+# ╠═575a1d7f-3b08-42ec-bfd2-7b1210eb94df
+# ╠═e799b22a-c975-4819-aa06-5a662d67c35c
 # ╟─8fc20559-3ebe-478a-a96a-d0b2f9ca7e6a
 # ╠═eba461a3-2026-47c8-8a4a-78dbf8975a3c
+# ╠═8a241ac1-ce09-403f-a05b-c6ca02db6209
 # ╟─ab836649-d896-487f-b47f-a4ab6b8e2a3f
 # ╠═d941f8a7-35d8-4e7d-85b7-1b72af32453a
-# ╠═4532b560-a6b2-4364-a548-ffb5d25b0d5c
 # ╠═768ea165-199f-4106-bcab-d476ebf7dea6
-# ╠═9865e00a-0c32-419e-a8cc-0b4cb35b7031
 # ╟─768bfdcc-11b6-4fd9-9b0b-42035ef89664
 # ╠═78ed1373-b51c-43c2-9227-9d9785848d69
 # ╟─04ea591e-bd74-4926-82a6-d6a09f242a71
-# ╠═90808947-4a59-4903-8912-5e43839f91e0
+# ╠═9865e00a-0c32-419e-a8cc-0b4cb35b7031
+# ╟─4121fd34-e7ae-4a04-a32f-69660e3b85ca
+# ╠═a306cd12-7218-4767-8650-7034dcb6e303
+# ╠═9f457e6d-ce3e-41fa-b3ce-eb3c4993286e
+# ╟─f646fd23-beeb-48d8-80d2-503442371d83
+# ╠═11d02c6a-a28b-4b6e-9b2a-83ea20e01c28
+# ╠═64ee1549-b481-49a1-88d6-1961b9b82a91
+# ╟─3aaa3e84-9cec-4797-bc1d-4d7c456bb8b3
 # ╠═a4e6194b-5cfd-4968-8d22-6d7ed4e15523
 # ╠═004aab75-ad77-4ea0-a335-71476f31ed94
 # ╠═132467b1-315f-40e1-b6fb-a56537d54f27
-# ╠═8cbd2f0f-cfd9-418a-9333-e49596c81c06
-# ╠═dddf76d2-dd8e-4c17-9cc0-256e20db0abe
 # ╟─55d77b19-e600-4ce8-9dc1-8d2458c99da2
 # ╠═db5d41fc-ea93-4abc-9efa-b232ef7f37e2
 # ╠═9a379335-9430-4fa2-9b84-15e192ace090
@@ -3521,10 +3795,11 @@ version = "1.4.1+1"
 # ╠═57f8919a-aadd-4e3b-9a24-cdca7870caa9
 # ╠═b700e215-3ba4-45e7-bea2-89f6f7ff73f7
 # ╠═175d7472-4a23-4715-a39e-4a434cac46b1
+# ╠═dd861e69-2c98-49e1-9970-f5e898048d04
 # ╟─7f0583b7-8d5c-4660-ad47-5f64aa6f57bb
+# ╠═7a2baa7c-af89-478f-99ee-f5e9fca9f871
 # ╠═fe402f42-0d4a-46fe-ad6d-57eb578d2cf4
 # ╠═cc982bfb-8147-4e69-be5c-c75c053e8e33
-# ╠═1a78c085-cd37-4e62-a6a4-aeeb2c689b94
 # ╟─36305f0a-a02d-4ba0-8a4b-12a645a6cf39
 # ╠═37396c37-0291-4ce6-92c6-defb547f94f5
 # ╟─89143850-3a09-4407-abf6-066087d180ef
@@ -3546,17 +3821,21 @@ version = "1.4.1+1"
 # ╠═d1d6309d-ccf8-4799-b09b-8405d3f8c302
 # ╠═68617bc1-8d21-4df7-8e1b-6751059e732e
 # ╠═dc849525-f3af-44e9-9ae9-bcb9c19512b7
+# ╠═8bcc990c-18b4-4a0d-87fc-4ba8963d81ce
 # ╠═9e1cdf98-5b5d-4b46-a779-560b6f552d3c
 # ╠═0d33e716-36c0-4a74-b30a-7ee19aeb26d3
 # ╠═a0ef34ff-bb06-43e8-acd4-ee228a6edc68
-# ╠═b17c985c-3869-482b-8199-23b1500893fe
+# ╠═4cd08b52-0848-458a-8b92-9909015d8edd
 # ╠═f0edaa1c-cd6d-4722-9d3f-0f6328095c48
 # ╠═6b313419-288a-4f20-8453-e61fa463d225
-# ╟─4149ce52-2e86-4c6b-92ca-d66fd9b8348d
+# ╠═4149ce52-2e86-4c6b-92ca-d66fd9b8348d
 # ╠═672ee9e6-1928-4eab-b2d9-b34179cf99fc
 # ╠═8515d621-6221-4711-a486-0b9c3d3f6be4
 # ╟─aae002c8-7160-40f2-a01b-dc1192dbd6d2
 # ╠═8a565363-d3bb-423d-ab43-642f781925e4
+# ╠═af195cbb-058e-429f-a2a8-0635b827d54f
+# ╠═818de785-c18d-4b35-9a16-4453b7c9ade7
+# ╠═5d477221-6c4a-409a-98aa-4373b7e05bce
 # ╟─a1eaec8f-3527-43f6-b3e6-360c64b156e5
 # ╠═023ccc34-42aa-4bbe-a127-3fdc48eec87a
 # ╠═e8f7cad1-65a6-4814-9a06-5c90c87ec297
@@ -3565,39 +3844,43 @@ version = "1.4.1+1"
 # ╠═c26855e0-ec65-4c63-a4dc-134af368aaa9
 # ╠═b51a452a-38b0-42f7-94b7-201a8c5e24c1
 # ╠═f057d9db-8c17-49a9-a910-c6c9553e9c93
+# ╟─dafb5973-8bf9-4436-b7e2-cd9fe29e1d2c
 # ╠═bbf11fd6-4a18-4f4e-9022-6801ec387df9
 # ╠═c8c3b967-ddb1-406b-8393-3fee26054d93
 # ╠═d3d0a9d6-4540-4d87-9254-489a9335a322
 # ╠═0c593b1c-e74a-46ed-8f66-47d1456b3636
-# ╠═5d56739d-f972-4839-a92e-ce2cc869f08e
 # ╟─7407b03b-df7d-499e-81b5-bba4120f1c82
 # ╠═b0a5af7c-235f-47c1-b3c8-a3f635ef53f1
 # ╠═c92826c1-61f0-44e6-b333-c60deae80f68
 # ╠═d7f3b4a4-99db-4a6d-a744-1b9e5a3f9360
 # ╠═f2fce8ac-7800-4153-b0fa-21168300984e
-# ╠═09c383f2-f209-418a-9a39-70f56b8bfe53
+# ╠═724dd2bd-3863-46fb-acaa-1b9b5768a73a
+# ╠═64df9eb5-e63c-45f1-a1af-5df300e05a0b
 # ╟─665deac0-1268-429c-8d75-d2bd0fdde0a3
 # ╠═6596f025-c158-4c87-bd2f-a5026b027d6d
 # ╠═26dd8486-fce6-457f-b435-6190fc6bb2bf
 # ╠═0a58b720-ea82-48e2-aa5c-ab0e9c530b41
 # ╟─fb7b8d5e-0a75-4139-a1fd-e8f5f3b7db98
 # ╠═00ffff53-e77e-46e3-be19-672cb1b87716
+# ╟─5ec44966-09ca-4e09-b087-38fc3adb2453
+# ╠═5c5a7195-6278-4ed8-9355-3617135fd210
+# ╠═f4d90ecb-5389-4f86-aa67-2a78a904d346
 # ╠═ee0e9437-428f-420c-8733-7b0a00a94670
 # ╠═c85e44f0-600a-4491-ba95-bf5b38d83578
-# ╠═6fda8490-fdab-43a1-84c7-217d7bcf12d2
-# ╠═5f07854d-0d4c-4de6-8d4a-4b319f372bc4
 # ╠═e96c765f-5f5f-41db-8191-1a0d444bcde2
 # ╠═8e4eb2c7-20d3-4aa0-8c09-34fdb8293a9c
-# ╠═298154d2-03b1-4062-a26e-c259ad979221
+# ╠═248c304c-de63-4523-b334-e201ed5f07f2
+# ╠═0462c099-18ee-415d-b06a-7bb8eafa360f
 # ╠═331ceecb-53e4-41f9-b8de-2aece6d1eea8
 # ╠═25319673-99ff-436d-bf5d-34c540f4faf1
-# ╠═752d42d4-bc56-4b0d-a457-c4dbf32b27f8
 # ╠═2a5009df-5e84-4b50-b819-c19333eb4a8b
-# ╠═a116db18-a4c5-4661-aa0b-5098114d201e
-# ╠═4abe4232-ca33-4d07-b20a-de2f0dc68591
+# ╠═3f880785-c0ef-447c-b5ee-db258fc9db16
+# ╠═6b847bf5-87df-4e87-8b1c-fb9da5da0d54
+# ╠═9510e0c5-c658-4358-871f-3c433a8f183d
+# ╠═907a813d-945d-40b2-9262-cc2975b8a436
 # ╠═2eded938-c85c-4bf4-95aa-8d8b02c6cbbb
-# ╠═23123586-648e-4187-829f-aba7f4114bd5
-# ╠═49bd7e05-aaa6-48ca-a6b8-0f5c22e6ae1a
+# ╠═fb1ad4f2-5b02-4080-bb0f-94a1bf918562
+# ╠═cd139cca-0b06-40da-b2b7-f49e3b3bcd52
 # ╟─9e4e4f8d-1d34-4c35-b814-b8d6708bf2ab
 # ╟─672fb2ff-5782-4411-85d0-ca83506372c8
 # ╟─00000000-0000-0000-0000-000000000001

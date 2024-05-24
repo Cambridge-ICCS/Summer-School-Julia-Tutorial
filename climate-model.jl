@@ -535,10 +535,28 @@ For constant ``M``, we want to verify that $\text{runtime} = \mathcal{O}(N_{x}^{
 
 """
 
+# ╔═╡ 126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
+function runtime(N)
+	G = Grid(N, 6000)
+	ocean_sim = let
+		model = OceanModel(G)
+		Δt = 12*60*60 * 8
+		T0 = InitBox(G, value=50)
+		ClimateModelSimulation(model, copy(T0), Δt)
+	end
+	return @elapsed timestep!(ocean_sim)
+end
+
 # ╔═╡ 923af680-2d0b-11eb-3f6a-db4bf29bb6a9
 md"""
 👉 Call your `runtime` function on a range of values for `N`, and use a plot to demonstrate that the predicted runtime complexity holds.
 """
+
+# ╔═╡ af02d23e-2e93-11eb-3547-85d2aa07081b
+let Ns = 10:2:70
+	t = [mean(runtime(N) for _ in 1:8) for N in Ns]
+	plot(Ns, t, legend=nothing)
+end
 
 # ╔═╡ a6811db2-2cdf-11eb-0aac-b1bf7b7d99eb
 md"""
@@ -686,21 +704,6 @@ md"""
 Below we define two new types: `RadiationOceanModel` and `RadiationOceanModelParameters`. Notice the similarities and differences with our original model. By making `RadiationOceanModel` also a subtype of `ClimateModel`, we will be able to re-use much of our original code.
 """
 
-# ╔═╡ 57535c60-2b49-11eb-07cc-ffc5b4d1f13c
-Base.@kwdef struct RadiationOceanModelParameters
-	κ::Float64=4.e4
-	
-	C::Float64=51.0 * 60*60*24*365.25 # converted from [W*year/m^2/K] to [J/m^2/K]
-	
-	A::Float64=210
-	B::Float64=-1.3
-	
-	S_mean::Float64 = 1380
-	α0::Float64=0.3
-	αi::Float64=0.55
-	ΔT::Float64=2.0
-end
-
 # ╔═╡ 90e1aa00-2b48-11eb-1a2d-8701a3069e50
 begin
 	struct RadiationOceanModel <: ClimateModel
@@ -718,6 +721,21 @@ begin
 	RadiationOceanModel(G::Grid) = 
 		RadiationOceanModel(G, RadiationOceanModelParameters(), zeros(G), zeros(G))
 end;
+
+# ╔═╡ 57535c60-2b49-11eb-07cc-ffc5b4d1f13c
+Base.@kwdef struct RadiationOceanModelParameters
+	κ::Float64=4.e4
+	
+	C::Float64=51.0 * 60*60*24*365.25 # converted from [W*year/m^2/K] to [J/m^2/K]
+	
+	A::Float64=210
+	B::Float64=-1.3
+	
+	S_mean::Float64 = 1380
+	α0::Float64=0.3
+	αi::Float64=0.55
+	ΔT::Float64=2.0
+end
 
 # ╔═╡ e5b95760-2d98-11eb-0ea3-8bfcf07031d6
 md"""
@@ -894,24 +912,6 @@ function timestep!(sim::ClimateModelSimulation{RadiationOceanModel})
 	sim.T .+= sim.Δt*tendencies
 	
 	sim.iteration += 1
-end
-
-# ╔═╡ 126bffce-2d0b-11eb-2bfd-bb5d1ad1169b
-function runtime(N)
-	G = Grid(N, 6000)
-	ocean_sim = let
-		model = OceanModel(G)
-		Δt = 12*60*60 * 8
-		T0 = InitBox(G, value=50)
-		ClimateModelSimulation(model, copy(T0), Δt)
-	end
-	return @elapsed timestep!(ocean_sim)
-end
-
-# ╔═╡ af02d23e-2e93-11eb-3547-85d2aa07081b
-let Ns = 10:2:70
-	t = [mean(runtime(N) for _ in 1:8) for N in Ns]
-	plot(Ns, t, legend=nothing)
 end
 
 # ╔═╡ ad95c4e0-2b4a-11eb-3584-dda89970ffdf
