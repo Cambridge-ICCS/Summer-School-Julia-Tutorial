@@ -59,43 +59,6 @@ begin
 	println(sum_numbers(fruits), " fruits in total!")
 end
 
-# ╔═╡ 004aab75-ad77-4ea0-a335-71476f31ed94
-# begin
-# 	function decode_chars(s::String)
-# 		foldl((n, a) -> UInt8(a) + (n << 8), s, init=0)
-# 	end
-
-# 	function encode_integer(n::Integer)
-# 		s = Char[]
-# 		mask = 1 << 8 - 1
-# 		while n > 0
-# 			push!(s, n & mask)
-# 			n >>= 8
-# 		end
-# 		reverse(join(s))
-# 	end
-# end
-
-# ╔═╡ 132467b1-315f-40e1-b6fb-a56537d54f27
-# begin
-# 	# Task 2: Knapsack
-# 	function knapsack(items::Vector{Pair{Int64, Int64}}, max_weight::Int64) :: Int64
-# 		# your code here
-# 		if length(items) == 0
-# 			return 0
-# 		else
-# 			totval = knapsack(items[2:end], max_weight)  # exclude 1st item
-# 			weight, value = first(items)
-# 			if weight <= max_weight
-# 				totval2 = value + knapsack(items[2:end], max_weight-weight)
-# 				totval = max(totval, totval2)
-# 			end
-# 			return totval
-# 		end
-# 	end
-# 	knapsack([3 => 4, 2 => 5, 4 => 8, 1 => 3, 3 => 2], 10)
-# end
-
 # ╔═╡ b700e215-3ba4-45e7-bea2-89f6f7ff73f7
 # Task: implement multi-threaded version
 
@@ -166,9 +129,6 @@ function fastfib(n)
     return z
 end
 
-# ╔═╡ ee0e9437-428f-420c-8733-7b0a00a94670
-# Task: solve the integer partition problem with @memoize
-
 # ╔═╡ c85e44f0-600a-4491-ba95-bf5b38d83578
 begin
 	"""`D` dimensional `F` (real/complex) vector space of vector type `T`."""
@@ -197,14 +157,9 @@ begin
 		function EuclideanSpace{D,F}(basis=I) where {D,F}
 			new{D,F}(SMatrix{D,D,F}(basis))
 		end
-		
-		# function EuclideanSpace(s::InnerProdSpace{T,D,F}) where {T,D,F}
-		# 	new{D,F}([u ⋅ v for u in basis(s), v in basis(s)])
-		# end
 	end
 
 	basis(s::EuclideanSpace) = eachcol(s.basis)
-	basis(s::EuclideanSpace, i::Integer) = s.basis[:, i]
 
 	function space_type(x::AbstractArray{T,N}) where {T<:Number,N}
 		EuclideanSpace{size(x, 1), T <: Real ? Float64 : ComplexF64}
@@ -491,7 +446,7 @@ end
 
 # ╔═╡ a29da296-cbde-4004-8022-ef5888509b38
 let m = [i + j*im for i in 1:3, j in 1:3]
-	m, m'  # adjoint
+	m, m', transpose(m)
 end
 
 # ╔═╡ 672ee9e6-1928-4eab-b2d9-b34179cf99fc
@@ -605,9 +560,6 @@ size(A), size(A, 1)
 let B = @show similar(A)
 	fill!(B, 3)
 end
-
-# ╔═╡ 9c1c8163-71ba-4261-bda2-d39ff729606c
-transpose(A)
 
 # ╔═╡ bc704cc3-c5eb-4119-8ed8-85b596fcaa8e
 [A[:, 3:4]; A[[1,3], 1:2:end]]  # concat vertically
@@ -3784,8 +3736,6 @@ version = "1.4.1+1"
 # ╠═64ee1549-b481-49a1-88d6-1961b9b82a91
 # ╟─3aaa3e84-9cec-4797-bc1d-4d7c456bb8b3
 # ╠═a4e6194b-5cfd-4968-8d22-6d7ed4e15523
-# ╠═004aab75-ad77-4ea0-a335-71476f31ed94
-# ╠═132467b1-315f-40e1-b6fb-a56537d54f27
 # ╟─55d77b19-e600-4ce8-9dc1-8d2458c99da2
 # ╠═db5d41fc-ea93-4abc-9efa-b232ef7f37e2
 # ╠═9a379335-9430-4fa2-9b84-15e192ace090
@@ -3811,7 +3761,6 @@ version = "1.4.1+1"
 # ╠═d7bdb281-a363-476a-893b-4b7392f5c993
 # ╠═95803efa-1141-42dd-8bcb-3778841d423f
 # ╠═2b7e66ad-731d-4074-867a-66c54fabfd71
-# ╠═9c1c8163-71ba-4261-bda2-d39ff729606c
 # ╠═bc704cc3-c5eb-4119-8ed8-85b596fcaa8e
 # ╠═539c0dbe-9ec3-4ea4-80e7-7ee7fd9324d6
 # ╠═6d424f75-c63f-4f08-bee9-31b57756690c
@@ -3865,7 +3814,6 @@ version = "1.4.1+1"
 # ╟─5ec44966-09ca-4e09-b087-38fc3adb2453
 # ╠═5c5a7195-6278-4ed8-9355-3617135fd210
 # ╠═f4d90ecb-5389-4f86-aa67-2a78a904d346
-# ╠═ee0e9437-428f-420c-8733-7b0a00a94670
 # ╠═c85e44f0-600a-4491-ba95-bf5b38d83578
 # ╠═e96c765f-5f5f-41db-8191-1a0d444bcde2
 # ╠═8e4eb2c7-20d3-4aa0-8c09-34fdb8293a9c
