@@ -1,6 +1,6 @@
 # Summer-School-Julia-Tutorial
 
-## Install Julia
+## Download Julia
 
 If you have not done so, download Julia from https://julialang.org/downloads/. 
 
