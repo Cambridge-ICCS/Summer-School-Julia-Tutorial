@@ -30,7 +30,7 @@ end
 md"## Types and Fields"
 
 # ╔═╡ b9ddc629-f680-4a71-8374-f3b01bb53890
-typeof(z)
+typeof(z)  # type alias
 
 # ╔═╡ bcacdf8c-695f-4590-b7d8-29d28086bd46
 fieldtypes(typeof(z)), z.re, getfield(z, :im)
@@ -98,6 +98,9 @@ begin
 	using LinearAlgebra
 	rank(M), tr(M), det(M), diag(M)
 end
+
+# ╔═╡ 1a2adde2-cb88-4877-8beb-edf9996b9d7e
+M isa Array{<:Number, 2}
 
 # ╔═╡ e3201408-e6b6-49be-b693-65d55b20be5f
 M', transpose(M)
@@ -351,6 +354,7 @@ version = "5.8.0+1"
 # ╠═9cb3f794-5696-4c9d-adf1-5d1f31ae8c00
 # ╠═17eeffee-701d-4251-aca7-308e456487da
 # ╠═5af22ae0-effd-4589-bd1f-d375299b6848
+# ╠═1a2adde2-cb88-4877-8beb-edf9996b9d7e
 # ╠═e3201408-e6b6-49be-b693-65d55b20be5f
 # ╠═83d0d182-c876-4aa2-a6f3-dfa92477bdcd
 # ╠═0db34f03-95ea-4ed8-b652-abd8b3b200b8

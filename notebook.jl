@@ -1065,9 +1065,6 @@ md"""The reason why the predicted temperature is lower than the observation is p
 # 	end
 # end
 
-# ╔═╡ 37008e44-c0fc-42e9-851a-c4e4a3a522d5
-
-
 # ╔═╡ 9e4e4f8d-1d34-4c35-b814-b8d6708bf2ab
 macro show_all(block)
 	if block.head == Symbol("let")
@@ -4488,7 +4485,6 @@ version = "1.4.1+1"
 # ╠═ae59ec71-6362-4dd9-bfc7-74fb8c52f777
 # ╟─d28ba6a0-e1b1-43ca-8744-976da374c98d
 # ╠═6f9c7c9c-5992-49bb-8090-98a03203414a
-# ╠═37008e44-c0fc-42e9-851a-c4e4a3a522d5
 # ╠═9e4e4f8d-1d34-4c35-b814-b8d6708bf2ab
 # ╟─672fb2ff-5782-4411-85d0-ca83506372c8
 # ╟─00000000-0000-0000-0000-000000000001
