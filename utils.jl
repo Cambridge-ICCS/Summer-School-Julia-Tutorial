@@ -1,9 +1,7 @@
 module Utilities
 
 using Markdown
-export nfold, almost, still_missing, keep_working, correct
-
-nfold(f, n) = foldr(∘, fill(f, n))
+export almost, still_missing, keep_working, correct
 
 almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
 still_missing(text=md"Replace `missing` with your answer.") = Markdown.MD(Markdown.Admonition("warning", "Here we go!", [text]))

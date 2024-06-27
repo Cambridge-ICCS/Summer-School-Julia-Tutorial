@@ -4,201 +4,116 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 47789e98-5de0-413f-8677-29918719278a
+# ╔═╡ 760ece48-33d1-11ef-027f-af04e58c6287
+abstract type Distribution end
+
+# ╔═╡ 9f03a1fa-b4aa-4b2a-b3eb-b09d86ecf308
 begin
-	using Statistics, Random
-	include("utils.jl")
+	abstract type AbstractNormal <: Distribution end
+	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √2π)
 end
 
-# ╔═╡ d685eff6-ab91-4bee-bf7a-957b2ae644f0
+# ╔═╡ 144ea4e0-e139-47b2-809a-01d5eeb428b1
+struct Normal <: AbstractNormal
+	μ :: Float64
+	σ :: Float64
+end
+
+# ╔═╡ c9e57755-df80-453e-b696-2fd87f1a41fa
+p = Normal(0, 1)
+
+# ╔═╡ 73bfe46e-d89b-4301-914c-98bdda018275
+p(1)
+
+# ╔═╡ a2f21f96-36c4-458e-94f2-6a2c88e0f14e
+@code_warntype p(1)
+
+# ╔═╡ f0b36411-d7c1-4e99-970e-0c9fbe3bd9e7
+@code_llvm p(1)
+
+# ╔═╡ dcafedbe-a201-416c-bf63-ee820ce76c27
+@kwdef struct NormalTypeUnstable <: AbstractNormal
+	μ = 0.0  # @kwdef allows setting default values of the struct fields
+	σ = 1.0
+end
+
+# ╔═╡ d37fa6af-048a-4cf1-b93f-e11adeec40df
+fieldtypes(NormalTypeUnstable)
+
+# ╔═╡ 211f61de-44f2-4e5a-9787-97e454cd7069
+q = NormalTypeUnstable()
+
+# ╔═╡ cf0727b8-8687-49f7-94e2-f073276c30b5
+@code_warntype q(1)
+
+# ╔═╡ 6508d750-9dd9-4846-b620-54b369bf73d1
+@code_llvm q(1)
+
+# ╔═╡ b094d7d8-092a-4fcc-9883-54ec4105c881
+methodswith(Normal)
+
+# ╔═╡ cca1f95b-27b1-4743-836b-78ee84eaf48b
+struct DistributionMixture{K} <: Distribution
+	ps :: Vector{Distribution}
+	DistributionMixture(ps...) = new{length(ps)}(collect(ps))
+	(p::DistributionMixture{K})(x) where {K} = sum(q(x) for q in p.ps) / K
+end
+
+# ╔═╡ 9c94e3be-82ec-4837-8472-ad12bccb3b92
 begin
-	using ForwardDiff  # automatically finds the derivative of a function
+	Base.rand(P::DistributionMixture, dims::Integer...) = 
+		[rand(p) for p in rand(P.ps, dims...)]
+	Base.:+(p1::Distribution, p2::Distribution) = DistributionMixture(p1, p2)
+	# operator overloading
+end
+
+# ╔═╡ 17433dd4-70bc-464e-84c0-fc77c3833edb
+begin
+	using Statistics
+	Base.rand(P::Normal, dims::Integer...) = randn(dims...) .* P.σ .+ P.μ
+	Statistics.mean(P::Normal) = P.μ
+	Statistics.var(P::Normal) = P.σ ^ 2
+	Statistics.std(P::Distribution) = sqrt(var(P))
+end
+
+# ╔═╡ 74b69b3b-2572-4849-86ed-b2bd4c09236c
+begin
 	using Plots
-end
-
-# ╔═╡ c6b3bebe-32da-11ef-09ae-ad02d9296cab
-md"""### Estimate π using Monte Carlo
-![image](https://i.ytimg.com/vi/HUBNQicYDkU/maxresdefault.jpg)
-"""
-
-# ╔═╡ 2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
-pi_err(x) = (value=x, error=abs(x-π))
-
-# ╔═╡ 664e8ba5-6dd8-44af-a8e1-1df6f80510a2
-begin
-	using KernelAbstractions
-	# using CUDA: CuArray
-
-	@kernel function estimate_pi_kernel(a, n)
-		i = @index(Global)
-		k = prod(@groupsize())
-		@inbounds a[i] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+i:k:n)
-	end
-
-	@time let N = 300_000_000, K = 64
-		A = ones(K)
-		# A = CuArray(ones(K))
-		device = @show get_backend(A)  # CPU / GPU
-		run! = estimate_pi_kernel(device, K)
-		run!(A, N, ndrange=size(A))
-		synchronize(device)
-		2 * prod(A)
-	end |> pi_err
-end
-
-# ╔═╡ efe11271-fe46-4399-ad6b-089b5b5ceec3
-function estimate_pi_mc(n=600_000_000)
-	rng = MersenneTwister(0)
-	mean(1:n) do _
-		rand(rng)^2 + rand(rng)^2 < 1
-	end * 4
-end
-
-# ╔═╡ 447bdcf9-260f-4cba-977b-6a97b2280d35
-@time pi_err(estimate_pi_mc())
-
-# ╔═╡ ec0cd66a-eed0-4ac5-a2ab-d021ba003ebd
-let task = Threads.@spawn estimate_pi_mc()
-	@time fetch(@show task)
-end
-
-# ╔═╡ b4c16d52-45d6-421f-aefe-e9680977a176
-@time let N = 600_000_000, k = @show Threads.nthreads()
-	mean(fetch.(Threads.@spawn estimate_pi_mc(N÷k) for _ in 1:k)) |> pi_err
-end
-
-# ╔═╡ 5ffdecbf-9a8b-49e5-adbb-90f932075076
-md"""### Estimate π using the Wallis product
-
-In 1655, John Wallis published what is now known as [Wallis product](https://en.wikipedia.org/wiki/Wallis_product), an infinite product:
-
-$$π = \frac{2\cdot2\cdot4\cdot4\cdot6\cdot6\ldots}
-		   {1\cdot3\cdot3\cdot5\cdot5\cdot7\ldots}$$
-"""
-
-# ╔═╡ 71f9f677-9721-4626-b8d6-eae70e25c2d5
-function estimate_pi_wallis(N=300_000_000)
-	# generator (laze evaluation)
-	fracs = ((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 2:N)
-	# fracs = [(i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 2:N]
-	2prod(fracs)
-end
-
-# ╔═╡ ed0e646e-f8c6-4cb3-95e3-e1d39fa0b4c9
-@time estimate_pi_wallis() |> pi_err
-
-# ╔═╡ 4b0fd4e7-fa60-4115-9548-02f88f3b7a82
-md"""
-!!! danger "Task"
-	Implement a multithreaded version of `estimate_pi_prod`
-"""
-
-# ╔═╡ 60ef1f4b-89ab-42ec-973f-1025d0161b96
-function estimate_pi_wallis_multithreaded(N=300_000_000)
-	missing # replace `missing` with your solution here
-	# sample solution:
-	# f(i) = (i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1)
-	# k = Threads.nthreads()
-	# p(r, k=k) = prod(f(i) for i in r:k:N)
-	# 2prod(fetch.(Threads.@spawn p(r) for r in 2:k+1))
-end
-
-# ╔═╡ 658c4cca-a5c6-4c5d-80fb-f939728c1992
-let
-	t0 = time()
-	result = @time estimate_pi_wallis_multithreaded()
-	dt = time() - t0
-	if ismissing(result)
-		still_missing()
-	elseif dt > 0.6
-		keep_working(md"Try reducing the time cost by distributing the computation on more threads.")
-	elseif abs(result - π) < 1e-8
-		correct()
-	else
-		keep_working()
+	p1 = Normal(0, 1)
+	p2 = Normal(-4.0, 0.7)
+	@show mean(p1) var(p1) mean(p2) var(p2)
+	xs = vcat(rand(p1, 2000), rand(p2, 2000))
+	@show xm = mean(xs)
+	@show mean((xs .- xm) .^ 2)
+	histogram(xs, label=false, normalize=true, nbin=80)
+	let x = range(-10, 10, 1000)
+		plot!(x, p1.(x), label="N$((p1.μ, p1.σ))")
+		plot!(x, p2.(x), label="N$((p2.μ, p2.σ))")
 	end
 end
 
-# ╔═╡ 9aeec0a9-9742-41e8-8c64-61744a86f653
-md"**Applying the `@Threads.threads` macro to a `for` loop:**"
-
-# ╔═╡ 44d506a5-9b65-48c1-bbfb-5a1977abcde1
-let N = 300_000_000, K = 240
-	times = [Float64[] for _ in 1:Threads.nthreads()]
-	pi = @time let
-		A = ones(K)
-		@Threads.threads for k in 1:K
-			t0 = time()
-			@inbounds A[k] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+k:K:N)
-			push!(times[Threads.threadid()], time() - t0)
-		end
-		2prod(A)
+# ╔═╡ 7ed08fbf-2857-4b82-90e1-883cf86daaa2
+let p = p1 + p2
+	xs = rand(p, 4000)
+	@show xm = mean(xs)
+	@show mean((xs .- xm) .^ 2)
+	histogram(xs, label=false, normalize=true, nbin=80)
+	let x = range(-10, 10, 1000)
+		plot!(x, p1.(x), label="N$((p1.μ, p1.σ))")
+		plot!(x, p2.(x), label="N$((p2.μ, p2.σ))")
 	end
-	println(pi_err(pi))
-	[f(ts) for ts in times, f in [length, mean]]
 end
 
-# ╔═╡ 0c6a623d-ec6b-4234-8cf1-873e14158eb4
-md"**Writing a CPU/GPU kernel for parallel computing:**"
+# ╔═╡ 9763e13b-c3c7-4af0-b1e4-c11ee792ab1a
 
-# ╔═╡ c8bf3d51-570d-4668-a4b1-bfa6e8e475fe
-md"""### Estimate π using Newton's method
-
-Idea: ``\pi`` is a root of ``sin(x)``.
-"""
-
-# ╔═╡ 15603d34-3728-42ce-bac7-1608ef34ba3c
-begin
-	Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, x)
-	sin'(0), cos'(π/2)
-end
-
-# ╔═╡ 4b626ee4-44fb-4488-b630-888601587a54
-function newton_method(f, x; max_iter=1000, tol=1e-12, buf=nothing)
-	for i in 1:max_iter
-		dx = f(x) / f'(x)
-		x -= dx
-		if buf != nothing
-			push!(buf, x)
-		end
-		if abs(dx) < tol
-			@info "converged after $i iterations"
-			return x
-		end
-	end
-	@warn "root not found after $max_iter iterations"
-end
-
-# ╔═╡ b6969c0f-c337-44a2-b458-10f916201484
-@time newton_method(sin, 2.0) |> pi_err
-
-# ╔═╡ fae4b543-03ac-4f27-bff6-07574fae5733
-let f = sin, x = range(-1, 5, 1000)
-	y = f.(x)
-	x0 = 2
-	xs = []
-	newton_method(f, x0, max_iter=30, buf=xs)
-	@gif for x1 in xs
-		plot(x, y, label="$f(x)", title="Newton's method")
-		plot!([x0, x1], [f(x0), 0], label="tagent line", markershape=:circle)
-		plot!([x1, x1], [0, f(x1)], label=nothing, linestyle=:dash)
-		annotate!(x0, f(x0), ("x = $(Float16(x0))", 8, :top))
-		x0 = x1
-	end fps=2
-end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
-KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-ForwardDiff = "~0.10.36"
-KernelAbstractions = "~0.9.20"
 Plots = "~1.40.4"
 """
 
@@ -208,17 +123,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "b5b1c0de84e3555716139fab6955a818a4e481a9"
-
-[[deps.Adapt]]
-deps = ["LinearAlgebra", "Requires"]
-git-tree-sha1 = "6a55b747d1812e699320963ffde36f1ebdda4099"
-uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "4.0.4"
-weakdeps = ["StaticArrays"]
-
-    [deps.Adapt.extensions]
-    AdaptStaticArraysExt = "StaticArrays"
+project_hash = "cdd468ca9386988ea017ed4b4018b3e25b3ec9bf"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -226,12 +131,6 @@ version = "1.1.1"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
-
-[[deps.Atomix]]
-deps = ["UnsafeAtomics"]
-git-tree-sha1 = "c06a868224ecba914baa6942988e2f2aade419be"
-uuid = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
-version = "0.1.0"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -246,11 +145,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "9e2a6b69137e6969bab0152632dcb3bc108c8bdd"
 uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.8+1"
-
-[[deps.CEnum]]
-git-tree-sha1 = "389ad5c84de1ae7cf0e28e381131c98ea87d54fc"
-uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
-version = "0.5.0"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -281,22 +175,18 @@ deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "Requires", "Statist
 git-tree-sha1 = "a1f44953f2382ebb937d60dafbe2deea4bd23249"
 uuid = "c3611d14-8923-5661-9e6a-0046d554d3a4"
 version = "0.10.0"
-weakdeps = ["SpecialFunctions"]
 
     [deps.ColorVectorSpace.extensions]
     SpecialFunctionsExt = "SpecialFunctions"
+
+    [deps.ColorVectorSpace.weakdeps]
+    SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [[deps.Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
 git-tree-sha1 = "362a287c3aa50601b0bc359053d5c2468f0e7ce0"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.11"
-
-[[deps.CommonSubexpressions]]
-deps = ["MacroTools", "Test"]
-git-tree-sha1 = "7b8a93dba8af7e3b42fecabf646260105ac373f7"
-uuid = "bbf7d656-a473-5ed7-a52c-81e309532950"
-version = "0.3.0"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
@@ -344,18 +234,6 @@ deps = ["Mmap"]
 git-tree-sha1 = "9e2f36d3c96a820c678f2f1f1782582fcf685bae"
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 version = "1.9.1"
-
-[[deps.DiffResults]]
-deps = ["StaticArraysCore"]
-git-tree-sha1 = "782dd5f4561f5d267313f23853baaaa4c52ea621"
-uuid = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
-version = "1.1.0"
-
-[[deps.DiffRules]]
-deps = ["IrrationalConstants", "LogExpFunctions", "NaNMath", "Random", "SpecialFunctions"]
-git-tree-sha1 = "23163d55f885173722d1e4cf0f6110cdbaf7e272"
-uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
-version = "1.15.1"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -417,16 +295,6 @@ version = "2.13.96+0"
 git-tree-sha1 = "9c68794ef81b08086aeb32eeaf33531668d5f5fc"
 uuid = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
 version = "1.3.7"
-
-[[deps.ForwardDiff]]
-deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
-git-tree-sha1 = "cf0fe81336da9fb90944683b8c41984b08793dad"
-uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "0.10.36"
-weakdeps = ["StaticArrays"]
-
-    [deps.ForwardDiff.extensions]
-    ForwardDiffStaticArraysExt = "StaticArrays"
 
 [[deps.FreeType2_jll]]
 deps = ["Artifacts", "Bzip2_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
@@ -526,18 +394,6 @@ git-tree-sha1 = "c84a835e1a09b289ffcd2271bf2a337bbdda6637"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
 version = "3.0.3+0"
 
-[[deps.KernelAbstractions]]
-deps = ["Adapt", "Atomix", "InteractiveUtils", "LinearAlgebra", "MacroTools", "PrecompileTools", "Requires", "SparseArrays", "StaticArrays", "UUIDs", "UnsafeAtomics", "UnsafeAtomicsLLVM"]
-git-tree-sha1 = "8e5a339882cc401688d79b811d923a38ba77d50a"
-uuid = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
-version = "0.9.20"
-
-    [deps.KernelAbstractions.extensions]
-    EnzymeExt = "EnzymeCore"
-
-    [deps.KernelAbstractions.weakdeps]
-    EnzymeCore = "f151be2c-9106-41f4-ab19-57ee4f262869"
-
 [[deps.LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "170b660facf5df5de098d866564877e119141cbd"
@@ -549,24 +405,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "bf36f528eec6634efc60d7ec062008f171071434"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
 version = "3.0.0+1"
-
-[[deps.LLVM]]
-deps = ["CEnum", "LLVMExtra_jll", "Libdl", "Preferences", "Printf", "Requires", "Unicode"]
-git-tree-sha1 = "389aea28d882a40b5e1747069af71bdbd47a1cae"
-uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
-version = "7.2.1"
-
-    [deps.LLVM.extensions]
-    BFloat16sExt = "BFloat16s"
-
-    [deps.LLVM.weakdeps]
-    BFloat16s = "ab4f0b2a-ad5b-11e8-123f-65d77653426b"
-
-[[deps.LLVMExtra_jll]]
-deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "88b916503aac4fb7f701bb625cd84ca5dd1677bc"
-uuid = "dad2f222-ce93-54a1-a47d-0025e8a3acab"
-version = "0.0.29+0"
 
 [[deps.LLVMOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -598,10 +436,6 @@ version = "0.16.3"
     [deps.Latexify.weakdeps]
     DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
     SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
-
-[[deps.LazyArtifacts]]
-deps = ["Artifacts", "Pkg"]
-uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -784,12 +618,6 @@ git-tree-sha1 = "a028ee3cb5641cccc4c24e90c36b0a4f7707bdf5"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
 version = "3.0.14+0"
 
-[[deps.OpenSpecFun_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "13652491f6856acfd2db29360e1bbcd4565d04f1"
-uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
-version = "0.5.5+0"
-
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "51a08fb14ec28da2ec7a927c4337e4332c2a4720"
@@ -957,37 +785,6 @@ deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 version = "1.10.0"
 
-[[deps.SpecialFunctions]]
-deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "2f5d4697f21388cbe1ff299430dd169ef97d7e14"
-uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.4.0"
-
-    [deps.SpecialFunctions.extensions]
-    SpecialFunctionsChainRulesCoreExt = "ChainRulesCore"
-
-    [deps.SpecialFunctions.weakdeps]
-    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-
-[[deps.StaticArrays]]
-deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "6e00379a24597be4ae1ee6b2d882e15392040132"
-uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.5"
-
-    [deps.StaticArrays.extensions]
-    StaticArraysChainRulesCoreExt = "ChainRulesCore"
-    StaticArraysStatisticsExt = "Statistics"
-
-    [deps.StaticArrays.weakdeps]
-    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-    Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-
-[[deps.StaticArraysCore]]
-git-tree-sha1 = "192954ef1208c7019899fbf8049e717f92959682"
-uuid = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
-version = "1.4.3"
-
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -1076,17 +873,6 @@ deps = ["LaTeXStrings", "Latexify", "Unitful"]
 git-tree-sha1 = "e2d817cc500e960fdbafcf988ac8436ba3208bfd"
 uuid = "45397f5d-5981-4c77-b2b3-fc36d6e9b728"
 version = "1.6.3"
-
-[[deps.UnsafeAtomics]]
-git-tree-sha1 = "6331ac3440856ea1988316b46045303bef658278"
-uuid = "013be700-e6cd-48c3-b4a1-df204f14c38f"
-version = "0.2.1"
-
-[[deps.UnsafeAtomicsLLVM]]
-deps = ["LLVM", "UnsafeAtomics"]
-git-tree-sha1 = "d9f5962fecd5ccece07db1ff006fb0b5271bdfdd"
-uuid = "d80eeb9a-aca5-4d75-85e5-170c8b632249"
-version = "0.1.4"
 
 [[deps.Unzip]]
 git-tree-sha1 = "ca0969166a028236229f63514992fc073799bb78"
@@ -1385,28 +1171,24 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
-# ╟─c6b3bebe-32da-11ef-09ae-ad02d9296cab
-# ╠═47789e98-5de0-413f-8677-29918719278a
-# ╠═2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
-# ╠═efe11271-fe46-4399-ad6b-089b5b5ceec3
-# ╠═447bdcf9-260f-4cba-977b-6a97b2280d35
-# ╠═ec0cd66a-eed0-4ac5-a2ab-d021ba003ebd
-# ╠═b4c16d52-45d6-421f-aefe-e9680977a176
-# ╟─5ffdecbf-9a8b-49e5-adbb-90f932075076
-# ╠═71f9f677-9721-4626-b8d6-eae70e25c2d5
-# ╠═ed0e646e-f8c6-4cb3-95e3-e1d39fa0b4c9
-# ╟─4b0fd4e7-fa60-4115-9548-02f88f3b7a82
-# ╠═60ef1f4b-89ab-42ec-973f-1025d0161b96
-# ╟─658c4cca-a5c6-4c5d-80fb-f939728c1992
-# ╟─9aeec0a9-9742-41e8-8c64-61744a86f653
-# ╠═44d506a5-9b65-48c1-bbfb-5a1977abcde1
-# ╟─0c6a623d-ec6b-4234-8cf1-873e14158eb4
-# ╠═664e8ba5-6dd8-44af-a8e1-1df6f80510a2
-# ╟─c8bf3d51-570d-4668-a4b1-bfa6e8e475fe
-# ╠═d685eff6-ab91-4bee-bf7a-957b2ae644f0
-# ╠═15603d34-3728-42ce-bac7-1608ef34ba3c
-# ╠═4b626ee4-44fb-4488-b630-888601587a54
-# ╠═b6969c0f-c337-44a2-b458-10f916201484
-# ╠═fae4b543-03ac-4f27-bff6-07574fae5733
+# ╠═760ece48-33d1-11ef-027f-af04e58c6287
+# ╠═9f03a1fa-b4aa-4b2a-b3eb-b09d86ecf308
+# ╠═144ea4e0-e139-47b2-809a-01d5eeb428b1
+# ╠═c9e57755-df80-453e-b696-2fd87f1a41fa
+# ╠═73bfe46e-d89b-4301-914c-98bdda018275
+# ╠═a2f21f96-36c4-458e-94f2-6a2c88e0f14e
+# ╠═f0b36411-d7c1-4e99-970e-0c9fbe3bd9e7
+# ╠═dcafedbe-a201-416c-bf63-ee820ce76c27
+# ╠═211f61de-44f2-4e5a-9787-97e454cd7069
+# ╠═d37fa6af-048a-4cf1-b93f-e11adeec40df
+# ╠═cf0727b8-8687-49f7-94e2-f073276c30b5
+# ╠═6508d750-9dd9-4846-b620-54b369bf73d1
+# ╠═17433dd4-70bc-464e-84c0-fc77c3833edb
+# ╠═b094d7d8-092a-4fcc-9883-54ec4105c881
+# ╠═74b69b3b-2572-4849-86ed-b2bd4c09236c
+# ╠═cca1f95b-27b1-4743-836b-78ee84eaf48b
+# ╠═9c94e3be-82ec-4837-8472-ad12bccb3b92
+# ╠═7ed08fbf-2857-4b82-90e1-883cf86daaa2
+# ╠═9763e13b-c3c7-4af0-b1e4-c11ee792ab1a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
