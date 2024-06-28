@@ -37,11 +37,11 @@ p(1)
 	σ = 1.0
 end
 
-# ╔═╡ d37fa6af-048a-4cf1-b93f-e11adeec40df
-fieldtypes(NormalTypeUnstable)
-
 # ╔═╡ 211f61de-44f2-4e5a-9787-97e454cd7069
 q = NormalTypeUnstable()
+
+# ╔═╡ d37fa6af-048a-4cf1-b93f-e11adeec40df
+fieldtypes(NormalTypeUnstable)
 
 # ╔═╡ cf0727b8-8687-49f7-94e2-f073276c30b5
 @code_warntype q(1)

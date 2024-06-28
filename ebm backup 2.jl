@@ -40,12 +40,12 @@ end
 # ╔═╡ 8264a6cf-803c-4f37-b516-b82be1000a38
 # Task 1: fit a polynomial to the Keeling curve
 begin
-	CO2_PreIndust = 280
-	time_features(t) = let x = t .- 1850; @. [x x^2 x^3] end
-	CO2(t) = time_features(t) * CO2_params .+ CO2_PreIndust
+	CO2(t) = features(t .- 1850) * CO2_params
+	features(t) = hcat(ones(length(t)), t.^3)
 	CO2_params = let
-		X = time_features(CO2_historical_data[:, "Year"])
-		y = CO2_historical_data[:, "CO2"] .- CO2_PreIndust
+		t = CO2_historical_data[:, "Year"] .- 1850
+		y = CO2_historical_data[:, "CO2"]
+		X = features(t)
 		p = X \ y  # least squares
 	end
 end
@@ -61,51 +61,33 @@ begin
 	title!("CO₂ observations and fit")
 end
 
-# ╔═╡ e39a69fe-0c82-482d-9a69-a5b028610c62
-md"Reference: [https://florianboergel.github.io/climateoftheocean/2020-11-11-energy-model.html](https://florianboergel.github.io/climateoftheocean/2020-11-11-energy-model.html)"
-
 # ╔═╡ c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
 begin
-	@parameters t α a S T_0 A B C
-	@variables T(t) R(t)
+	@parameters t α a S β γ C
+	@variables Y(t) RC(t)
 
 	absorbed_solar_radiation = (1 - α) * S / 4
-	outgoing_thermal_radiation = A - B * T
-	greenhouse_effect = a * log(R)
+	outgoing_thermal_radiation = β - γ * Y
+	greenhouse_effect = a * log(RC)
 
 	D = Differential(t)
 	eqs = [
-		C * D(T) ~ 
+		C * D(Y) ~ 
 			absorbed_solar_radiation - 
 			outgoing_thermal_radiation + 
 			greenhouse_effect,
-		R ~ CO2(t) / CO2(1850)
+		RC ~ CO2(t+1850) / CO2(1850)
+		# RC ~ 1 + (t/220)^3
 	]
 end
 
 # ╔═╡ 70db5d4d-e346-476a-8bba-50070260abe5
 @mtkbuild sys = ODESystem(eqs, t)
 
-# ╔═╡ 4084d556-5673-444f-bb9f-e77a502799d5
-begin
-	T0 = 14.0
-	ini = [T => T0]  # initial condition
-	ps = [  # parameters
-		a => 5.,  # CO2 forcing coefficient [W/m^2]
-		α => 0.3,  # albedo
-		C => 51.,  # atmosphere and upper-ocean heat capacity
-		S => 1368.,  # solar insolation
-		A => absorbed_solar_radiation + B * T0,
-		B => -1.3,  # climate feedback parameter [W/m^2/°C]
-	]
-	tspan = (1850, 2024)
-	prob = ODEProblem(sys, ini, tspan, ps)
-end
-
 # ╔═╡ 29f5d3a1-b805-4c90-b602-0d2de83d0152
 begin
-	temps = vcat(solve(prob).(1880:2030)...)
-	plot(1880:2030, temps, lw=2, legend=:topleft,
+	temps = vcat(solve(prob).(30:175)...)
+	plot(1880:2025, temps, lw=2, legend=:topleft,
 		 label="Predicted Temperature from model")
 	xlabel!("year")
 	ylabel!("Temp °C")
@@ -127,69 +109,66 @@ plot!(T_df[:, :year], T_df[:, :temp],
 	  color=:black, label="NASA Observations", legend=:topleft)
 
 # ╔═╡ a2bd2e6c-4908-472a-9cd7-b7bf22c313e2
-md"""The reason why the predicted temperature is lower than the observation is probably that we have not taken into account other greenhouse gases and feedback factors such as sea-ice albedo and water vapour."""
+md"""The reason why the predicted temperature is lower than the observation is probably that we have not taken into account other greenhouse gases and feedback factors such as water vapour."""
 
-# ╔═╡ 68b04370-7d3e-4b6a-a07a-e11b90ce440e
+# ╔═╡ 4084d556-5673-444f-bb9f-e77a502799d5
 begin
-	@variables NN(t)
-	dT_expr = substitute(substitute(sys, ps).eqs[1].rhs, [ps; log(R) => NN])
-	dT_expr = simplify(dT_expr, expand=true)
+	ini = [Y => 14.0]  # initial condition
+	ps = [  # parameters
+		a => 5.0, 
+		α => 0.3, 
+		C => 51, 
+		S => 1368, 
+		β => 221.2, 
+		γ => -1.3,
+	]
+	tspan = (0, 2024-1850)
+	prob = ODEProblem(sys, ini, tspan, ps)
 end
 
 # ╔═╡ 981f864e-da3f-4f27-996b-3172ae0fe76f
 begin
-	using Flux, SciMLSensitivity
+	using Flux
 
-	function dTdt(dT_t, T_t, p, t)
-		nn = reconstruct(p)
-		x = (t - 1850) / 200
-		y = T_t[1]
-		c0, c1 = nn([x, x^2, x^3])  # ODE parameters estimated by the NN
-		dT_t[1] = substitute(dT_expr, Dict(T => y, NN => c0 + c1 * y))
+	u0 = Float32[0.8; 0.8]
+	tspan = (0.0f0,25.0f0)
+	
+	ann = Chain(Dense(2,10,tanh), Dense(10,1))
+	
+	p1,re = Flux.destructure(ann)
+	p2 = Float32[-2.0,1.1]
+	p3 = [p1;p2]
+	ps = Flux.params(p3)
+	
+	function dudt_(du,u,p,t)
+	    x, y = u
+	    du[1] = re(p[1:41])(u)[1]
+	    du[2] = p[end-1]*y + p[end]*x
 	end
+	prob = ODEProblem(dudt_,u0,tspan,p3)
+	concrete_solve(prob,Tsit5(),u0,p3,abstol=1e-8,reltol=1e-6)
 
-	init = Flux.orthogonal
-	nn = Chain(Dense(3,16,selu,init=init),
-		       Dense(16,2,init=init)) |> f64  # float32 by default
-
-	params, reconstruct = Flux.destructure(nn)
-
-	nn_prob = ODEProblem(dTdt, [T0], tspan, params)
-end
-
-# ╔═╡ af156b54-629a-48e7-8065-e426b17e8224
-begin
-	true_temp = T_df[!, :temp]
-
-	mask = T_df.year[1] .<= range(tspan...) .<= T_df.year[end]
-	predict_temp() = Vector(solve(nn_prob, Tsit5(), p=params, saveat=1))[mask]
-	loss() = sum(abs2, predict_temp() .- true_temp)
+	function predict_adjoint()
+	  Array(concrete_solve(prob,Tsit5(),u0,p3,saveat=0.0:0.1:25.0))
+	end
+	loss_adjoint() = sum(abs2,x-1 for x in predict_adjoint())
+	loss_adjoint()
 	
-	data = Iterators.repeated((), 200)
-	opt = ADAM(0.012)
-
-	history = []
-	
-	callback = function ()
-		println(loss())
-		push!(history, predict_temp())
+	data = Iterators.repeated((), 300)
+	opt = ADAM(0.01)
+	iter = 0
+	cb = function ()
+	  global iter += 1
+	  if iter % 50 == 0
+	    display(loss_adjoint())
+	    display(plot(solve(remake(prob,p=p3,u0=u0),Tsit5(),saveat=0.1),ylim=(0,6)))
+	  end
 	end
 	
-	Flux.train!(loss, Flux.params(params), data, opt, cb=callback)
-end
-
-# ╔═╡ 840b3aae-3ea6-4726-bfea-569ddb69e103
-@gif for p in history[2:2:end]
-	plot(T_df[:, :year], p, ylim=(13.6,15.4), label="Predicted Temperature")
-	plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
-end
-
-# ╔═╡ ea8427d8-37f5-4e69-ab1f-e53f4031610d
-begin
-	ts = (1880, 2050)
-	pred = Vector(solve(nn_prob, Tsit5(), tspan=ts, p=params, saveat=1))
-	plot(range(ts...), pred, label="Predicted Temperature", legend=:topleft)
-	plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
+	# Display the ODE with the current parameter values.
+	cb()
+	
+	Flux.train!(loss_adjoint, ps, data, opt, cb = cb)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -203,7 +182,6 @@ ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 NaNStatistics = "b946abbf-3ea7-4610-9019-9858bfdeaf2d"
 PlotlyJS = "f0f68f2c-4968-5e81-91da-67840de0976a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-SciMLSensitivity = "1ed8b502-d754-442c-8d5d-10ac956f44a1"
 
 [compat]
 CSV = "~0.10.14"
@@ -214,7 +192,6 @@ ModelingToolkit = "~9.19.0"
 NaNStatistics = "~0.6.36"
 PlotlyJS = "~0.18.13"
 Plots = "~1.40.4"
-SciMLSensitivity = "~7.61.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -223,7 +200,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "2141d08d4696a690968503e2226c6729a75c9915"
+project_hash = "925f5b4ef93529d7ca3776bc62cfb9c598fd73a9"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "fa0822e5baee6e23081c2685ae27265dabee23d8"
@@ -469,11 +446,6 @@ git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
 uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 version = "0.5.1"
 
-[[deps.Cassette]]
-git-tree-sha1 = "0970356c3bb9113309c74c27c87083cf9c73880a"
-uuid = "7057c7e9-c182-5462-911a-8362d720325c"
-version = "0.3.13"
-
 [[deps.ChainRules]]
 deps = ["Adapt", "ChainRulesCore", "Compat", "Distributed", "GPUArraysCore", "IrrationalConstants", "LinearAlgebra", "Random", "RealDot", "SparseArrays", "SparseInverseSubset", "Statistics", "StructArrays", "SuiteSparse"]
 git-tree-sha1 = "227985d885b4dbce5e18a96f9326ea1e836e5a03"
@@ -712,10 +684,12 @@ deps = ["DiffEqBase", "Distributions", "GPUArraysCore", "LinearAlgebra", "Markdo
 git-tree-sha1 = "65cbbe1450ced323b4b17228ccd96349d96795a7"
 uuid = "77a26b50-5914-5dd7-bc55-306e6241c503"
 version = "5.21.0"
-weakdeps = ["ReverseDiff"]
 
     [deps.DiffEqNoiseProcess.extensions]
     DiffEqNoiseProcessReverseDiffExt = "ReverseDiff"
+
+    [deps.DiffEqNoiseProcess.weakdeps]
+    ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 
 [[deps.DiffResults]]
 deps = ["StaticArraysCore"]
@@ -855,28 +829,10 @@ version = "0.13.2"
     ScientificTypes = "321657f4-b219-11e9-178b-2701a2544e81"
     Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
-[[deps.EllipsisNotation]]
-deps = ["StaticArrayInterface"]
-git-tree-sha1 = "3507300d4343e8e4ad080ad24e335274c2e297a9"
-uuid = "da5c29d0-fa7d-589e-88eb-ea29b0a81949"
-version = "1.8.0"
-
 [[deps.EnumX]]
 git-tree-sha1 = "bdb1942cd4c45e3c678fd11569d5cccd80976237"
 uuid = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
 version = "1.0.4"
-
-[[deps.Enzyme]]
-deps = ["CEnum", "EnzymeCore", "Enzyme_jll", "GPUCompiler", "LLVM", "Libdl", "LinearAlgebra", "ObjectFile", "Preferences", "Printf", "Random"]
-git-tree-sha1 = "bcdd5aded174c9a5c9b8a79df7e03ff34a691042"
-uuid = "7da242da-08ed-463a-9acd-ee780be4f1d9"
-version = "0.12.15"
-weakdeps = ["ChainRulesCore", "SpecialFunctions", "StaticArrays"]
-
-    [deps.Enzyme.extensions]
-    EnzymeChainRulesCoreExt = "ChainRulesCore"
-    EnzymeSpecialFunctionsExt = "SpecialFunctions"
-    EnzymeStaticArraysExt = "StaticArrays"
 
 [[deps.EnzymeCore]]
 git-tree-sha1 = "88bc63137eb033acc3afe1b9875717889c718c46"
@@ -886,12 +842,6 @@ weakdeps = ["Adapt"]
 
     [deps.EnzymeCore.extensions]
     AdaptExt = "Adapt"
-
-[[deps.Enzyme_jll]]
-deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
-git-tree-sha1 = "a72a624d06df67de228fe0561b274872c21fae51"
-uuid = "7cc45869-7501-5eee-bdea-0790c847d4ef"
-version = "0.0.123+0"
 
 [[deps.EpollShim_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1068,12 +1018,6 @@ git-tree-sha1 = "1ed150b39aebcc805c26b93a8d0122c940f64ce2"
 uuid = "559328eb-81f9-559d-9380-de523a88c83c"
 version = "1.0.14+0"
 
-[[deps.FunctionProperties]]
-deps = ["Cassette", "DiffRules"]
-git-tree-sha1 = "bf7c740307eb0ee80e05d8aafbd0c5a901578398"
-uuid = "f62d2435-5019-4c03-9749-2d4c77af0cbc"
-version = "0.1.2"
-
 [[deps.FunctionWrappers]]
 git-tree-sha1 = "d62485945ce5ae9c0c48f124a84998d755bae00e"
 uuid = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
@@ -1118,12 +1062,6 @@ deps = ["Adapt"]
 git-tree-sha1 = "ec632f177c0d990e64d955ccc1b8c04c485a0950"
 uuid = "46192b85-c4d5-4398-a991-12ede77f4527"
 version = "0.1.6"
-
-[[deps.GPUCompiler]]
-deps = ["ExprTools", "InteractiveUtils", "LLVM", "Libdl", "Logging", "Scratch", "TimerOutputs", "UUIDs"]
-git-tree-sha1 = "518ebd058c9895de468a8c255797b0c53fdb44dd"
-uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
-version = "0.26.5"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
@@ -1834,12 +1772,6 @@ version = "3.13.0"
     Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
     Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
-[[deps.ObjectFile]]
-deps = ["Reexport", "StructIO"]
-git-tree-sha1 = "195e0a19842f678dd3473ceafbe9d82dfacc583c"
-uuid = "d8793406-e978-5875-9003-1fc021f44a92"
-version = "0.4.1"
-
 [[deps.Observables]]
 git-tree-sha1 = "7438a59546cf62428fc9d1bc94729146d37a7225"
 uuid = "510215fc-4207-5dde-b226-833fc4488ee2"
@@ -2077,10 +2009,12 @@ deps = ["Adapt", "ArrayInterface", "ForwardDiff"]
 git-tree-sha1 = "406c29a7f46706d379a3bce45671b4e3a39ddfbc"
 uuid = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
 version = "0.4.22"
-weakdeps = ["ReverseDiff"]
 
     [deps.PreallocationTools.extensions]
     PreallocationToolsReverseDiffExt = "ReverseDiff"
+
+    [deps.PreallocationTools.weakdeps]
+    ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
@@ -2223,12 +2157,6 @@ git-tree-sha1 = "256eeeec186fa7f26f2801732774ccf277f05db9"
 uuid = "ae5879a3-cd67-5da8-be7f-38c6eb64a37b"
 version = "1.1.1"
 
-[[deps.ReverseDiff]]
-deps = ["ChainRulesCore", "DiffResults", "DiffRules", "ForwardDiff", "FunctionWrappers", "LinearAlgebra", "LogExpFunctions", "MacroTools", "NaNMath", "Random", "SpecialFunctions", "StaticArrays", "Statistics"]
-git-tree-sha1 = "cc6cd622481ea366bb9067859446a8b01d92b468"
-uuid = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
-version = "1.15.3"
-
 [[deps.Rmath]]
 deps = ["Random", "Rmath_jll"]
 git-tree-sha1 = "f65dcb5fa46aee0cf9ed6274ccbd597adc49aa7b"
@@ -2293,12 +2221,6 @@ git-tree-sha1 = "10499f619ef6e890f3f4a38914481cc868689cd5"
 uuid = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
 version = "0.3.8"
 
-[[deps.SciMLSensitivity]]
-deps = ["ADTypes", "Adapt", "ArrayInterface", "ChainRulesCore", "DiffEqBase", "DiffEqCallbacks", "DiffEqNoiseProcess", "Distributions", "EllipsisNotation", "Enzyme", "FiniteDiff", "ForwardDiff", "FunctionProperties", "FunctionWrappersWrappers", "Functors", "GPUArraysCore", "LinearAlgebra", "LinearSolve", "Markdown", "OrdinaryDiffEq", "Parameters", "PreallocationTools", "QuadGK", "Random", "RandomNumbers", "RecursiveArrayTools", "Reexport", "ReverseDiff", "SciMLBase", "SciMLOperators", "SparseDiffTools", "StaticArrays", "StaticArraysCore", "Statistics", "StochasticDiffEq", "Tracker", "TruncatedStacktraces", "Zygote"]
-git-tree-sha1 = "fb0071d13d892ff860527106ffd6df3d7590cad9"
-uuid = "1ed8b502-d754-442c-8d5d-10ac956f44a1"
-version = "7.61.1"
-
 [[deps.SciMLStructures]]
 deps = ["ArrayInterface"]
 git-tree-sha1 = "6ab4beaf88dcdd2639bead916f2347f81dcacd0e"
@@ -2351,13 +2273,18 @@ deps = ["ADTypes", "ArrayInterface", "ConcreteStructs", "DiffEqBase", "DiffResul
 git-tree-sha1 = "913754ccbbc78720a4542b56a6bdfbab1c84c8f2"
 uuid = "727e6d20-b764-4bd8-a329-72de5adea6c7"
 version = "1.10.0"
-weakdeps = ["ChainRulesCore", "ReverseDiff", "Tracker", "Zygote"]
 
     [deps.SimpleNonlinearSolve.extensions]
     SimpleNonlinearSolveChainRulesCoreExt = "ChainRulesCore"
     SimpleNonlinearSolveReverseDiffExt = "ReverseDiff"
     SimpleNonlinearSolveTrackerExt = "Tracker"
     SimpleNonlinearSolveZygoteExt = "Zygote"
+
+    [deps.SimpleNonlinearSolve.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+    Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
+    Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [[deps.SimpleTraits]]
 deps = ["InteractiveUtils", "MacroTools"]
@@ -2536,12 +2463,6 @@ weakdeps = ["Adapt", "GPUArraysCore", "SparseArrays", "StaticArrays"]
     StructArraysSparseArraysExt = "SparseArrays"
     StructArraysStaticArraysExt = "StaticArrays"
 
-[[deps.StructIO]]
-deps = ["Test"]
-git-tree-sha1 = "010dc73c7146869c042b49adcdb6bf528c12e859"
-uuid = "53d494c1-5632-5724-8f4c-31dff12d585f"
-version = "0.3.0"
-
 [[deps.SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
@@ -2652,16 +2573,6 @@ version = "0.5.24"
 git-tree-sha1 = "468b4685af4abe0e9fd4d7bf495a6554a6276e75"
 uuid = "0796e94c-ce3b-5d07-9a54-7f471281c624"
 version = "0.5.29"
-
-[[deps.Tracker]]
-deps = ["Adapt", "ChainRulesCore", "DiffRules", "ForwardDiff", "Functors", "LinearAlgebra", "LogExpFunctions", "MacroTools", "NNlib", "NaNMath", "Optimisers", "Printf", "Random", "Requires", "SpecialFunctions", "Statistics"]
-git-tree-sha1 = "5158100ed55411867674576788e710a815a0af02"
-uuid = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
-version = "0.2.34"
-weakdeps = ["PDMats"]
-
-    [deps.Tracker.extensions]
-    TrackerPDMatsExt = "PDMats"
 
 [[deps.TranscodingStreams]]
 git-tree-sha1 = "a947ea21087caba0a798c5e494d0bb78e3a1a3a0"
@@ -3008,12 +2919,16 @@ deps = ["AbstractFFTs", "ChainRules", "ChainRulesCore", "DiffRules", "Distribute
 git-tree-sha1 = "19c586905e78a26f7e4e97f81716057bd6b1bc54"
 uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"
 version = "0.6.70"
-weakdeps = ["Colors", "Distances", "Tracker"]
 
     [deps.Zygote.extensions]
     ZygoteColorsExt = "Colors"
     ZygoteDistancesExt = "Distances"
     ZygoteTrackerExt = "Tracker"
+
+    [deps.Zygote.weakdeps]
+    Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
+    Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+    Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
 
 [[deps.ZygoteRules]]
 deps = ["ChainRulesCore", "MacroTools"]
@@ -3133,7 +3048,6 @@ version = "1.4.1+1"
 # ╠═d6ecc837-be55-4db7-bac7-8446e7a3cfa2
 # ╠═8264a6cf-803c-4f37-b516-b82be1000a38
 # ╠═f539ddd6-041f-4b84-91c0-aca74131c960
-# ╟─e39a69fe-0c82-482d-9a69-a5b028610c62
 # ╠═c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
 # ╠═70db5d4d-e346-476a-8bba-50070260abe5
 # ╠═4084d556-5673-444f-bb9f-e77a502799d5
@@ -3141,10 +3055,6 @@ version = "1.4.1+1"
 # ╠═b29d66d4-ef28-4de8-acc1-7d4fe607742b
 # ╠═7f4af72c-9ca1-4b65-8557-9d59880ba261
 # ╟─a2bd2e6c-4908-472a-9cd7-b7bf22c313e2
-# ╠═68b04370-7d3e-4b6a-a07a-e11b90ce440e
 # ╠═981f864e-da3f-4f27-996b-3172ae0fe76f
-# ╠═af156b54-629a-48e7-8065-e426b17e8224
-# ╠═840b3aae-3ea6-4726-bfea-569ddb69e103
-# ╠═ea8427d8-37f5-4e69-ab1f-e53f4031610d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

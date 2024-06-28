@@ -254,6 +254,9 @@ let f(g) = n -> n < 2 ? big(1) : n * g(n-1)
 	Y_fact.(1:8)  # f(f(f(f(...))))
 end
 
+# ╔═╡ 3aecb613-5b0e-4551-8820-98c5fb1f10d7
+md"### Macros"
+
 # ╔═╡ 8bc7e78b-ff6d-4553-b327-f03d21651121
 macro show_all(block)
 	if block.head == Symbol("let")
@@ -433,6 +436,7 @@ version = "5.8.0+1"
 # ╟─7af106cf-3e7b-497d-95c1-b90c09b048e5
 # ╠═1396345b-8abf-48ac-8bfa-6c641a395c2c
 # ╠═4c2d5a36-acaf-46ae-bb5a-a28d8ded855c
-# ╟─8bc7e78b-ff6d-4553-b327-f03d21651121
+# ╟─3aecb613-5b0e-4551-8820-98c5fb1f10d7
+# ╠═8bc7e78b-ff6d-4553-b327-f03d21651121
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

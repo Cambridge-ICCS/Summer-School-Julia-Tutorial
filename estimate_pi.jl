@@ -8,7 +8,11 @@ using InteractiveUtils
 begin
 	using Statistics, Random
 	include("utils.jl")
+	using .Utilities
 end
+
+# ╔═╡ c79e8873-789a-4db8-8af5-d915c465d72b
+using .Utilities: still_missing
 
 # ╔═╡ d685eff6-ab91-4bee-bf7a-957b2ae644f0
 begin
@@ -109,13 +113,13 @@ let
 	result = @time estimate_pi_wallis_multithreaded()
 	dt = time() - t0
 	if ismissing(result)
-		still_missing()
+		Utilities.still_missing()
 	elseif dt > 0.6
-		keep_working(md"Try reducing the time cost by distributing the computation on more threads.")
+		Utilities.keep_working(md"Try reducing the time cost by distributing the computation on more threads.")
 	elseif abs(result - π) < 1e-8
-		correct()
+		Utilities.correct()
 	else
-		keep_working()
+		Utilities.keep_working()
 	end
 end
 
@@ -1389,6 +1393,7 @@ version = "1.4.1+1"
 # ╠═47789e98-5de0-413f-8677-29918719278a
 # ╠═2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
 # ╠═efe11271-fe46-4399-ad6b-089b5b5ceec3
+# ╠═c79e8873-789a-4db8-8af5-d915c465d72b
 # ╠═447bdcf9-260f-4cba-977b-6a97b2280d35
 # ╠═ec0cd66a-eed0-4ac5-a2ab-d021ba003ebd
 # ╠═b4c16d52-45d6-421f-aefe-e9680977a176
