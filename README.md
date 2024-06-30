@@ -31,7 +31,7 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 ## FAQ
 
 ### In what order should I read the notebooks in this repository?
-`basics` -> `
+`basics` -> `pdist` -> `fibonacci` -> `estimate_pi` -> `image_transform` -> `ebm`
 
 ### How to type Unicode characters?
 Type the corresponding LaTeX-like character sequence (starting with `\`), followed by a `tab`.
