@@ -100,11 +100,6 @@ md"""
 # ╔═╡ 60ef1f4b-89ab-42ec-973f-1025d0161b96
 function estimate_pi_wallis_multithreaded(N=300_000_000)
 	missing # replace `missing` with your solution here
-	# sample solution:
-	# f(i) = (i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1)
-	# k = Threads.nthreads()
-	# p(r, k=k) = prod(f(i) for i in r:k:N)
-	# 2prod(fetch.(Threads.@spawn p(r) for r in 2:k+1))
 end
 
 # ╔═╡ 658c4cca-a5c6-4c5d-80fb-f939728c1992
@@ -1400,7 +1395,7 @@ version = "1.4.1+1"
 # ╟─5ffdecbf-9a8b-49e5-adbb-90f932075076
 # ╠═71f9f677-9721-4626-b8d6-eae70e25c2d5
 # ╠═ed0e646e-f8c6-4cb3-95e3-e1d39fa0b4c9
-# ╠═4b0fd4e7-fa60-4115-9548-02f88f3b7a82
+# ╟─4b0fd4e7-fa60-4115-9548-02f88f3b7a82
 # ╠═60ef1f4b-89ab-42ec-973f-1025d0161b96
 # ╟─658c4cca-a5c6-4c5d-80fb-f939728c1992
 # ╟─9aeec0a9-9742-41e8-8c64-61744a86f653

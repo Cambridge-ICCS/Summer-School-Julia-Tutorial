@@ -28,6 +28,12 @@ typeof(img)
 # ╔═╡ cb18c751-11ac-4ac7-9a51-b5a81ac9d553
 size(img)
 
+# ╔═╡ 68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
+0.5(RGB(1, 0, 0) + RGB(0, 0, 1))
+
+# ╔═╡ 09d1fff1-443f-47f5-a465-edb919f612d3
+red(RGB(.2, .3, .4))
+
 # ╔═╡ dbbe16ae-dd77-458c-8a65-1dec362c06d8
 md"## Image Compression"
 
@@ -118,13 +124,50 @@ md"## Image Filtering"
 # ╔═╡ 7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 let 
 	kernel = centered([1 2 -1; 2 0 -2; -1 -2 1])
-	# kernel = Kernel.Laplacian()
-	# kernel = Kernel.gaussian(3)
 	imfilter(load("/tmp/my_earth.png"), kernel)
 end
 
+# ╔═╡ c252841d-aba3-4a78-8b18-8a3924aab24b
+md"""Try these kernels to filter the image:
+- `Kernel.Laplacian()`
+- `Kernel.gaussian(3)`
+"""
+
 # ╔═╡ f01f1a2d-002d-4372-b3be-887e0b30b092
 run(`rm /tmp/my_earth.png`)
+
+# ╔═╡ 2da4d930-dce3-4680-bea7-f8140b0fb62a
+md"""## Exercise 1
+
+Write a function that inverts the pixel colors of an image, i.e. converts `(r, g, b)` to `(1 - r, 1 - g, 1 - b)`.
+"""
+
+# ╔═╡ 2ed6065b-7779-4bd3-bde2-57f0e05b8e27
+function invert(image::AbstractMatrix{<:RGB})
+	# your code here!
+	return missing
+end
+
+# ╔═╡ 1a0d0798-561b-49bc-987b-b2089ca5e863
+invert(img)
+
+# ╔═╡ f33c6690-f55c-4580-8ea0-b58aa6864bd2
+md"""## Exercise 2
+
+Write a function that applies a given function `f` to each pixel of an RGB matrix.
+"""
+
+# ╔═╡ 22523aa4-f1c1-4c40-b344-9c2020c94544
+function map_image(f::Function, image::AbstractMatrix{<:RGB})
+	# your code here!
+	return missing
+end
+
+# ╔═╡ 3cc07495-bce9-4b1f-8223-9829b1f943c3
+map_image(c -> RGB(c.r, 0., 0.), img)
+
+# ╔═╡ e43fb1d4-ca68-475f-8a05-211d045e4734
+map_image(c -> RGB(1-c.r, 1-c.g, 1-c.b), img)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1316,6 +1359,8 @@ version = "17.4.0+2"
 # ╠═62c81910-330a-11ef-2304-250af46959c0
 # ╠═699b06a0-d706-470e-aca8-8d882b85c09a
 # ╠═cb18c751-11ac-4ac7-9a51-b5a81ac9d553
+# ╠═68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
+# ╠═09d1fff1-443f-47f5-a465-edb919f612d3
 # ╟─dbbe16ae-dd77-458c-8a65-1dec362c06d8
 # ╠═019cbf4d-49b2-4d74-aa10-ab23c7c18ddb
 # ╠═2b99f7f5-e01c-4dd5-a1af-7e9fa1744269
@@ -1330,6 +1375,14 @@ version = "17.4.0+2"
 # ╠═ccdb123d-53db-4b54-a96b-90453df0d619
 # ╟─79fa4049-f8f8-463e-b8bd-6a4792a5d15b
 # ╠═7fb19257-a0b2-4f7d-8912-5c8a250a85cd
+# ╟─c252841d-aba3-4a78-8b18-8a3924aab24b
 # ╠═f01f1a2d-002d-4372-b3be-887e0b30b092
+# ╟─2da4d930-dce3-4680-bea7-f8140b0fb62a
+# ╠═2ed6065b-7779-4bd3-bde2-57f0e05b8e27
+# ╠═1a0d0798-561b-49bc-987b-b2089ca5e863
+# ╟─f33c6690-f55c-4580-8ea0-b58aa6864bd2
+# ╠═22523aa4-f1c1-4c40-b344-9c2020c94544
+# ╠═3cc07495-bce9-4b1f-8223-9829b1f943c3
+# ╠═e43fb1d4-ca68-475f-8a05-211d045e4734
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

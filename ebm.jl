@@ -38,7 +38,7 @@ begin
 end
 
 # ╔═╡ 8264a6cf-803c-4f37-b516-b82be1000a38
-# Task 1: fit a polynomial to the Keeling curve
+# Fit a polynomial to the Keeling curve
 begin
 	CO2_PreIndust = 280
 	time_features(t) = let x = t .- 1850; @. [x x^2 x^3] end
