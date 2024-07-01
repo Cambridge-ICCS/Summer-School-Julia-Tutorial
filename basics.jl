@@ -364,14 +364,11 @@ binomial(100, 30)
 # ╔═╡ 7923655c-be6d-47ed-a996-061328a3255f
 function binom(n, k)
 	@assert 0 <= k <= n
-	if n <= 1
-        big(1)
-	elseif k in (0, n)
-		big(1)
-	else
-		binom(n-1, k-1) + binom(n-1, k)
-	end
+	missing
 end
+
+# ╔═╡ a438406b-80ae-467b-a29f-aaf4cc158719
+binom(10, 5)
 
 # ╔═╡ 5d57d740-4a92-48d7-aa43-9604c55cc4aa
 const Maybe{T} = Union{T, Nothing}
@@ -427,11 +424,13 @@ function empty!(tree::BST)
 end
 
 # ╔═╡ 2cd4262f-83ee-4f23-b9c2-986aaffedfd9
-AbstractTrees.children(t::Node) = t.left == t.right == nothing ? [] : [t.left, t.right]
-
-# ╔═╡ b6d7df63-7e33-4996-b9bf-fc388d2cb198
-Base.show(io::IO, t::BST) = 
-	print_tree((io, t) -> print(io, t == nothing ? '/' : t.key => t.val), io, t.root)
+begin
+	AbstractTrees.children(t::Node) = 
+		t.left == t.right == nothing ? [] : [t.left, t.right]
+	Base.show(io::IO, t::BST) = 
+		print_tree((io, t) -> print(io, isnothing(t) ? '/' : t.key => t.val), 
+				   io, t.root)
+end
 
 # ╔═╡ 45e8dd14-b2ff-448f-915a-56524bedf77d
 begin
@@ -444,17 +443,8 @@ end
 
 # ╔═╡ cda55723-3863-41ed-980b-49cf88c76127
 function Base.getindex(tree::BST{K, V}, key::K) where {K, V}
-	missing  # hint: make use of `search(tree, key)`
-	if tree.root == nothing
-		raise(KeyError("key not found"))
-	else
-		node, dir = search(tree.root, key)
-		if dir == :this
-			node.val
-		else
-			raise(KeyError("key not found"))
-		end
-	end
+	# hint: make use of `search(tree, key)`
+	missing
 end
 
 # ╔═╡ 0939489d-79d2-4c1a-9841-17d9ae448d94
@@ -521,17 +511,9 @@ md"""
 function binom_m(n, k, memo=BST{NTuple{2, Int}, BigInt}())
 	@assert 0 <= k <= n
 	try
-		memo[(n, k)]
+		missing
 	catch
-		if n <= 1
-	        ans = big(1)
-		elseif k in (0, n)
-			ans = big(1)
-		else
-			ans = binom_m(n-1, k-1, memo) + binom_m(n-1, k, memo)
-		end
-		memo[(n, k)] = ans
-		ans
+		missing
 	end
 end
 
@@ -1754,8 +1736,9 @@ version = "1.4.1+1"
 # ╠═8bc7e78b-ff6d-4553-b327-f03d21651121
 # ╟─6042b2ff-d9fe-47c8-8f72-11f377299adc
 # ╠═ac12297d-3358-45e7-8f76-3c0688a638bd
-# ╠═085e2a09-1306-4ad1-bc83-554c2d214d50
+# ╟─085e2a09-1306-4ad1-bc83-554c2d214d50
 # ╠═7923655c-be6d-47ed-a996-061328a3255f
+# ╠═a438406b-80ae-467b-a29f-aaf4cc158719
 # ╟─2c4450a7-4c5d-4692-897f-4c8eadcdae27
 # ╠═5d57d740-4a92-48d7-aa43-9604c55cc4aa
 # ╠═845c2ef5-e05a-4b63-8098-abdc111900b4
@@ -1764,7 +1747,6 @@ version = "1.4.1+1"
 # ╠═47f98ed2-2bfc-4b6b-9c23-3c09d97de395
 # ╠═9ddf1021-72cb-4502-b520-115a4e520eac
 # ╠═2cd4262f-83ee-4f23-b9c2-986aaffedfd9
-# ╠═b6d7df63-7e33-4996-b9bf-fc388d2cb198
 # ╠═45e8dd14-b2ff-448f-915a-56524bedf77d
 # ╠═cda55723-3863-41ed-980b-49cf88c76127
 # ╠═535e4409-097c-4d8a-99f6-20df5a9d5a00
