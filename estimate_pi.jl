@@ -14,20 +14,6 @@ end
 # ╔═╡ c79e8873-789a-4db8-8af5-d915c465d72b
 using .Utilities: still_missing
 
-# ╔═╡ d685eff6-ab91-4bee-bf7a-957b2ae644f0
-begin
-	using ForwardDiff  # automatically finds the derivative of a function
-	using Plots
-end
-
-# ╔═╡ c6b3bebe-32da-11ef-09ae-ad02d9296cab
-md"""### Estimate π using Monte Carlo
-![image](https://i.ytimg.com/vi/HUBNQicYDkU/maxresdefault.jpg)
-"""
-
-# ╔═╡ 2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
-pi_err(x) = (value=x, error=abs(x-π))
-
 # ╔═╡ 664e8ba5-6dd8-44af-a8e1-1df6f80510a2
 begin
 	using KernelAbstractions
@@ -49,6 +35,20 @@ begin
 		2 * prod(A)
 	end |> pi_err
 end
+
+# ╔═╡ d685eff6-ab91-4bee-bf7a-957b2ae644f0
+begin
+	using ForwardDiff  # automatically finds the derivative of a function
+	using Plots
+end
+
+# ╔═╡ c6b3bebe-32da-11ef-09ae-ad02d9296cab
+md"""### Estimate π using Monte Carlo
+![image](https://i.ytimg.com/vi/HUBNQicYDkU/maxresdefault.jpg)
+"""
+
+# ╔═╡ 2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
+pi_err(x) = (value=x, error=abs(x-π))
 
 # ╔═╡ efe11271-fe46-4399-ad6b-089b5b5ceec3
 function estimate_pi_mc(n=600_000_000)
@@ -152,7 +152,7 @@ Idea: ``\pi`` is a root of ``sin(x)``.
 """
 
 # ╔═╡ 15603d34-3728-42ce-bac7-1608ef34ba3c
-begin
+begin  # Operator overloading
 	Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, x)
 	sin'(0), cos'(π/2)
 end
@@ -1400,7 +1400,7 @@ version = "1.4.1+1"
 # ╟─5ffdecbf-9a8b-49e5-adbb-90f932075076
 # ╠═71f9f677-9721-4626-b8d6-eae70e25c2d5
 # ╠═ed0e646e-f8c6-4cb3-95e3-e1d39fa0b4c9
-# ╟─4b0fd4e7-fa60-4115-9548-02f88f3b7a82
+# ╠═4b0fd4e7-fa60-4115-9548-02f88f3b7a82
 # ╠═60ef1f4b-89ab-42ec-973f-1025d0161b96
 # ╟─658c4cca-a5c6-4c5d-80fb-f939728c1992
 # ╟─9aeec0a9-9742-41e8-8c64-61744a86f653

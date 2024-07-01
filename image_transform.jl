@@ -25,11 +25,17 @@ end
 # ╔═╡ 699b06a0-d706-470e-aca8-8d882b85c09a
 typeof(img)
 
+# ╔═╡ cb18c751-11ac-4ac7-9a51-b5a81ac9d553
+size(img)
+
+# ╔═╡ dbbe16ae-dd77-458c-8a65-1dec362c06d8
+md"## Image Compression"
+
 # ╔═╡ 019cbf4d-49b2-4d74-aa10-ab23c7c18ddb
 SVD_results = [svd(f.(img)) for f in [red, green, blue]];
 
 # ╔═╡ 2b99f7f5-e01c-4dd5-a1af-7e9fa1744269
-@bind K Slider(1:50, show_value=true, default=20)
+@bind K Slider(1:60, show_value=true, default=20)
 
 # ╔═╡ ed7b0ce7-7b45-4109-83b8-d82597802f8d
 let
@@ -43,12 +49,15 @@ let
 	hcat(img, RGB.(data...))
 end
 
+# ╔═╡ b114d895-79e6-4309-b881-9bc9bd1db58e
+@bind L Slider(1:120, show_value=true, default=20)
+
 # ╔═╡ 26719593-1dbb-4eba-8426-2c8a702eb626
 FFT_results = [fft(f.(img)) for f in [red, green, blue]];
 
 # ╔═╡ 09071740-a203-4837-841a-41f52283d3a1
 let
-	fftmask = abs.(fftfreq(size(img)...)) .<= 2K
+	fftmask = abs.(fftfreq(size(img)...)) .<= L
 	data = @time map(FFT_results) do a
 		b = spzeros(ComplexF32, size(a)...)
 		b[fftmask, fftmask] .= a[fftmask, fftmask]
@@ -58,13 +67,16 @@ let
 	hcat(img, RGB.(data...))
 end
 
+# ╔═╡ 3d52bc87-c24a-45b8-abc5-22c42fc4f265
+md"## Image Linear Transformation"
+
 # ╔═╡ fd12f674-74b3-4ffa-bdfd-9533380add0b
 function transform_image(img::AbstractMatrix{<:RGB}, basis::Matrix{<:Real})
 	M, N = size(img)
 	# A = OffsetMatrix(img, -M÷2, -N÷2)
 	A = centered(img)
 	I, J = convert.(UnitRange, axes(A))
-	sx, sy = svd(basis).S
+	sx, sy = svd(basis).S  # singular values
 	P = Iterators.product((I.start*sy):(I.stop*sy), (J.start*sx):(J.stop*sx))
 	Idx = Int32.(floor.(inv(basis) * reshape(collect(Iterators.flatten(P)), 2, :)))
 	blank = RGB(0, 0, 0)
@@ -99,6 +111,9 @@ end
 
 # ╔═╡ ccdb123d-53db-4b54-a96b-90453df0d619
 save("/tmp/my_earth.png", img2)
+
+# ╔═╡ 79fa4049-f8f8-463e-b8bd-6a4792a5d15b
+md"## Image Filtering"
 
 # ╔═╡ 7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 let 
@@ -1300,15 +1315,20 @@ version = "17.4.0+2"
 # ╠═b79e1b65-56e5-471b-a665-65c41d8bce38
 # ╠═62c81910-330a-11ef-2304-250af46959c0
 # ╠═699b06a0-d706-470e-aca8-8d882b85c09a
+# ╠═cb18c751-11ac-4ac7-9a51-b5a81ac9d553
+# ╟─dbbe16ae-dd77-458c-8a65-1dec362c06d8
 # ╠═019cbf4d-49b2-4d74-aa10-ab23c7c18ddb
 # ╠═2b99f7f5-e01c-4dd5-a1af-7e9fa1744269
-# ╠═ed7b0ce7-7b45-4109-83b8-d82597802f8d
+# ╟─ed7b0ce7-7b45-4109-83b8-d82597802f8d
+# ╠═b114d895-79e6-4309-b881-9bc9bd1db58e
 # ╠═26719593-1dbb-4eba-8426-2c8a702eb626
-# ╠═09071740-a203-4837-841a-41f52283d3a1
+# ╟─09071740-a203-4837-841a-41f52283d3a1
+# ╟─3d52bc87-c24a-45b8-abc5-22c42fc4f265
 # ╠═fd12f674-74b3-4ffa-bdfd-9533380add0b
 # ╟─cf464513-0fe3-4e3c-8d3e-2e673a485bdb
 # ╠═74cd3cc8-f897-449e-be69-cadea4da9e3c
 # ╠═ccdb123d-53db-4b54-a96b-90453df0d619
+# ╟─79fa4049-f8f8-463e-b8bd-6a4792a5d15b
 # ╠═7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 # ╠═f01f1a2d-002d-4372-b3be-887e0b30b092
 # ╟─00000000-0000-0000-0000-000000000001
