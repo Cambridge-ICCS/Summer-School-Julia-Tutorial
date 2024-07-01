@@ -41,6 +41,7 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 - arrays and linear algebra
 - functions and functional programming
 - macros
+
 `pdist`:
 - random numbers and statistics
 - abstract type and composite type (struct)
@@ -48,24 +49,28 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 - multiple dispatch
 - operator overloading
 - basic plotting
+
 `fibonacci`:
 - time and memory profiling
 - memoization using macro
 - symbolic computation
 - mutable struct
 - calling C/Fortran code
+
 `estimate_pi`:
 - monte carlo simulation
 - multi-threading
 - writing CPU/GPU kernel for parallelization
 - automatic differentiation
 - animation
+
 `image_transform`:
 - images are arrays
 - downloading and saving files
 - image compression using SVD and FFT
 - image transformation using linear algebra
 - image convolution using filters
+
 `ebm`:
 - DataFrames and CSV
 - Earth energy balance model
