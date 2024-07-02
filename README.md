@@ -50,40 +50,27 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 - functions and functional programming
 - macros
 
-`pdist`:
-- random numbers and statistics
-- abstract type and composite type (struct)
-- type stability and LLVM
-- multiple dispatch
-- operator overloading
-- basic plotting
-
-`fibonacci`:
-- time and memory profiling
-- memoization using macro
-- symbolic computation
-- mutable struct
-- calling C/Fortran code
-
-`estimate_pi`:
-- monte carlo simulation
-- multi-threading
-- writing CPU/GPU kernel for parallelization
-- automatic differentiation
-- animation
-
 `image_transform`:
 - images are arrays
 - downloading and saving files
-- image compression using SVD and FFT
 - image transformation using linear algebra
-- image convolution using filters
+- image compression using SVD and FFT
+- image filtering using convolution
+- multi-thread parallelization
 
 `ebm`:
 - DataFrames and CSV
 - Earth energy balance model
 - DifferentialEquations
 - Neural ODE
+
+(Optional)
+`estimate_pi`:
+- monte carlo simulation
+- multi-threading
+- writing CPU/GPU kernel for parallelization
+- automatic differentiation
+- animation
 
 ### How to type Unicode characters?
 Type the corresponding LaTeX-like character sequence (starting with `\`), followed by a `tab`.
