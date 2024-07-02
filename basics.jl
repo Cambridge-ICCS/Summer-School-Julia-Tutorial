@@ -32,12 +32,14 @@ using Statistics
 z = exp(im * π)
 
 # ╔═╡ b4de91e1-ef8a-44ae-ac31-ac99d0a041d2
-z == -1, z ≈ -1  # isapprox
+z == -1, z ≈ -1  # ≈ is typed as \approx and is equivalent to isapprox(a, b)
 
 # ╔═╡ 79dd50f1-bd99-4384-b691-4bdb73096161
-let θ = rand(), z = exp(im * θ)  # bind variables locally
-	x, y = @show reim(z)
-	x ^ 2 + y ^ 2 == abs(z) ^ 2
+let θ = rand(), z = exp(im * θ)  # let...end binds variables locally
+	# θ is a random value in [0, 1)
+	@show θ angle(z) abs(z)
+	x, y = @show reim(z)  # real and imaginary parts of z
+	x ^ 2 + y ^ 2 == 1.0
 end
 
 # ╔═╡ b9ddc629-f680-4a71-8374-f3b01bb53890
@@ -370,6 +372,19 @@ end
 # ╔═╡ a438406b-80ae-467b-a29f-aaf4cc158719
 binom(10, 5)
 
+# ╔═╡ 3533d0ba-463e-493d-8a5b-132463842b6a
+let
+	results = [binom(n, k) == binomial(n, k) 
+		       for n in rand(1:20, 10) for k in rand(1:n)]
+	if all(ismissing, results)
+		Utilities.still_missing()
+	elseif all(results)
+		Utilities.correct()
+	else
+		Utilities.keep_working()
+	end
+end
+
 # ╔═╡ 5d57d740-4a92-48d7-aa43-9604c55cc4aa
 const Maybe{T} = Union{T, Nothing}
 
@@ -417,10 +432,10 @@ function Base.setindex!(tree::BST{K, V}, val::V, key::K) where {K, V}
 	end
 end
 
-# ╔═╡ 9ddf1021-72cb-4502-b520-115a4e520eac
-function empty!(tree::BST)
-	tree.root = nothing
-	tree.size = 0
+# ╔═╡ 20883c28-c142-4dab-ab47-1fbecbbbecb1
+begin
+	sharps = BST{String, Int}()
+	@which sharps["C"] = 0  # this will not execute the method
 end
 
 # ╔═╡ 2cd4262f-83ee-4f23-b9c2-986aaffedfd9
@@ -432,19 +447,22 @@ begin
 				   io, t.root)
 end
 
-# ╔═╡ 45e8dd14-b2ff-448f-915a-56524bedf77d
-begin
-	tree = BST{Int, Int}()
-	for i in [2, 4, 1, 5, 3, 6]
-		tree[i] = i ^ 2
+# ╔═╡ 3874b1e7-c20a-46a1-a1a4-d2a75eb45e23
+begin  
+	scales = map(String, split("C G D A E B F#"))
+	for (i, k) in enumerate(scales)
+		sharps[k] = i - 1
 	end
-	tree
+	sharps  # number of sharps in a major scale
 end
 
-# ╔═╡ cda55723-3863-41ed-980b-49cf88c76127
-function Base.getindex(tree::BST{K, V}, key::K) where {K, V}
-	# hint: make use of `search(tree, key)`
-	missing
+# ╔═╡ 45e8dd14-b2ff-448f-915a-56524bedf77d
+begin
+	function Base.getindex(tree::BST{K, V}, key::K) where {K, V}
+		missing  # hint: make use of `search(tree, key)`
+	end
+
+	sharps["D"]
 end
 
 # ╔═╡ 0939489d-79d2-4c1a-9841-17d9ae448d94
@@ -452,6 +470,12 @@ md"# An Introduction to Julia Programming"
 
 # ╔═╡ 4efa23f3-e705-469e-8e82-fb6d0e4589a3
 md"## Basic Calculation"
+
+# ╔═╡ b4cb3a82-d740-4d02-b0f4-f18ec9500b4f
+md"""
+!!! tip "Tip"
+	Open the **Live Docs** at the bottom right and click a symbol to read its documentation. 
+"""
 
 # ╔═╡ 13104a6c-0eb7-42d7-961d-addc55f06588
 md"## Type System"
@@ -486,25 +510,53 @@ md"## Macros"
 # ╔═╡ 6042b2ff-d9fe-47c8-8f72-11f377299adc
 md"## Exercises"
 
+# ╔═╡ 0102faaf-c6cc-4a95-bd77-0a762f1ba680
+md"Similar to `factorial`, we would like to implement a variant of `binomial` that can handle integer overflow using `BigInt`/`big`."
+
 # ╔═╡ 085e2a09-1306-4ad1-bc83-554c2d214d50
 md"""
 !!! danger "Task"
-	Task 1: Implement the binomial function using recursion and BigInt.
+	Implement the binomial function using recursion and BigInt.
 """
 
-# ╔═╡ 2c4450a7-4c5d-4692-897f-4c8eadcdae27
+# ╔═╡ 3e79c7ef-8e91-4072-8ade-a86e4e426ede
+md"""
+!!! hint
+	Recall the relation ``\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}``.
+"""
+
+# ╔═╡ 81230ae7-8aa7-4c5d-822b-013c15f655f5
+md"The following code implements the *binary search tree* (BST), which can store key-value mappings and support look-up with logarithmic time complexity. In other words, if a BST stores ``N`` key-value pairs, the user can look up the value corresponding to a given key in ``O(\log(N))`` time."
+
+# ╔═╡ d86a50bb-7eed-41fd-94f1-394e38d0c135
+md"The function `setindex!(a, v, k)` in the `Base` library of Julia can be called by `a[k] = v`. (Of course, you can also directly call `Base.setindex!(a, v, k)`.) Here we implement the `setindex!` method for our own `BST` instances. For the same function, Julia can figure out which method to execute based on the types of its arguments. This is called **multiple dispatch**."
+
+# ╔═╡ 502bfe2a-0847-4cac-b1c0-f57e24b66a71
+md"Now we overload the `Base.show` function to customize the way a BST is printed."
+
+# ╔═╡ 0737b8f7-8dbe-42f8-878d-7a304531bcdc
 md"""
 !!! danger "Task"
-	Task 2: Implement the `getindex` method of BST (binary search tree).
+	Evaluating `a[k]` will call the function `getindex(a, k)` in the `Base` library. Now implement the `getindex` method for BST.
 """
 
-# ╔═╡ 535e4409-097c-4d8a-99f6-20df5a9d5a00
-tree[5]
+# ╔═╡ 0265d228-c26f-4969-8449-6ee23ea41f2e
+let
+	results = [try Base.getindex(sharps, k) == i-1 catch; true end 
+		       for (i, k) in enumerate([scales..., "C#"])]
+	if all(ismissing, results)
+		Utilities.still_missing()
+	elseif all(results)
+		Utilities.correct()
+	else
+		Utilities.keep_working()
+	end
+end
 
 # ╔═╡ 0c7f1a08-c4f9-4670-9c70-2ec539f8ec96
 md"""
 !!! danger "Task"
-	Task 3: Implement a memoized verion of `binom` and compare its performance with the original version.
+	Implement a memoized verion of `binom` and compare its performance with the original version.
 """
 
 # ╔═╡ 09fa49a6-439b-4a6a-8045-313f1a5cdc1d
@@ -524,6 +576,19 @@ begin
 	N = 100
 	@time bs = [binom_m(N, k, memo) for k in 0:N]
 	plot(0:N, bs, label="Binomial($N, k)", xlabel="k")
+end
+
+# ╔═╡ d77e5b32-f1c0-4eed-954b-cc63c04c0040
+let
+	results = [binom_m(n, k) == fact_c(n)/fact_c(k)/fact_c(n-k)
+			   for n in rand(1:30, 5) for k in rand(1:n, 2)]
+	if all(ismissing, results)
+		Utilities.still_missing()
+	elseif all(results)
+		Utilities.correct()
+	else
+		Utilities.keep_working()
+	end
 end
 
 # ╔═╡ c3b9c387-3c01-499a-b2e4-f2a70afd462c
@@ -1657,6 +1722,7 @@ version = "1.4.1+1"
 # ╟─4efa23f3-e705-469e-8e82-fb6d0e4589a3
 # ╠═52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
 # ╠═50c86554-ff09-4e4a-94e8-0f30b83e8655
+# ╟─b4cb3a82-d740-4d02-b0f4-f18ec9500b4f
 # ╠═0f63f358-310c-4475-a17b-6376ce26f903
 # ╠═3ae5a286-cc9d-4837-a6de-c79bad078df4
 # ╠═b4de91e1-ef8a-44ae-ac31-ac99d0a041d2
@@ -1736,22 +1802,29 @@ version = "1.4.1+1"
 # ╠═8bc7e78b-ff6d-4553-b327-f03d21651121
 # ╟─6042b2ff-d9fe-47c8-8f72-11f377299adc
 # ╠═ac12297d-3358-45e7-8f76-3c0688a638bd
+# ╟─0102faaf-c6cc-4a95-bd77-0a762f1ba680
 # ╟─085e2a09-1306-4ad1-bc83-554c2d214d50
+# ╟─3e79c7ef-8e91-4072-8ade-a86e4e426ede
 # ╠═7923655c-be6d-47ed-a996-061328a3255f
 # ╠═a438406b-80ae-467b-a29f-aaf4cc158719
-# ╟─2c4450a7-4c5d-4692-897f-4c8eadcdae27
+# ╟─3533d0ba-463e-493d-8a5b-132463842b6a
+# ╟─81230ae7-8aa7-4c5d-822b-013c15f655f5
 # ╠═5d57d740-4a92-48d7-aa43-9604c55cc4aa
 # ╠═845c2ef5-e05a-4b63-8098-abdc111900b4
 # ╠═d6c47c30-f589-430c-9b34-5d52274143cd
 # ╠═cf588263-39b6-42b5-bcba-814e273e3625
+# ╟─d86a50bb-7eed-41fd-94f1-394e38d0c135
 # ╠═47f98ed2-2bfc-4b6b-9c23-3c09d97de395
-# ╠═9ddf1021-72cb-4502-b520-115a4e520eac
+# ╠═20883c28-c142-4dab-ab47-1fbecbbbecb1
+# ╟─502bfe2a-0847-4cac-b1c0-f57e24b66a71
 # ╠═2cd4262f-83ee-4f23-b9c2-986aaffedfd9
+# ╠═3874b1e7-c20a-46a1-a1a4-d2a75eb45e23
+# ╟─0737b8f7-8dbe-42f8-878d-7a304531bcdc
 # ╠═45e8dd14-b2ff-448f-915a-56524bedf77d
-# ╠═cda55723-3863-41ed-980b-49cf88c76127
-# ╠═535e4409-097c-4d8a-99f6-20df5a9d5a00
+# ╟─0265d228-c26f-4969-8449-6ee23ea41f2e
 # ╟─0c7f1a08-c4f9-4670-9c70-2ec539f8ec96
 # ╠═09fa49a6-439b-4a6a-8045-313f1a5cdc1d
+# ╟─d77e5b32-f1c0-4eed-954b-cc63c04c0040
 # ╠═c3b9c387-3c01-499a-b2e4-f2a70afd462c
 # ╠═9af7b7d3-1b03-4be2-ace9-adf6897a54d3
 # ╠═73e474e7-5621-4abc-8dcf-d90bcfc4e57d
