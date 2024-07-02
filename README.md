@@ -4,7 +4,7 @@
 
 # Introduction to Computational Science in Julia
 
-![GitHub](https://img.shields.io/github/license/Cambridge-ICCS/Summer-School-Julia-Tutoria)
+![GitHub](https://img.shields.io/github/license/Cambridge-ICCS/Summer-School-Julia-Tutorial)
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
 
 This is an intensive 2-hour workshop for the Julia language, including 6 web-based Pluto notebooks covering concepts from basic to intermediate level in Julia. It assumes that the attendees have some basic familiarity with programming. It also has an emphasis on scientific computing, so it would be beneficial if you have some experience in this field as well. The goal of the workshop is to help you gain experience and have fun in Julia programming.
