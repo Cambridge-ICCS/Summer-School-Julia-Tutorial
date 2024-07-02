@@ -88,3 +88,12 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 ### How to type Unicode characters?
 Type the corresponding LaTeX-like character sequence (starting with `\`), followed by a `tab`.
 
+## Further introductory reading
+
+The following slides give further background on the Julia language:
+
+* https://github.com/mitmath/julia-mit/blob/master/Julia-intro.pdf
+* https://github.com/carstenbauer/JuliaUCL24/blob/main/presentation/intro_juliahpc_ucl.pdf
+* https://github.com/vboussange/WSLJuliaWorkshop2023/blob/master/Day1/12_julia-overview/12_julia-overview.pdf
+* https://github.com/mitmath/18337/blob/master/lecture1/fernbach%202019%20power_of_language.pptx
+
