@@ -191,19 +191,22 @@ end
 kernel = [1 2 -1; 2 0 -2; -1 -2 1]
 
 # ╔═╡ 268529fe-cb2d-460d-86a5-afb88e54137b
-@time convolve2D(img, kernel, callback=clipRGB);
+convolve2D(img2, kernel, callback=clipRGB)
 
-# ╔═╡ 7fb19257-a0b2-4f7d-8912-5c8a250a85cd
-let 
-	# kernel = Kernel.Laplacian()
-	imfilter(load("/tmp/my_earth.png"), kernel)
-end
+# ╔═╡ 4ab78bbc-aa89-4325-b8ee-906f7cba6075
+md"We can directly use the `imfilter` method provided by the `Images` library."
 
 # ╔═╡ c252841d-aba3-4a78-8b18-8a3924aab24b
-md"""Try these kernels to filter the image:
+md"""Try these kernels provided by the `ImageFiltering` library to filter the image:
 - `Kernel.Laplacian()`
 - `Kernel.gaussian(3)`
 """
+
+# ╔═╡ 7fb19257-a0b2-4f7d-8912-5c8a250a85cd
+let 
+	# kernel = Kernel.gaussian(3)
+	imfilter(load("/tmp/my_earth.png"), kernel)
+end
 
 # ╔═╡ f01f1a2d-002d-4372-b3be-887e0b30b092
 run(`rm /tmp/my_earth.png`)
@@ -1471,8 +1474,9 @@ version = "17.4.0+2"
 # ╠═d5fb7160-2d63-4da9-9f8e-53450f5a8dd3
 # ╠═06150612-5c8f-419d-abf9-f644851559df
 # ╠═268529fe-cb2d-460d-86a5-afb88e54137b
-# ╠═7fb19257-a0b2-4f7d-8912-5c8a250a85cd
+# ╟─4ab78bbc-aa89-4325-b8ee-906f7cba6075
 # ╟─c252841d-aba3-4a78-8b18-8a3924aab24b
+# ╠═7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 # ╠═f01f1a2d-002d-4372-b3be-887e0b30b092
 # ╟─2da4d930-dce3-4680-bea7-f8140b0fb62a
 # ╠═2ed6065b-7779-4bd3-bde2-57f0e05b8e27

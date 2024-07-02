@@ -181,7 +181,7 @@ begin
 	loss() = sum(abs2, predict_temp() .- true_temp) / length(true_temp)
 	
 	data = Iterators.repeated((), 160)  # () is the input to the loss function
-	opt = ADAM(0.1)
+	opt = ADAM(0.02)
 
 	losses = []
 	history = []
