@@ -39,7 +39,7 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 ## FAQ
 
 ### In what order should I read the notebooks in this repository?
-`basics`, `pdist`, `fibonacci`, `estimate_pi`, `image_transform`, `ebm`.
+`basics`, `image_transform`, `ebm`.
 
 ### What topics do these notebooks cover?
 `basics`:
