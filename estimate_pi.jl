@@ -14,6 +14,20 @@ end
 # ╔═╡ c79e8873-789a-4db8-8af5-d915c465d72b
 using .Utilities: still_missing
 
+# ╔═╡ d685eff6-ab91-4bee-bf7a-957b2ae644f0
+begin
+	using ForwardDiff  # automatically finds the derivative of a function
+	using Plots
+end
+
+# ╔═╡ c6b3bebe-32da-11ef-09ae-ad02d9296cab
+md"""### Estimate π using Monte Carlo
+![image](https://i.ytimg.com/vi/HUBNQicYDkU/maxresdefault.jpg)
+"""
+
+# ╔═╡ 2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
+pi_err(x) = (value=x, error=abs(x-π))
+
 # ╔═╡ 664e8ba5-6dd8-44af-a8e1-1df6f80510a2
 begin
 	using KernelAbstractions
@@ -35,20 +49,6 @@ begin
 		2 * prod(A)
 	end |> pi_err
 end
-
-# ╔═╡ d685eff6-ab91-4bee-bf7a-957b2ae644f0
-begin
-	using ForwardDiff  # automatically finds the derivative of a function
-	using Plots
-end
-
-# ╔═╡ c6b3bebe-32da-11ef-09ae-ad02d9296cab
-md"""### Estimate π using Monte Carlo
-![image](https://i.ytimg.com/vi/HUBNQicYDkU/maxresdefault.jpg)
-"""
-
-# ╔═╡ 2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
-pi_err(x) = (value=x, error=abs(x-π))
 
 # ╔═╡ efe11271-fe46-4399-ad6b-089b5b5ceec3
 function estimate_pi_mc(n=600_000_000)
@@ -94,7 +94,7 @@ end
 # ╔═╡ 4b0fd4e7-fa60-4115-9548-02f88f3b7a82
 md"""
 !!! danger "Task"
-	Implement a multithreaded version of `estimate_pi_prod`
+	Implement a multithreaded version of `estimate_pi_wallis`
 """
 
 # ╔═╡ 60ef1f4b-89ab-42ec-973f-1025d0161b96

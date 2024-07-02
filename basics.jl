@@ -42,8 +42,14 @@ let θ = rand(), z = exp(im * θ)  # let...end binds variables locally
 	x ^ 2 + y ^ 2 == 1.0
 end
 
+# ╔═╡ 76f1b9df-46e4-4920-b62d-f6e802f9a8ec
+θ
+
 # ╔═╡ b9ddc629-f680-4a71-8374-f3b01bb53890
 Tz = typeof(z)  # type alias
+
+# ╔═╡ 40ce6638-a83e-4928-beda-2aa4eaed6147
+Complex{Int}
 
 # ╔═╡ 414f4132-8d04-48c0-a107-e77af3fe928c
 fieldnames(Tz)
@@ -52,10 +58,13 @@ fieldnames(Tz)
 fieldtypes(Tz)
 
 # ╔═╡ 06ec1ee6-817b-45df-899a-3f8b0c541257
-fieldnames(Int)
+fieldnames(Int)  # primitive type
 
 # ╔═╡ eb50833d-3de0-431c-a12b-8b0169a221e7
 z.re, getfield(z, :im)
+
+# ╔═╡ 5fcf5830-5a7e-47fe-910c-f3c7831bee6f
+typeof(:im)
 
 # ╔═╡ 002bd083-00d2-4fd6-965f-9415d85f23f6
 subtypes(Integer), supertypes(Integer)
@@ -64,7 +73,7 @@ subtypes(Integer), supertypes(Integer)
 isabstracttype(Integer)
 
 # ╔═╡ 0c4a6998-8863-404e-96c2-952df70839ab
-isconcretetype(Int)
+isconcretetype(Int64)
 
 # ╔═╡ e3f7a77a-8c9e-4f15-af47-551fd959b2a6
 abstract type Distribution end
@@ -72,22 +81,26 @@ abstract type Distribution end
 # ╔═╡ 149a64ba-6d5b-4416-bc2d-8e1ae897c71d
 function probability(P::Distribution, interval::NTuple{2, Float64}; step=1e-6)
 	s, e = interval
-	xs = s:step:e
+	xs = s:step:e  # equivelant to range(s, e+step, step) in python
 	ps = P.(xs)
 	step * sum(ps)
 end
 
-# ╔═╡ 86242e6d-b229-4317-8f32-e92a4ad3de3e
-[1, 2, 3] isa Vector{<:Number}
+# ╔═╡ 69283b2e-bd47-4c3c-890f-677b253183e7
+v = [1, 2, 3]
 
-# ╔═╡ 510a8018-b160-42ea-9787-0bbb7bd890d2
-Array{Int, 1}
+# ╔═╡ d7186b34-117c-4a11-8907-91766a038425
+v[1]
+
+# ╔═╡ a2c92fca-fbab-4396-b472-a53d7a858abe
+typeof(v)
 
 # ╔═╡ 3cfce228-b634-4e31-b3f3-ddadb6c7a53d
 Array{Int, 2}
 
 # ╔═╡ 4f62d53f-11bb-4e53-b759-d6f49eec5cd4
 let a = Array{Float64}(undef, 2, 3)  # initialize a 2x3 Matrix of Float64s
+	@show a
 	for i in 1:2, j in 1:3
 		a[i, j] = i * j
 	end
@@ -97,6 +110,11 @@ end
 # ╔═╡ 952db525-9d54-4b56-a09f-3014a9ca9293
 [i * j for i in 1:2, j in 1:3]
 
+# ╔═╡ 21844a9b-54d3-4429-ba9d-3e3c2bc6ad65
+let a = 1:2:100
+	@code_warntype a[4]
+end
+
 # ╔═╡ 6b3a83eb-e316-46b5-a097-233145ab1bcc
 [1 2 3
  5 6 4
@@ -105,19 +123,14 @@ end
 # ╔═╡ d02b8c20-6e43-435c-ba9f-870b1bb5fae9
 zeros(3, 3)
 
+# ╔═╡ b5eb64a4-6572-405f-bed4-7e483f6e50e5
+rand(2, 2, 2)
+
 # ╔═╡ 8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
 A = rand(Float64, (3, 4))
 
 # ╔═╡ d1ca8fb0-580f-4625-aba3-dd18e054ee48
 size(A), size(A, 1)
-
-# ╔═╡ 8cbce37e-e384-47a3-b345-7f77699cfc8c
-let B = @show similar(A)
-	fill!(B, 3)
-	B[2, :] .= 1
-	B[10] = NaN
-	B
-end
 
 # ╔═╡ 8ea9ecaf-6d66-4e57-8606-e79fdc8415e5
 [A[:, 3:4]; A[[1,3], 1:2:end]]  # concat vertically
@@ -127,6 +140,9 @@ vcat(A[:, 3:4], A[[1,3], 1:2:end])
 
 # ╔═╡ 12008adf-5162-484c-af6b-30b2d43f46b5
 [sum(A .^ 2, dims=2) maximum(A, dims=2)]  # concat horizontally
+
+# ╔═╡ d1fb6a87-ef5f-49f8-be44-84889e4dfd39
+hcat(sum(A .^ 2, dims=2), maximum(A, dims=2))
 
 # ╔═╡ 9cb3f794-5696-4c9d-adf1-5d1f31ae8c00
 diff(cumsum(A, dims=2), dims=2) ≈ A[:, 2:end]
@@ -141,16 +157,12 @@ mean(A)
 methods(mean)
 
 # ╔═╡ 9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
-mean(A; dims=1)
+mean(A, dims=1)
 
 # ╔═╡ 17eeffee-701d-4251-aca7-308e456487da
 let B = reshape(A, 2, 6)
 	B[2, 3] = NaN
-	C = @view B[1:2, 2:3]
-	D = copy(C)
-	i = @show findfirst(isnan.(A))
-	A[i] = -1
-	C, D
+	A
 end
 
 # ╔═╡ 5af22ae0-effd-4589-bd1f-d375299b6848
@@ -190,10 +202,10 @@ p1 = NormalUntyped(0, 1)
 p1(0)
 
 # ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
-@code_warntype p1(1)
+@code_warntype p1(0)
 
 # ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
-@code_llvm p1(1)
+@code_llvm p1(0)
 
 # ╔═╡ 04780b58-ff08-4e77-b573-68a7d9fdf4da
 @time probability(p1, (-1.96, 1.96))
@@ -224,7 +236,7 @@ M ^ 2, exp(M)
 
 # ╔═╡ 6287eddc-9b35-489e-b584-8197c09cb228
 let b = [3, 2, 1]
-	x = @show M \ b  # inv(M) * b
+	x = inv(M) * b  # or M \ b
 	M * x
 end
 
@@ -248,9 +260,9 @@ let
 	function f(a, b=0, args...; c, d=1, kwargs...)
 		@show a b args c d kwargs
 	end
-	f('a', 2, 3, 4; c=3, e=7)
+	f('a', 2, 3, 4, c=3, e=7)
 	println()
-	f(1; c=7)
+	f(1, c=7)
 end
 
 # ╔═╡ 39a9ed81-ad29-45ef-a199-045a4634eee0
@@ -258,6 +270,9 @@ factorial(5)
 
 # ╔═╡ 7996e940-12d0-4c90-b173-9f04b2ede3d0
 factorial(32)
+
+# ╔═╡ 785e3c94-c385-4721-a232-56f26d072e33
+factorial(BigInt(32))
 
 # ╔═╡ e9b56975-891a-4cf9-b4e6-7ff72fa4235b
 let factorial(n) = n < 2 ? big(1) : n * factorial(n-1)
@@ -292,72 +307,13 @@ end
 
 # ╔═╡ 1396345b-8abf-48ac-8bfa-6c641a395c2c
 begin
-	sq(x) = x ^ 2
-	double(f) = x -> f(f(x))  # anonymous function
-	@show map(double(sq), [3, "3"])
-	triple(f) = f ∘ f ∘ f
-	inc = Base.Fix1(+, 1)  # inc = x -> 1 + x
-	@show triple(double)(inc)(0)  # applies inc for 2^3 times
+	inc = x -> x + 1  # anonymous function
+	double(f) = x -> f(f(x))
+	@show double(inc)(0)
+	triple(f) = f ∘ f ∘ f  # \circ -> ∘ (function composition)
+	@show triple(inc)(0)  # applies inc for 2^3 times
 	nfold(f, n) = foldr(∘, fill(f, n))
-	nfold(triple, 3)(cos)
-end
-
-# ╔═╡ 4c2d5a36-acaf-46ae-bb5a-a28d8ded855c
-let f(g) = n -> n < 2 ? big(1) : n * g(n-1)
-	partial_fact(i) = nfold(f, i)(x -> NaN)
-	for i in 1:8
-		println(partial_fact(i).(1:8))
-	end
-	Y_fact = (x -> f(y -> x(x)(y)))(x -> f(y -> x(x)(y)))  # Y combinator
-	Y_fact.(1:8)  # f(f(f(f(...))))
-end
-
-# ╔═╡ 8bc7e78b-ff6d-4553-b327-f03d21651121
-macro show_all(block)
-	if block.head == Symbol("let")
-		lines = block.args[2].args
-	elseif block.head == Symbol("block")
-		lines = block.args
-	else
-		return block
-	end
-	foreach(enumerate(lines)) do (i, ex)
-		if ex isa Union{Symbol, Expr, Number}
-			lines[i] = :(@show $ex)
-		end
-	end
-	return block
-end
-
-# ╔═╡ 936bc73b-681e-46a5-b7a5-4bb071cc91a5
-@show_all let T = Complex{Int64}
-	T<:Complex 
-	T<:Number 
-	T<:Complex{<:Real} 
-	T<:Complex{Real}
-	z isa Complex
-	Dict(zip(fieldnames(T), fieldtypes(T)))
-end
-
-# ╔═╡ fbd9a83b-17b4-47db-a46e-e7a9037b9090
-@show_all let a = -6:3:6, b = [1, 2, 3]
-	length(a)
-	reverse(a)
-	a .* 2
-	a[1:3:end]
-	a[end:-2:1]
-	maximum(a)  # max(a...)
-	abs.(a)
-	a .^ 2 |> sum  # sum of squares
-	count(iseven, a)
-	vcat(a, b)
-	zip(a, b) |> collect
-	map(-, a, b)
-	push!(b, 5, 4)
-	sort!(b)
-	deleteat!(b, 1)
-	accumulate(*, b)
-	foldl(-, b)  # 2 - 3 - 4 - 5 (starting from the left)
+	@show nfold(triple, 4)(inc)(0)
 end
 
 # ╔═╡ ac12297d-3358-45e7-8f76-3c0688a638bd
@@ -504,9 +460,6 @@ md"## Functions"
 # ╔═╡ 7af106cf-3e7b-497d-95c1-b90c09b048e5
 md"### Higher Order Functions"
 
-# ╔═╡ 3aecb613-5b0e-4551-8820-98c5fb1f10d7
-md"## Macros"
-
 # ╔═╡ 6042b2ff-d9fe-47c8-8f72-11f377299adc
 md"## Exercises"
 
@@ -602,6 +555,54 @@ memo
 
 # ╔═╡ e36c46d2-f745-48b7-bee1-a56c670c1e3c
 memo.size
+
+# ╔═╡ 8bc7e78b-ff6d-4553-b327-f03d21651121
+macro show_all(block)
+	if block.head == Symbol("let")
+		lines = block.args[2].args
+	elseif block.head == Symbol("block")
+		lines = block.args
+	else
+		return block
+	end
+	foreach(enumerate(lines)) do (i, ex)
+		if ex isa Union{Symbol, Expr, Number}
+			lines[i] = :(@show $ex)
+		end
+	end
+	return block
+end
+
+# ╔═╡ 936bc73b-681e-46a5-b7a5-4bb071cc91a5
+@show_all let T = Complex{Int64}
+	T<:Complex 
+	T<:Number 
+	T<:Complex{<:Real} 
+	T<:Complex{Real}
+	z isa Complex  # isa(z, Complex)
+	Dict(zip(fieldnames(T), fieldtypes(T)))
+end
+
+# ╔═╡ fbd9a83b-17b4-47db-a46e-e7a9037b9090
+@show_all let a = -6:3:6, b = [1, 2, 3]
+	length(a)
+	reverse(a)
+	a .* 2
+	a[1:3:end]
+	a[end:-2:1]
+	maximum(a)  # max(a...)
+	abs.(a)
+	a .^ 2 |> sum  # sum of squares
+	count(iseven, a)
+	vcat(a, b)
+	zip(a, b) |> collect
+	map(-, a, b)
+	push!(b, 5, 4)
+	sort!(b)
+	deleteat!(b, 1)
+	accumulate(*, b)
+	foldl(-, b)  # 2 - 3 - 4 - 5 (starting from the left)
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1727,13 +1728,16 @@ version = "1.4.1+1"
 # ╠═3ae5a286-cc9d-4837-a6de-c79bad078df4
 # ╠═b4de91e1-ef8a-44ae-ac31-ac99d0a041d2
 # ╠═79dd50f1-bd99-4384-b691-4bdb73096161
+# ╠═76f1b9df-46e4-4920-b62d-f6e802f9a8ec
 # ╟─13104a6c-0eb7-42d7-961d-addc55f06588
 # ╠═b9ddc629-f680-4a71-8374-f3b01bb53890
+# ╠═40ce6638-a83e-4928-beda-2aa4eaed6147
 # ╠═414f4132-8d04-48c0-a107-e77af3fe928c
 # ╠═bcacdf8c-695f-4590-b7d8-29d28086bd46
-# ╠═87c97051-6c29-43d9-abc6-5877ff03ee00
+# ╟─87c97051-6c29-43d9-abc6-5877ff03ee00
 # ╠═06ec1ee6-817b-45df-899a-3f8b0c541257
 # ╠═eb50833d-3de0-431c-a12b-8b0169a221e7
+# ╠═5fcf5830-5a7e-47fe-910c-f3c7831bee6f
 # ╠═936bc73b-681e-46a5-b7a5-4bb071cc91a5
 # ╠═002bd083-00d2-4fd6-965f-9415d85f23f6
 # ╠═18aab5fb-7add-4ada-b42e-2bc62968d6bc
@@ -1747,31 +1751,34 @@ version = "1.4.1+1"
 # ╠═322ea469-2961-46b0-a93c-20e2c8f94328
 # ╠═ec5238e4-f445-491c-bd14-8e1aba59049f
 # ╠═cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
+# ╟─f3b4eba4-5471-441e-b199-69fd07f528e2
 # ╠═c6739f52-f87f-4bef-8c32-ce3ec4942342
 # ╠═035f9794-43ea-4e19-860c-a66fd0ea1a14
 # ╠═57f30a3c-7d28-4819-958a-bf1859d6947c
 # ╠═024aa7d5-a569-4639-851f-b7d491855202
-# ╟─f3b4eba4-5471-441e-b199-69fd07f528e2
 # ╠═f640df71-ae15-4b67-a30e-c806ea532a19
 # ╟─2e6521be-ff66-47a9-8c19-68216cb62f3d
 # ╠═149a64ba-6d5b-4416-bc2d-8e1ae897c71d
 # ╠═04780b58-ff08-4e77-b573-68a7d9fdf4da
 # ╠═e64bf54d-681b-4117-815a-734e69925b7d
 # ╟─7b6e1d43-c72c-4bd9-b493-838b05e845c4
-# ╠═86242e6d-b229-4317-8f32-e92a4ad3de3e
-# ╠═510a8018-b160-42ea-9787-0bbb7bd890d2
+# ╠═69283b2e-bd47-4c3c-890f-677b253183e7
+# ╠═d7186b34-117c-4a11-8907-91766a038425
+# ╠═a2c92fca-fbab-4396-b472-a53d7a858abe
 # ╠═3cfce228-b634-4e31-b3f3-ddadb6c7a53d
 # ╠═4f62d53f-11bb-4e53-b759-d6f49eec5cd4
 # ╠═952db525-9d54-4b56-a09f-3014a9ca9293
+# ╠═21844a9b-54d3-4429-ba9d-3e3c2bc6ad65
 # ╠═fbd9a83b-17b4-47db-a46e-e7a9037b9090
 # ╠═6b3a83eb-e316-46b5-a097-233145ab1bcc
 # ╠═d02b8c20-6e43-435c-ba9f-870b1bb5fae9
+# ╠═b5eb64a4-6572-405f-bed4-7e483f6e50e5
 # ╠═8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
 # ╠═d1ca8fb0-580f-4625-aba3-dd18e054ee48
-# ╠═8cbce37e-e384-47a3-b345-7f77699cfc8c
 # ╠═8ea9ecaf-6d66-4e57-8606-e79fdc8415e5
 # ╠═2f512a32-8e03-4ef1-9a09-d5a388f06823
 # ╠═12008adf-5162-484c-af6b-30b2d43f46b5
+# ╠═d1fb6a87-ef5f-49f8-be44-84889e4dfd39
 # ╠═9cb3f794-5696-4c9d-adf1-5d1f31ae8c00
 # ╠═a4e1bde7-2de3-4df9-8dc3-f25aafac7dfd
 # ╠═c252cdaf-6334-4ddc-a114-5e7ea0d2ea63
@@ -1780,8 +1787,8 @@ version = "1.4.1+1"
 # ╠═9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
 # ╠═6b95a054-c3f7-4777-bbcd-ccbd12741234
 # ╠═17eeffee-701d-4251-aca7-308e456487da
-# ╠═5af22ae0-effd-4589-bd1f-d375299b6848
 # ╟─66cae8d2-8e20-4b1e-9dae-e120eee4d944
+# ╠═5af22ae0-effd-4589-bd1f-d375299b6848
 # ╠═e3201408-e6b6-49be-b693-65d55b20be5f
 # ╠═83d0d182-c876-4aa2-a6f3-dfa92477bdcd
 # ╠═6287eddc-9b35-489e-b584-8197c09cb228
@@ -1791,15 +1798,13 @@ version = "1.4.1+1"
 # ╠═72bdde5a-a503-4cc4-bd06-de49794e53b5
 # ╠═39a9ed81-ad29-45ef-a199-045a4634eee0
 # ╠═7996e940-12d0-4c90-b173-9f04b2ede3d0
+# ╠═785e3c94-c385-4721-a232-56f26d072e33
 # ╠═e9b56975-891a-4cf9-b4e6-7ff72fa4235b
 # ╠═e6e2109f-07f7-4bdb-a44b-075125de8cf1
 # ╠═ef49a0fa-a322-480f-9981-4247a3647f38
 # ╠═4163b41b-03b3-45eb-8ada-adb8c697f10c
 # ╟─7af106cf-3e7b-497d-95c1-b90c09b048e5
 # ╠═1396345b-8abf-48ac-8bfa-6c641a395c2c
-# ╠═4c2d5a36-acaf-46ae-bb5a-a28d8ded855c
-# ╟─3aecb613-5b0e-4551-8820-98c5fb1f10d7
-# ╠═8bc7e78b-ff6d-4553-b327-f03d21651121
 # ╟─6042b2ff-d9fe-47c8-8f72-11f377299adc
 # ╠═ac12297d-3358-45e7-8f76-3c0688a638bd
 # ╟─0102faaf-c6cc-4a95-bd77-0a762f1ba680
@@ -1830,5 +1835,6 @@ version = "1.4.1+1"
 # ╠═73e474e7-5621-4abc-8dcf-d90bcfc4e57d
 # ╠═fae78894-54a9-4696-8eda-9e7b067779fd
 # ╠═e36c46d2-f745-48b7-bee1-a56c670c1e3c
+# ╟─8bc7e78b-ff6d-4553-b327-f03d21651121
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

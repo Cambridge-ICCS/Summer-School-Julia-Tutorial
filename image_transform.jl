@@ -28,11 +28,64 @@ typeof(img)
 # ╔═╡ cb18c751-11ac-4ac7-9a51-b5a81ac9d553
 size(img)
 
+# ╔═╡ 09d1fff1-443f-47f5-a465-edb919f612d3
+let c = RGB(.2, .3, .4)
+	red(c), green(c), blue(c)
+end
+
 # ╔═╡ 68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
 0.5(RGB(1, 0, 0) + RGB(0, 0, 1))
 
-# ╔═╡ 09d1fff1-443f-47f5-a465-edb919f612d3
-red(RGB(.2, .3, .4))
+# ╔═╡ 3d52bc87-c24a-45b8-abc5-22c42fc4f265
+md"## Image Linear Transformation"
+
+# ╔═╡ d4b8edee-760b-44ae-901c-5b9028a091d7
+function borders(a::AbstractArray)
+	ax_ranges = convert.(UnitRange, axes(a))
+	[(r.start, r.stop) for r in ax_ranges]
+end
+
+# ╔═╡ fd12f674-74b3-4ffa-bdfd-9533380add0b
+function transform_image(img::AbstractMatrix{<:RGB}, basis::Matrix{<:Real})
+	M, N = size(img)
+	# A = OffsetMatrix(img, -M÷2, -N÷2)
+	A = centered(img)
+	(i0, i1), (j0, j1) = borders(A)
+	sx, sy = svd(basis).S  # singular values (x scale, y scale)
+	P = Iterators.product((i0*sy):(i1*sy), (j0*sx):(j1*sx))
+	Idx = Int32.(floor.(inv(basis) * reshape(collect(Iterators.flatten(P)), 2, :)))
+	blank = RGB(0, 0, 0)
+	color(i, j) = i0 <= i <= i1 && j0 <= j <= j1 ? A[i,j] : blank
+	C = color.(eachrow(Idx)...)
+	reshape(C, length.(P.iterators)...)
+end
+
+# ╔═╡ cf464513-0fe3-4e3c-8d3e-2e673a485bdb
+@bind T PlutoUI.combine() do Child
+	θ = Child("θ", Slider(0:5:360, show_value=true))
+	ϕ = Child("ϕ", Slider(0:5:360, show_value=true))
+	x = Child("x", Slider(0.1:0.02:1, show_value=true, default=0.5))
+	y = Child("y", Slider(0.1:0.02:1, show_value=true, default=0.5))
+	md"""
+	1. rotation: $θ``^\degree``
+	1. horizontal scale: $x
+	1. vertical scale: $y
+	1. rotation: $ϕ``^\degree``
+	"""
+end
+
+# ╔═╡ 74cd3cc8-f897-449e-be69-cadea4da9e3c
+begin
+	rotate(θ) = [cos(θ) -sin(θ); sin(θ) cos(θ)]
+	scaley(a) = [a 0; 0 1]
+	scalex(a) = [1 0; 0 a]
+
+	trans = rotate(-T.ϕ * π/180) * scalex(T.x) * scaley(T.y) * rotate(T.θ * π/180)
+	img2 = transform_image(img, trans)
+end
+
+# ╔═╡ ccdb123d-53db-4b54-a96b-90453df0d619
+save("/tmp/my_earth.png", img2)
 
 # ╔═╡ dbbe16ae-dd77-458c-8a65-1dec362c06d8
 md"## Image Compression"
@@ -47,6 +100,7 @@ SVD_results = [svd(f.(img)) for f in [red, green, blue]];
 let
 	data = @time map(SVD_results) do (U, Σ, V)
 		U_K = U[:, 1:K]
+		@show issorted(Σ, rev=true)
 		Σ_K = Diagonal(Σ[1:K])
 		V_K = V[:, 1:K]
 		println("Data size: ", sum(length(a) for a in [U_K, Σ_K, V_K]))
@@ -73,57 +127,75 @@ let
 	hcat(img, RGB.(data...))
 end
 
-# ╔═╡ 3d52bc87-c24a-45b8-abc5-22c42fc4f265
-md"## Image Linear Transformation"
-
-# ╔═╡ fd12f674-74b3-4ffa-bdfd-9533380add0b
-function transform_image(img::AbstractMatrix{<:RGB}, basis::Matrix{<:Real})
-	M, N = size(img)
-	# A = OffsetMatrix(img, -M÷2, -N÷2)
-	A = centered(img)
-	I, J = convert.(UnitRange, axes(A))
-	sx, sy = svd(basis).S  # singular values
-	P = Iterators.product((I.start*sy):(I.stop*sy), (J.start*sx):(J.stop*sx))
-	Idx = Int32.(floor.(inv(basis) * reshape(collect(Iterators.flatten(P)), 2, :)))
-	blank = RGB(0, 0, 0)
-	color(i, j) = i in I && j in J ? A[i,j] : blank
-	C = color.(eachrow(Idx)...)
-	reshape(C, length.(P.iterators)...)
-end
-
-# ╔═╡ cf464513-0fe3-4e3c-8d3e-2e673a485bdb
-@bind T PlutoUI.combine() do Child
-	θ = Child("θ", Slider(0:5:360, show_value=true))
-	ϕ = Child("ϕ", Slider(0:5:360, show_value=true))
-	x = Child("x", Slider(0.1:0.02:1, show_value=true, default=0.5))
-	y = Child("y", Slider(0.1:0.02:1, show_value=true, default=0.5))
-	md"""
-	1. rotation: $θ
-	1. horizontal scale: $x
-	1. vertical scale: $y
-	1. rotation: $ϕ
-	"""
-end
-
-# ╔═╡ 74cd3cc8-f897-449e-be69-cadea4da9e3c
-begin
-	rotate(θ) = [cos(θ) -sin(θ); sin(θ) cos(θ)]
-	scaley(a) = [a 0; 0 1]
-	scalex(a) = [1 0; 0 a]
-
-	trans = rotate(-T.ϕ * π/180) * scalex(T.x) * scaley(T.y) * rotate(T.θ * π/180)
-	img2 = transform_image(img, trans)
-end
-
-# ╔═╡ ccdb123d-53db-4b54-a96b-90453df0d619
-save("/tmp/my_earth.png", img2)
-
 # ╔═╡ 79fa4049-f8f8-463e-b8bd-6a4792a5d15b
 md"## Image Filtering"
 
+# ╔═╡ b32e2e9c-5b67-4104-989b-16620268bbfb
+function convolve2D(image::AbstractMatrix, kernel::AbstractMatrix; callback=x->x)
+	kernel = centered(kernel)
+	(t, b), (l, r) = borders(kernel)  # top, bottom, left, right
+	out = similar(image)
+	pa = padarray(image, Pad(:replicate, (-t, -l), (b, r)))
+	@Threads.threads for idx in CartesianIndices(image)  # multi-threading
+		i, j = idx.I
+		patch = @view pa[i+t:i+b, j+l:j+r]  # @view avoids making a copy
+		out[i, j] = callback(mapreduce(*, +, kernel.parent, patch))
+		# .parent gets the original array
+	end
+	return out
+end
+
+# ╔═╡ 6c38ac7a-302d-4c32-a78a-4ac78e1aacf0
+mapreduce(*, +, [1,2,3], [3,2,1])
+# ==> reduce(+, map(*, [1,2,3], [3,2,1]))
+# ==> sum(a * b for (a, b) in zip([1,2,3], [3,2,1]))
+
+# ╔═╡ 5fa0ba4f-6b18-42a8-b1ae-63a42fac4675
+md"A bit of digression into multithread parallelization in Julia."
+
+# ╔═╡ 04de16bf-b5a6-47fb-a72a-7af0331e3fed
+let K = @show Threads.nthreads()
+	function task(t)
+		println("start sleeping for $t seconds (in thread $(Threads.threadid()))")
+		sleep(t)
+		println("waking up (in thread $(Threads.threadid()))")
+		return t
+	end
+	
+	ts = fill(.1, 6)
+	
+	@time @assert sum(task, ts) == sum(ts)
+	println()
+	
+	@time let tasks = [@Threads.spawn task(t) for t in ts]
+		@assert sum(fetch, tasks) == sum(ts)
+	end
+	println()
+
+	a = 0.0
+	@time @Threads.threads for t in ts
+		a += task(t)  # race condition!
+	end
+	@show a
+	# `a` is written by multiple threads at the same time
+	# in effect, its value is only increased for once
+end
+
+# ╔═╡ d5fb7160-2d63-4da9-9f8e-53450f5a8dd3
+function clipRGB(c::RGB, lo=0.0, hi=1.0)
+	f(x) = min(hi, max(lo, x))
+	RGB(f(c.r), f(c.g), f(c.b))
+end
+
+# ╔═╡ 06150612-5c8f-419d-abf9-f644851559df
+kernel = [1 2 -1; 2 0 -2; -1 -2 1]
+
+# ╔═╡ 268529fe-cb2d-460d-86a5-afb88e54137b
+@time convolve2D(img, kernel, callback=clipRGB);
+
 # ╔═╡ 7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 let 
-	kernel = centered([1 2 -1; 2 0 -2; -1 -2 1])
+	# kernel = Kernel.Laplacian()
 	imfilter(load("/tmp/my_earth.png"), kernel)
 end
 
@@ -139,7 +211,8 @@ run(`rm /tmp/my_earth.png`)
 # ╔═╡ 2da4d930-dce3-4680-bea7-f8140b0fb62a
 md"""## Exercise 1
 
-Write a function that inverts the pixel colors of an image, i.e. converts `(r, g, b)` to `(1 - r, 1 - g, 1 - b)`.
+!!! danger "Task"
+	Write a function that inverts the pixel colors of an image, i.e. converts `(r, g, b)` to `(1 - r, 1 - g, 1 - b)`.
 """
 
 # ╔═╡ 2ed6065b-7779-4bd3-bde2-57f0e05b8e27
@@ -154,7 +227,10 @@ invert(img)
 # ╔═╡ f33c6690-f55c-4580-8ea0-b58aa6864bd2
 md"""## Exercise 2
 
-Write a function that applies a given function `f` to each pixel of an RGB matrix.
+!!! danger "Task"
+	Write a function that applies a given function `f` to each pixel of an RGB matrix.
+
+	*Bonus point*: use multi-threading in your implementation and measure the performance improvement.
 """
 
 # ╔═╡ 22523aa4-f1c1-4c40-b344-9c2020c94544
@@ -164,10 +240,23 @@ function map_image(f::Function, image::AbstractMatrix{<:RGB})
 end
 
 # ╔═╡ 3cc07495-bce9-4b1f-8223-9829b1f943c3
-map_image(c -> RGB(c.r, 0., 0.), img)
+@time map_image(c -> RGB(c.r, 0., 0.), img)
+
+# ╔═╡ dc86fd91-a9e6-4869-abb9-1fe9cfdf08a1
+@time map_image(c -> RGB(1-c.r, 1-c.g, 1-c.b), img)
+
+# ╔═╡ 24444576-935c-4d5f-a412-3a799270bdb1
+# sample solution of parallelized map_image
+function map_image_parallel(f::Function, image::AbstractMatrix{<:RGB})
+	out = similar(image)
+	Threads.@threads for i in 1:length(image)
+		out[i] = f(image[i])
+	end
+	out
+end
 
 # ╔═╡ e43fb1d4-ca68-475f-8a05-211d045e4734
-map_image(c -> RGB(1-c.r, 1-c.g, 1-c.b), img)
+@time map_image_parallel(c -> RGB(1-c.r, 1-c.g, 1-c.b), img);
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1359,21 +1448,29 @@ version = "17.4.0+2"
 # ╠═62c81910-330a-11ef-2304-250af46959c0
 # ╠═699b06a0-d706-470e-aca8-8d882b85c09a
 # ╠═cb18c751-11ac-4ac7-9a51-b5a81ac9d553
-# ╠═68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
 # ╠═09d1fff1-443f-47f5-a465-edb919f612d3
-# ╟─dbbe16ae-dd77-458c-8a65-1dec362c06d8
-# ╠═019cbf4d-49b2-4d74-aa10-ab23c7c18ddb
-# ╠═2b99f7f5-e01c-4dd5-a1af-7e9fa1744269
-# ╟─ed7b0ce7-7b45-4109-83b8-d82597802f8d
-# ╠═b114d895-79e6-4309-b881-9bc9bd1db58e
-# ╠═26719593-1dbb-4eba-8426-2c8a702eb626
-# ╟─09071740-a203-4837-841a-41f52283d3a1
+# ╠═68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
 # ╟─3d52bc87-c24a-45b8-abc5-22c42fc4f265
+# ╠═d4b8edee-760b-44ae-901c-5b9028a091d7
 # ╠═fd12f674-74b3-4ffa-bdfd-9533380add0b
 # ╟─cf464513-0fe3-4e3c-8d3e-2e673a485bdb
 # ╠═74cd3cc8-f897-449e-be69-cadea4da9e3c
 # ╠═ccdb123d-53db-4b54-a96b-90453df0d619
+# ╟─dbbe16ae-dd77-458c-8a65-1dec362c06d8
+# ╠═019cbf4d-49b2-4d74-aa10-ab23c7c18ddb
+# ╠═2b99f7f5-e01c-4dd5-a1af-7e9fa1744269
+# ╠═ed7b0ce7-7b45-4109-83b8-d82597802f8d
+# ╠═b114d895-79e6-4309-b881-9bc9bd1db58e
+# ╠═26719593-1dbb-4eba-8426-2c8a702eb626
+# ╟─09071740-a203-4837-841a-41f52283d3a1
 # ╟─79fa4049-f8f8-463e-b8bd-6a4792a5d15b
+# ╠═b32e2e9c-5b67-4104-989b-16620268bbfb
+# ╠═6c38ac7a-302d-4c32-a78a-4ac78e1aacf0
+# ╟─5fa0ba4f-6b18-42a8-b1ae-63a42fac4675
+# ╠═04de16bf-b5a6-47fb-a72a-7af0331e3fed
+# ╠═d5fb7160-2d63-4da9-9f8e-53450f5a8dd3
+# ╠═06150612-5c8f-419d-abf9-f644851559df
+# ╠═268529fe-cb2d-460d-86a5-afb88e54137b
 # ╠═7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 # ╟─c252841d-aba3-4a78-8b18-8a3924aab24b
 # ╠═f01f1a2d-002d-4372-b3be-887e0b30b092
@@ -1383,6 +1480,8 @@ version = "17.4.0+2"
 # ╟─f33c6690-f55c-4580-8ea0-b58aa6864bd2
 # ╠═22523aa4-f1c1-4c40-b344-9c2020c94544
 # ╠═3cc07495-bce9-4b1f-8223-9829b1f943c3
+# ╠═dc86fd91-a9e6-4869-abb9-1fe9cfdf08a1
 # ╠═e43fb1d4-ca68-475f-8a05-211d045e4734
+# ╟─24444576-935c-4d5f-a412-3a799270bdb1
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

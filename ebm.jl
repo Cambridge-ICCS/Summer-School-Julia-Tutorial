@@ -11,6 +11,14 @@ begin
 	plotlyjs()
 end
 
+# ╔═╡ d584e21d-3c8e-4fd9-9818-33cadb782ac9
+md"""### Key Take-away Features
+
+- The SciML community
+- Data Visualization
+- Neural ODE
+"""
+
 # ╔═╡ c5765cae-28fd-439e-b5ce-844b5637d2e4
 begin
 	# https://dataframes.juliadata.org/stable/man/comparisons/
@@ -24,8 +32,6 @@ begin
 		header=offset, 
 		skipto=offset+2,
 	)
-
-	last(CO2_historical_data_raw, 220)
 end
 
 # ╔═╡ d6ecc837-be55-4db7-bac7-8446e7a3cfa2
@@ -66,11 +72,11 @@ md"Reference: [https://florianboergel.github.io/climateoftheocean/2020-11-11-ene
 
 # ╔═╡ c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
 begin
-	@parameters t α a S T_0 A B C
-	@variables T(t) R(t)
+	@parameters t α a S B C T_0
+	@variables T(t) R(t) G(T, t)
 
 	absorbed_solar_radiation = (1 - α) * S / 4
-	outgoing_thermal_radiation = A - B * T
+	outgoing_thermal_radiation = G
 	greenhouse_effect = a * log(R)
 
 	D = Differential(t)
@@ -79,7 +85,8 @@ begin
 			absorbed_solar_radiation - 
 			outgoing_thermal_radiation + 
 			greenhouse_effect,
-		R ~ CO2(t) / CO2(1850)
+		G ~ absorbed_solar_radiation + B * (T_0 - T),
+		R ~ only(CO2(t) / CO2(1850)),  # takes the value of a single-element array
 	]
 end
 
@@ -89,22 +96,25 @@ end
 # ╔═╡ 4084d556-5673-444f-bb9f-e77a502799d5
 begin
 	T0 = 14.0
-	ini = [T => T0]  # initial condition
+	ini = [T => T0]  # initial condition (assume thermal equilibrium)
 	ps = [  # parameters
 		a => 5.,  # CO2 forcing coefficient [W/m^2]
 		α => 0.3,  # albedo
 		C => 51.,  # atmosphere and upper-ocean heat capacity
 		S => 1368.,  # solar insolation
-		A => absorbed_solar_radiation + B * T0,
 		B => -1.3,  # climate feedback parameter [W/m^2/°C]
+		T_0 => T0,
 	]
 	tspan = (1850, 2024)
 	prob = ODEProblem(sys, ini, tspan, ps)
 end
 
+# ╔═╡ 6b608521-626c-4366-b1ce-5520d2c71529
+solution = solve(prob)
+
 # ╔═╡ 29f5d3a1-b805-4c90-b602-0d2de83d0152
 begin
-	temps = vcat(solve(prob).(1880:2030)...)
+	temps = vcat(solution.(1880:2030)...)
 	plot(1880:2030, temps, lw=2, legend=:topleft,
 		 label="Predicted Temperature from model")
 	xlabel!("year")
@@ -129,28 +139,33 @@ plot!(T_df[:, :year], T_df[:, :temp],
 # ╔═╡ a2bd2e6c-4908-472a-9cd7-b7bf22c313e2
 md"""The reason why the predicted temperature is lower than the observation is probably that we have not taken into account other greenhouse gases and feedback factors such as sea-ice albedo and water vapour."""
 
+# ╔═╡ 75cad6f3-ea0d-48d6-b314-df2660f3fe61
+md"Let's fit a neural ODE to better approximate the real observations. We will use a Flux neural network to approximate the outgoing radiation term, instead of the current coarse linear approximation obtained from a Taylor Series expansion."
+
 # ╔═╡ 68b04370-7d3e-4b6a-a07a-e11b90ce440e
 begin
 	@variables NN(t)
-	dT_expr = substitute(substitute(sys, ps).eqs[1].rhs, [ps; log(R) => NN])
-	dT_expr = simplify(dT_expr, expand=true)
+	new_sys = substitute(sys, [ps; G => NN; R => sys.eqs[3].rhs])
 end
+
+# ╔═╡ 9a93642b-7fca-4346-914b-e9a1ab6c2bc9
+new_dT = simplify(new_sys.eqs[1].rhs, expand=true)
 
 # ╔═╡ 981f864e-da3f-4f27-996b-3172ae0fe76f
 begin
 	using Flux, SciMLSensitivity
 
-	function dTdt(dT_t, T_t, p, t)
-		nn = reconstruct(p)
-		x = (t - 1850) / 200
-		y = T_t[1]
-		c0, c1 = nn([x, x^2, x^3])  # ODE parameters estimated by the NN
-		dT_t[1] = substitute(dT_expr, Dict(T => y, NN => c0 + c1 * y))
+	function dTdt(dT, T, ps, yr)
+		nn = reconstruct(ps)
+		x = (yr - 1850) / 200
+		u = T .^ [0 1 2]
+		c = nn([x, x^2, x^3])  # ODE parameters estimated by the NN
+		dT[1] = substitute(new_dT, Dict(NN => only(u * c), t => yr))
 	end
 
 	init = Flux.orthogonal
 	nn = Chain(Dense(3,16,selu,init=init),
-		       Dense(16,2,init=init)) |> f64  # float32 by default
+		       Dense(16,3,init=init)) |> f64  # float32 by default
 
 	params, reconstruct = Flux.destructure(nn)
 
@@ -163,20 +178,24 @@ begin
 
 	mask = T_df.year[1] .<= range(tspan...) .<= T_df.year[end]
 	predict_temp() = Vector(solve(nn_prob, Tsit5(), p=params, saveat=1))[mask]
-	loss() = sum(abs2, predict_temp() .- true_temp)
+	loss() = sum(abs2, predict_temp() .- true_temp) / length(true_temp)
 	
-	data = Iterators.repeated((), 200)
-	opt = ADAM(0.012)
+	data = Iterators.repeated((), 160)  # () is the input to the loss function
+	opt = ADAM(0.1)
 
+	losses = []
 	history = []
 	
 	callback = function ()
-		println(loss())
+		push!(losses, loss())
 		push!(history, predict_temp())
 	end
 	
 	Flux.train!(loss, Flux.params(params), data, opt, cb=callback)
 end
+
+# ╔═╡ 512c0d2e-25ed-44fe-a0f9-f09af0d1be49
+plot(losses)
 
 # ╔═╡ 840b3aae-3ea6-4726-bfea-569ddb69e103
 @gif for p in history[2:2:end]
@@ -187,10 +206,16 @@ end
 # ╔═╡ ea8427d8-37f5-4e69-ab1f-e53f4031610d
 begin
 	ts = (1880, 2050)
-	pred = Vector(solve(nn_prob, Tsit5(), tspan=ts, p=params, saveat=1))
+	pred = Vector(solve(nn_prob, Tsit5(), tspan=ts, saveat=1))
 	plot(range(ts...), pred, label="Predicted Temperature", legend=:topleft)
 	plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
 end
+
+# ╔═╡ e3cb923a-f3c6-41d4-8072-9f4b183d77a0
+md"""
+!!! danger "Task"
+	Compare ``\frac{dT}{dt}`` between the original ODE and the neural ODE.
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -3128,6 +3153,7 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
+# ╟─d584e21d-3c8e-4fd9-9818-33cadb782ac9
 # ╠═1fbb5414-3483-11ef-2f91-affe69c5f577
 # ╠═c5765cae-28fd-439e-b5ce-844b5637d2e4
 # ╠═d6ecc837-be55-4db7-bac7-8446e7a3cfa2
@@ -3137,14 +3163,19 @@ version = "1.4.1+1"
 # ╠═c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
 # ╠═70db5d4d-e346-476a-8bba-50070260abe5
 # ╠═4084d556-5673-444f-bb9f-e77a502799d5
+# ╠═6b608521-626c-4366-b1ce-5520d2c71529
 # ╠═29f5d3a1-b805-4c90-b602-0d2de83d0152
 # ╠═b29d66d4-ef28-4de8-acc1-7d4fe607742b
 # ╠═7f4af72c-9ca1-4b65-8557-9d59880ba261
 # ╟─a2bd2e6c-4908-472a-9cd7-b7bf22c313e2
+# ╟─75cad6f3-ea0d-48d6-b314-df2660f3fe61
 # ╠═68b04370-7d3e-4b6a-a07a-e11b90ce440e
+# ╠═9a93642b-7fca-4346-914b-e9a1ab6c2bc9
 # ╠═981f864e-da3f-4f27-996b-3172ae0fe76f
 # ╠═af156b54-629a-48e7-8065-e426b17e8224
+# ╠═512c0d2e-25ed-44fe-a0f9-f09af0d1be49
 # ╠═840b3aae-3ea6-4726-bfea-569ddb69e103
 # ╠═ea8427d8-37f5-4e69-ab1f-e53f4031610d
+# ╟─e3cb923a-f3c6-41d4-8072-9f4b183d77a0
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
