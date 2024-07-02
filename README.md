@@ -64,14 +64,6 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 - DifferentialEquations
 - Neural ODE
 
-(Optional)
-`estimate_pi`:
-- monte carlo simulation
-- multi-threading
-- writing CPU/GPU kernel for parallelization
-- automatic differentiation
-- animation
-
 ### How to type Unicode characters?
 Type the corresponding LaTeX-like character sequence (starting with `\`), followed by a `tab`.
 
