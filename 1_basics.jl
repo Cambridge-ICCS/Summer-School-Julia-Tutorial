@@ -143,21 +143,26 @@ md"(Show this cell for a sample solution)"
 # ╔═╡ b5b168db-b896-41bb-afeb-08e328d7b28e
 md"## Function Definition"
 
+# ╔═╡ 8bed8fcc-1ea4-414f-a188-910b74632085
+# arguments before the ; are positional, after are keyword
+# there can be defaults in both categories
+# anything without a default must be assigned when the function is called
+# ... before the ; accepts any number of positional arguments
+# ... after the ; accepts any keyword arguments
+# the names args and kwargs are conventional for these extra arguments
+# the string above the function definiction is documentation
+
+"My custon function."
+function func(a, b=0, args...; c, d=1, kwargs...)
+	@show a b args c d kwargs
+	println()
+	return a
+end
+
 # ╔═╡ 40c36c39-b3b7-4c12-a116-7c0ddb079085
-let
-	# arguments before the ; are positional, after are keyword
-	# there can be defaults in both categories
-	# anything without a default must be assigned when the function is called
-	# ... before the ; accepts any number of positional arguments
-	# ... after the ; accepts any keyword arguments
-	# the names args and kwargs are conventional for these extra arguments
-	function f(a, b=0, args...; c, d=1, kwargs...)
-		@show a b args c d kwargs
-		println()
-		return a
-	end
-	f('a', 2, 3, 4, c=3, e=7)
-	f(1, c=7)
+begin
+	func('a', 2, 3, 4, c=3, e=7)
+	func(1, c=7)
 end
 
 # ╔═╡ 4a851df6-3894-42a9-9acd-eb25a56f5535
@@ -183,27 +188,64 @@ md"Estimate π using fixed point iteration:"
 1 |> nfold(x -> x + sin(x), 5)
 # `a |> f` (pipe operator) is equivalent to `f(a)`
 
+# ╔═╡ c7bff4de-88ca-4264-bf83-4a2f08728395
+md"### Recursive Functions"
+
+# ╔═╡ 82b29e45-827c-44b9-9225-17ae863c34bd
+factorial(4)
+
+# ╔═╡ 0fcdc4f2-f369-4d09-ac6c-c42d2a8172ce
+factorial(30)
+
+# ╔═╡ eb40f8e1-4e03-4099-bba0-29e0ea43ed79
+fact_big(n::Integer) = n < 2 ? big(1) : n * fact_big(n - 1)
+
+# ╔═╡ 161587eb-5676-4154-9dff-abe0868efc03
+fact_big(30)
+
+# ╔═╡ c827b4d5-67fe-48df-aad2-15af280b7050
+md"See [Arbitrary Precision Arithmetic](https://docs.julialang.org/en/v1/manual/integers-and-floating-point-numbers/#Arbitrary-Precision-Arithmetic) in the Julia documentation."
+
 # ╔═╡ 360d4228-a59a-4915-bf23-dd5537274d78
 md"""
 !!! danger "Task"
-	Write a function `total(ns...)` that adds all its input arguments together.
+	Implement the `fib(n)` function to calculate the `n`-th Fibonacci number.
 """
 
 # ╔═╡ 94f505a0-c146-4ce6-8274-4d84edfd0abe
 md"""
 !!! hint
-	Use the `reduce` function.
+	Recall that `fib(0) = 0`, `fib(1) = 1`, and `fib(n) = fib(n-1) + fib(n-2)`.
 """
 
 # ╔═╡ 0abdd55f-f7aa-4896-9f6d-f8c2ea638acf
-total(ns...) = missing  # replace `missing` with your code
+function fib(n)
+	missing  # replace `missing` with your answer
+end
 
 # ╔═╡ a338fd44-7ccb-4607-bdc7-01ada39f02b9
 md"(Show this cell for a sample solution)"
 # sum(n...) = reduce(+, ns)
 
 # ╔═╡ 8116c816-ab72-4415-94bf-a66ad7f52d2d
-total(1, 2, 3)
+function fib_c(n)
+    z = BigInt()
+    @ccall "libgmp".__gmpz_fib_ui(z::Ref{BigInt}, n::Culong)::Cvoid
+	# Call the fib function in the C library libgmp
+    return z
+end
+
+# ╔═╡ bd7bed63-714c-417c-822c-2c07419d59db
+let
+	result = all(fib(n) == fib_c(n) for n in 0:30)
+	if ismissing(result)
+		Utilities.still_missing()
+	elseif result
+		Utilities.correct()
+	else
+		Utilities.keep_working()
+	end
+end
 
 # ╔═╡ 13104a6c-0eb7-42d7-961d-addc55f06588
 md"## Type System"
@@ -328,6 +370,9 @@ methods(mean)
 # ╔═╡ 6b95a054-c3f7-4777-bbcd-ccbd12741234
 @which mean(1:100)
 
+# ╔═╡ 2db6eff5-e28a-4594-a13b-3ed429d47140
+methodswith(StepRange)
+
 # ╔═╡ 26f43214-3b99-4c99-9512-398a28f9ae0a
 md"""
 !!! danger "Task"
@@ -341,47 +386,40 @@ md"""
 """
 
 # ╔═╡ b226106d-6f21-4d72-951c-c4d9d01cbbcb
-# Q = NaN  # replace NaN with your answer
+Q = missing  # replace missing with your answer
 
 # ╔═╡ aa0c8fec-254b-4805-bf07-b1ce7266685c
-# md"(Show this cell for a sample solution)"
-Q = randn(1000, 2)
+begin
+	md"(Show this cell for a sample solution)"
+	# Q = randn(1000, 2)
+end
+
+# ╔═╡ 03c85588-2237-4d17-9755-bd3386f8e348
+md"""
+!!! danger "Task"
+	Scale each column of Q by the values in the second row of `S`, and then shift each column of Q by the first row of `S`. These operations should be in-place.
+"""
 
 # ╔═╡ 24077fc9-4d06-4b80-91be-321a7bb0fe5c
-ms, ss = [2.0 -1.0], [4.0 0.2]
+S = [2.0 -1.0; 4.0 0.2]
 
 # ╔═╡ 50cb4c19-1d76-4844-8bc7-bc564aa34ab8
-R = ss .* Q .+ ms;
+begin
+	md"(Show this cell for a sample solution)"
+	# @. Q = S[2, :]' * Q + S[1, :]'  # @. converts all operators to a broacasting one
+end
 
 # ╔═╡ 8615c4ca-7e2b-49fb-bb0f-078347a7c56b
 md"""
 !!! danger "Task"
-	Calculate the `mean` and `std` of each column of `R` and assign them to `Rm` and `Rs` respectively.
+	Calculate the `mean` and `std` of each column of `Q` and concatenate them vertically. Compare the result with `S`.
 """
 
 # ╔═╡ be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
-# md"(Show this cell for a sample solution)"
-Rm, Rs = mean(R, dims=1), std(R, dims=1)
-
-# ╔═╡ ec2d6a3b-4bc5-4629-a772-5dca32d1a863
-md"""
-!!! danger "Task"
-	Create a `Normal` Distribution using each pair of `ms` and `ss`, and assign the distributions to `Ps` (should be a `Vector{Normal}` with length 2). Compare the parameters of these distributions with `Rm` and `Rs`.
-"""
-
-# ╔═╡ 870241c7-ee8d-4f60-8105-65714bccf522
-md"""
-!!! danger "Optional Task"
-	Calculate the negative log joint probability of each column of `R` being samples of the corresponding distribution in `Ps`.
-
-	The negative log joint probability of getting samples ``x`` from a distribution ``P`` is defined as ``-\log\prod_i P(x_i)=-\sum_i\log P(x_i)``.
-"""
-
-# ╔═╡ f5b83c37-bd36-43b1-8af5-c87452e71e21
-md"""
-!!! hint
-	The negative log joint probability of getting samples ``x`` from a distribution ``P`` can be calculated by `-mapreduce(log ∘ P, +, x)`.
-"""
+begin
+	md"(Show this cell for a sample solution)"
+	# [mean(R, dims=1); std(R, dims=1)]
+end
 
 # ╔═╡ 66cae8d2-8e20-4b1e-9dae-e120eee4d944
 md"## Linear Algebra"
@@ -462,13 +500,6 @@ p3 = NormalParametric(0f0, 5f-1)  # float32 version of 8e-1
 # ╔═╡ af5fffbd-baf5-46e4-b285-3a98a5d01e55
 @time probability(p3, -1.96, 1.96)
 
-# ╔═╡ 0e917d3d-63f2-48d3-8f71-68f98c32a1a0
-# md"(Show this cell for a sample solution)"
-Ps = vec(map(NormalParametric, ms, ss))
-
-# ╔═╡ ed76e932-1c9d-49c5-b721-b3aa5ccbb747
-[-mapreduce(log ∘ P, +, x) for (P, x) in zip(Ps, eachcol(R))]
-
 # ╔═╡ 8efda77f-e3d5-4866-8b64-159b6c3a6114
 transpose(A)
 
@@ -507,95 +538,6 @@ let F = svd(M)
 	@assert U * Diagonal(S) * V' ≈ M
 end
 
-# ╔═╡ 6042b2ff-d9fe-47c8-8f72-11f377299adc
-md"## Exercises"
-
-# ╔═╡ 39a9ed81-ad29-45ef-a199-045a4634eee0
-factorial(5)
-
-# ╔═╡ 7996e940-12d0-4c90-b173-9f04b2ede3d0
-factorial(32)
-
-# ╔═╡ 785e3c94-c385-4721-a232-56f26d072e33
-factorial(BigInt(32))
-
-# ╔═╡ 2b805b5e-c6ca-4781-922a-d2628518bdbe
-md"See [Arbitrary Precision Arithmetic](https://docs.julialang.org/en/v1/manual/integers-and-floating-point-numbers/#Arbitrary-Precision-Arithmetic) in the Julia documentation."
-
-# ╔═╡ e9b56975-891a-4cf9-b4e6-7ff72fa4235b
-let factorial(n) = n < 2 ? big(1) : n * factorial(n-1)
-	@show factorial(32)
-	@time factorial.(0:32)
-end
-
-# ╔═╡ e6e2109f-07f7-4bdb-a44b-075125de8cf1
-let
-	function factorial(n)
-		if !(n isa Integer)
-			throw(TypeError("input is not an integer"))
-		elseif n < 0
-			throw(ValueError("input cannot be negative"))
-		else
-			prod(1:big(n))
-		end
-	end
-	@time factorial.(0:32)
-end
-
-# ╔═╡ ef49a0fa-a322-480f-9981-4247a3647f38
-"Call the factorial function in the C library libgmp."
-function fact_c(n)
-    z = BigInt()
-    @ccall "libgmp".__gmpz_fac_ui(z::Ref{BigInt}, n::Culong)::Cvoid
-    return z
-end
-
-# ╔═╡ b6ea0bca-d641-4d55-91f7-3d4b85eb093e
-fact_c(10)
-
-# ╔═╡ 4163b41b-03b3-45eb-8ada-adb8c697f10c
-@time fact_c.(0:32)
-
-# ╔═╡ ac12297d-3358-45e7-8f76-3c0688a638bd
-binomial(100, 30)
-
-# ╔═╡ 0102faaf-c6cc-4a95-bd77-0a762f1ba680
-md"Similar to `factorial`, we would like to implement a variant of `binomial` that can handle integer overflow using `BigInt`/`big`."
-
-# ╔═╡ 085e2a09-1306-4ad1-bc83-554c2d214d50
-md"""
-!!! danger "Task"
-	Implement the binomial function using recursion and BigInt.
-"""
-
-# ╔═╡ 3e79c7ef-8e91-4072-8ade-a86e4e426ede
-md"""
-!!! hint
-	Recall the relation ``\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}``.
-"""
-
-# ╔═╡ 7923655c-be6d-47ed-a996-061328a3255f
-function binom(n, k)
-	@assert 0 <= k <= n
-	missing
-end
-
-# ╔═╡ a438406b-80ae-467b-a29f-aaf4cc158719
-binom(10, 5)
-
-# ╔═╡ 3533d0ba-463e-493d-8a5b-132463842b6a
-let
-	results = [binom(n, k) == binomial(n, k) 
-		       for n in rand(1:20, 10) for k in rand(1:n)]
-	if all(ismissing, results)
-		Utilities.still_missing()
-	elseif all(results)
-		Utilities.correct()
-	else
-		Utilities.keep_working()
-	end
-end
-
 # ╔═╡ 8bc7e78b-ff6d-4553-b327-f03d21651121
 macro show_all(block)
 	if block.head == Symbol("let")
@@ -623,6 +565,7 @@ end
 
 	zip(a, b, c) |> collect
 	count(iseven, a)
+	findfirst(iszero, a)
 	map(-, a, b)
 	mapreduce(-, +, a, b)  # reduce the result of map(-, a, b) by the + operator
 	
@@ -634,6 +577,7 @@ end
 	
 	d[1], d[2]
 	d[4] = 7
+	delete!(d, 1)
 	keys(d), values(d)
 end
 
@@ -952,16 +896,24 @@ version = "17.4.0+2"
 # ╟─01e35e8d-cb99-45fb-8770-2e23f3ec7c7c
 # ╟─8d8c7053-1a23-485f-90c5-2db999f7581d
 # ╟─b5b168db-b896-41bb-afeb-08e328d7b28e
+# ╠═8bed8fcc-1ea4-414f-a188-910b74632085
 # ╠═40c36c39-b3b7-4c12-a116-7c0ddb079085
 # ╟─4a851df6-3894-42a9-9acd-eb25a56f5535
 # ╠═1396345b-8abf-48ac-8bfa-6c641a395c2c
 # ╟─41f7af8e-28b2-4216-aac6-2827dda5e6db
 # ╠═ef02cbb9-11af-49e9-a996-f2c44c9c1191
+# ╟─c7bff4de-88ca-4264-bf83-4a2f08728395
+# ╠═82b29e45-827c-44b9-9225-17ae863c34bd
+# ╠═0fcdc4f2-f369-4d09-ac6c-c42d2a8172ce
+# ╠═eb40f8e1-4e03-4099-bba0-29e0ea43ed79
+# ╠═161587eb-5676-4154-9dff-abe0868efc03
+# ╟─c827b4d5-67fe-48df-aad2-15af280b7050
 # ╟─360d4228-a59a-4915-bf23-dd5537274d78
 # ╟─94f505a0-c146-4ce6-8274-4d84edfd0abe
 # ╠═0abdd55f-f7aa-4896-9f6d-f8c2ea638acf
 # ╟─a338fd44-7ccb-4607-bdc7-01ada39f02b9
-# ╠═8116c816-ab72-4415-94bf-a66ad7f52d2d
+# ╟─8116c816-ab72-4415-94bf-a66ad7f52d2d
+# ╟─bd7bed63-714c-417c-822c-2c07419d59db
 # ╟─13104a6c-0eb7-42d7-961d-addc55f06588
 # ╠═002bd083-00d2-4fd6-965f-9415d85f23f6
 # ╠═e9f8aee3-aa16-446b-aeec-8d1aae6e7169
@@ -1021,20 +973,17 @@ version = "17.4.0+2"
 # ╠═9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
 # ╠═47aae1fe-5c76-4f47-ab94-d8c784c59c35
 # ╠═6b95a054-c3f7-4777-bbcd-ccbd12741234
+# ╠═2db6eff5-e28a-4594-a13b-3ed429d47140
 # ╠═17eeffee-701d-4251-aca7-308e456487da
 # ╟─26f43214-3b99-4c99-9512-398a28f9ae0a
 # ╟─f942be94-a50f-4bd5-9987-ed0124531dd3
 # ╠═b226106d-6f21-4d72-951c-c4d9d01cbbcb
-# ╠═aa0c8fec-254b-4805-bf07-b1ce7266685c
+# ╟─aa0c8fec-254b-4805-bf07-b1ce7266685c
+# ╟─03c85588-2237-4d17-9755-bd3386f8e348
 # ╠═24077fc9-4d06-4b80-91be-321a7bb0fe5c
-# ╠═50cb4c19-1d76-4844-8bc7-bc564aa34ab8
+# ╟─50cb4c19-1d76-4844-8bc7-bc564aa34ab8
 # ╟─8615c4ca-7e2b-49fb-bb0f-078347a7c56b
-# ╠═be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
-# ╟─ec2d6a3b-4bc5-4629-a772-5dca32d1a863
-# ╠═0e917d3d-63f2-48d3-8f71-68f98c32a1a0
-# ╟─870241c7-ee8d-4f60-8105-65714bccf522
-# ╟─f5b83c37-bd36-43b1-8af5-c87452e71e21
-# ╠═ed76e932-1c9d-49c5-b721-b3aa5ccbb747
+# ╟─be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
 # ╟─66cae8d2-8e20-4b1e-9dae-e120eee4d944
 # ╠═5af22ae0-effd-4589-bd1f-d375299b6848
 # ╠═493a6c95-3820-43aa-8e6c-939757aecf2b
@@ -1042,23 +991,6 @@ version = "17.4.0+2"
 # ╠═5ee4f31b-ebae-4d8f-8ccc-6df671de6965
 # ╠═3f6fbfd0-b35a-4af9-86cd-55d7e4188301
 # ╠═bbd257e4-63ef-4024-bbe7-b57213d10e1f
-# ╟─6042b2ff-d9fe-47c8-8f72-11f377299adc
-# ╠═39a9ed81-ad29-45ef-a199-045a4634eee0
-# ╠═7996e940-12d0-4c90-b173-9f04b2ede3d0
-# ╠═785e3c94-c385-4721-a232-56f26d072e33
-# ╟─2b805b5e-c6ca-4781-922a-d2628518bdbe
-# ╠═e9b56975-891a-4cf9-b4e6-7ff72fa4235b
-# ╠═e6e2109f-07f7-4bdb-a44b-075125de8cf1
-# ╠═ef49a0fa-a322-480f-9981-4247a3647f38
-# ╠═b6ea0bca-d641-4d55-91f7-3d4b85eb093e
-# ╠═4163b41b-03b3-45eb-8ada-adb8c697f10c
-# ╠═ac12297d-3358-45e7-8f76-3c0688a638bd
-# ╟─0102faaf-c6cc-4a95-bd77-0a762f1ba680
-# ╟─085e2a09-1306-4ad1-bc83-554c2d214d50
-# ╟─3e79c7ef-8e91-4072-8ade-a86e4e426ede
-# ╠═7923655c-be6d-47ed-a996-061328a3255f
-# ╠═a438406b-80ae-467b-a29f-aaf4cc158719
-# ╟─3533d0ba-463e-493d-8a5b-132463842b6a
 # ╟─8bc7e78b-ff6d-4553-b327-f03d21651121
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
