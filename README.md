@@ -39,28 +39,7 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 ## FAQ
 
 ### In what order should I read the notebooks in this repository?
-`basics`, `image_transform`, `ebm`.
-
-### What topics do these notebooks cover?
-`basics`:
-- basic syntax and features
-- types and `struct`
-- arrays and linear algebra
-- functions and functional programming
-
-`image_transform`:
-- images are arrays of RGB values
-- downloading and saving files
-- image transformation using linear algebra
-- image compression using SVD and FFT
-- image filtering using convolution
-- multi-thread parallelization
-
-`ebm`:
-- DataFrames and CSV
-- Earth energy balance model
-- DifferentialEquations
-- Neural ODE
+`1_basics.jl`, `2_image_process.jl`, `3_ebm.jl`. The `4_estimate_pi_(optional).jl` notebook is optional.
 
 ### How to type Unicode characters?
 Type the corresponding LaTeX-like character sequence (starting with `\`), followed by a `tab`.
