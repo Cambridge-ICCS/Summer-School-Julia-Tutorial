@@ -44,13 +44,12 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 ### What topics do these notebooks cover?
 `basics`:
 - basic syntax and features
-- `import` packages and `include` source files
 - types and `struct`
 - arrays and linear algebra
 - functions and functional programming
 
 `image_transform`:
-- images are arrays
+- images are arrays of RGB values
 - downloading and saving files
 - image transformation using linear algebra
 - image compression using SVD and FFT
