@@ -4,619 +4,201 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ a025f4ac-9f39-4d05-9e0f-c12b9145d7c6
+# ╔═╡ 47789e98-5de0-413f-8677-29918719278a
 begin
-	using PlutoUI
-	include("utils.jl")  # local source file
+	using Statistics, Random
+	include("utils.jl")
 	using .Utilities
-	PlutoUI.TableOfContents(aside=true)
 end
 
-# ╔═╡ a9561c08-2b07-4590-b901-d9cbd60355ee
+# ╔═╡ c79e8873-789a-4db8-8af5-d915c465d72b
+using .Utilities: still_missing
+
+# ╔═╡ d685eff6-ab91-4bee-bf7a-957b2ae644f0
 begin
-	using AbstractTrees
-	AbstractTrees.children(d::DataType) = subtypes(d)
-	print_tree(Number)
-end
-
-# ╔═╡ a4e1bde7-2de3-4df9-8dc3-f25aafac7dfd
-using Statistics
-
-# ╔═╡ 52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
-1 + 2 * 3
-
-# ╔═╡ 0f63f358-310c-4475-a17b-6376ce26f903
-@show log2(4) log(ℯ) log10(1e4) log(4, 1024) sqrt(4) exp(4) cos(0) acos(0);
-
-# ╔═╡ 3ae5a286-cc9d-4837-a6de-c79bad078df4
-z = exp(im * π)
-
-# ╔═╡ b4de91e1-ef8a-44ae-ac31-ac99d0a041d2
-z == -1, z ≈ -1  # ≈ is typed as \approx and is equivalent to isapprox(a, b)
-
-# ╔═╡ 79dd50f1-bd99-4384-b691-4bdb73096161
-let θ = rand(), z = exp(im * θ)  # let...end binds variables locally
-	# θ is a random value in [0, 1)
-	@show θ angle(z) abs(z)
-	x, y = @show reim(z)  # real and imaginary parts of z
-	x ^ 2 + y ^ 2 == 1.0
-end
-
-# ╔═╡ 76f1b9df-46e4-4920-b62d-f6e802f9a8ec
-θ
-
-# ╔═╡ b9ddc629-f680-4a71-8374-f3b01bb53890
-Tz = typeof(z)  # type alias
-
-# ╔═╡ 40ce6638-a83e-4928-beda-2aa4eaed6147
-Complex{Int}
-
-# ╔═╡ 414f4132-8d04-48c0-a107-e77af3fe928c
-fieldnames(Tz)
-
-# ╔═╡ bcacdf8c-695f-4590-b7d8-29d28086bd46
-fieldtypes(Tz)
-
-# ╔═╡ 06ec1ee6-817b-45df-899a-3f8b0c541257
-fieldnames(Int)  # primitive type
-
-# ╔═╡ eb50833d-3de0-431c-a12b-8b0169a221e7
-z.re, getfield(z, :im)
-
-# ╔═╡ 5fcf5830-5a7e-47fe-910c-f3c7831bee6f
-typeof(:im)
-
-# ╔═╡ 002bd083-00d2-4fd6-965f-9415d85f23f6
-subtypes(Integer), supertypes(Integer)
-
-# ╔═╡ 18aab5fb-7add-4ada-b42e-2bc62968d6bc
-isabstracttype(Integer)
-
-# ╔═╡ 0c4a6998-8863-404e-96c2-952df70839ab
-isconcretetype(Int64)
-
-# ╔═╡ e3f7a77a-8c9e-4f15-af47-551fd959b2a6
-abstract type Distribution end
-
-# ╔═╡ 149a64ba-6d5b-4416-bc2d-8e1ae897c71d
-function probability(P::Distribution, interval::NTuple{2, Float64}; step=1e-6)
-	s, e = interval
-	xs = s:step:e  # equivelant to range(s, e+step, step) in python
-	ps = P.(xs)
-	step * sum(ps)
-end
-
-# ╔═╡ 69283b2e-bd47-4c3c-890f-677b253183e7
-v = [1, 2, 3]
-
-# ╔═╡ d7186b34-117c-4a11-8907-91766a038425
-v[1]
-
-# ╔═╡ a2c92fca-fbab-4396-b472-a53d7a858abe
-typeof(v)
-
-# ╔═╡ 3cfce228-b634-4e31-b3f3-ddadb6c7a53d
-Array{Int, 2}
-
-# ╔═╡ 4f62d53f-11bb-4e53-b759-d6f49eec5cd4
-let a = Array{Float64}(undef, 2, 3)  # initialize a 2x3 Matrix of Float64s
-	@show a
-	for i in 1:2, j in 1:3
-		a[i, j] = i * j
-	end
-	a
-end
-
-# ╔═╡ 952db525-9d54-4b56-a09f-3014a9ca9293
-[i * j for i in 1:2, j in 1:3]
-
-# ╔═╡ 21844a9b-54d3-4429-ba9d-3e3c2bc6ad65
-let a = 1:2:100
-	@code_warntype a[4]
-end
-
-# ╔═╡ 6b3a83eb-e316-46b5-a097-233145ab1bcc
-[1 2 3
- 5 6 4
- 9 7 8]  # or [1 2 3; 5 6 4; 9 7 8]
-
-# ╔═╡ d02b8c20-6e43-435c-ba9f-870b1bb5fae9
-zeros(3, 3)
-
-# ╔═╡ b5eb64a4-6572-405f-bed4-7e483f6e50e5
-rand(2, 2, 2)
-
-# ╔═╡ 8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
-A = rand(Float64, (3, 4))
-
-# ╔═╡ d1ca8fb0-580f-4625-aba3-dd18e054ee48
-size(A), size(A, 1)
-
-# ╔═╡ 8ea9ecaf-6d66-4e57-8606-e79fdc8415e5
-[A[:, 3:4]; A[[1,3], 1:2:end]]  # concat vertically
-
-# ╔═╡ 2f512a32-8e03-4ef1-9a09-d5a388f06823
-vcat(A[:, 3:4], A[[1,3], 1:2:end])
-
-# ╔═╡ 12008adf-5162-484c-af6b-30b2d43f46b5
-[sum(A .^ 2, dims=2) maximum(A, dims=2)]  # concat horizontally
-
-# ╔═╡ d1fb6a87-ef5f-49f8-be44-84889e4dfd39
-hcat(sum(A .^ 2, dims=2), maximum(A, dims=2))
-
-# ╔═╡ 9cb3f794-5696-4c9d-adf1-5d1f31ae8c00
-diff(cumsum(A, dims=2), dims=2) ≈ A[:, 2:end]
-
-# ╔═╡ c252cdaf-6334-4ddc-a114-5e7ea0d2ea63
-names(Statistics)
-
-# ╔═╡ 65f92119-b389-491c-b809-fab91636c53a
-mean(A)
-
-# ╔═╡ c41480a9-e6d8-48b7-ac5c-326706e84d62
-methods(mean)
-
-# ╔═╡ 9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
-mean(A, dims=1)
-
-# ╔═╡ 17eeffee-701d-4251-aca7-308e456487da
-let B = reshape(A, 2, 6)
-	B[2, 3] = NaN
-	A
-end
-
-# ╔═╡ 5af22ae0-effd-4589-bd1f-d375299b6848
-M = [i + j*im for i in 1:3, j in 1:3]
-
-# ╔═╡ 6b95a054-c3f7-4777-bbcd-ccbd12741234
-@which mean(M; dims=1)
-
-# ╔═╡ 5ee4f31b-ebae-4d8f-8ccc-6df671de6965
-begin
-	using LinearAlgebra
-	rank(M), tr(M), det(M), diag(M)
-end
-
-# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
-@show 3+4 3*4 3/4 3÷4 4%3 3^4;
-
-# ╔═╡ 0f2aff9d-778b-4a08-9c33-c1866279c686
-begin
-	abstract type AbstractNormal <: Distribution end
-	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √(2π))
-end
-
-# ╔═╡ 48e93319-299b-40b9-bbf9-09d18d683c9c
-struct NormalUntyped <: AbstractNormal
-	μ
-	σ
-end
-
-# ╔═╡ fa1283d5-b3d5-46d4-a34c-4cddc32ab284
-fieldtypes(NormalUntyped)
-
-# ╔═╡ 322ea469-2961-46b0-a93c-20e2c8f94328
-p1 = NormalUntyped(0, 1)
-
-# ╔═╡ ec5238e4-f445-491c-bd14-8e1aba59049f
-p1(0)
-
-# ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
-@code_warntype p1(0)
-
-# ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
-@code_llvm p1(0)
-
-# ╔═╡ 04780b58-ff08-4e77-b573-68a7d9fdf4da
-@time probability(p1, (-1.96, 1.96))
-
-# ╔═╡ 035f9794-43ea-4e19-860c-a66fd0ea1a14
-struct Normal <: AbstractNormal
-	μ :: Float64
-	σ :: Float64
-end
-
-# ╔═╡ 57f30a3c-7d28-4819-958a-bf1859d6947c
-p2 = Normal(0, 1)
-
-# ╔═╡ 024aa7d5-a569-4639-851f-b7d491855202
-@code_warntype p2(1)
-
-# ╔═╡ f640df71-ae15-4b67-a30e-c806ea532a19
-@code_llvm p2(1)
-
-# ╔═╡ e64bf54d-681b-4117-815a-734e69925b7d
-@time probability(p2, (-1.96, 1.96))
-
-# ╔═╡ e3201408-e6b6-49be-b693-65d55b20be5f
-M', transpose(M)
-
-# ╔═╡ 83d0d182-c876-4aa2-a6f3-dfa92477bdcd
-M ^ 2, exp(M)
-
-# ╔═╡ 6287eddc-9b35-489e-b584-8197c09cb228
-let b = [3, 2, 1]
-	x = inv(M) * b  # or M \ b
-	M * x
-end
-
-# ╔═╡ 3f6fbfd0-b35a-4af9-86cd-55d7e4188301
-let eig = eigen(M)
-	@show typeof(eig)
-	@show eig.values
-	@show eig.vectors
-	λ, V = eig
-	M * V ≈ λ' .* V
-end
-
-# ╔═╡ 72bdde5a-a503-4cc4-bd06-de49794e53b5
-let
-	# arguments before the ; are positional, after are keyword
-	# there can be defaults in both categories
-	# anything without a default must be assigned when the function is called
-	# ... before the ; accepts any number of positional arguments
-	# ... after the ; accepts any keyword arguments
-	# the names args and kwargs are conventional for these extra arguments
-	function f(a, b=0, args...; c, d=1, kwargs...)
-		@show a b args c d kwargs
-	end
-	f('a', 2, 3, 4, c=3, e=7)
-	println()
-	f(1, c=7)
-end
-
-# ╔═╡ 39a9ed81-ad29-45ef-a199-045a4634eee0
-factorial(5)
-
-# ╔═╡ 7996e940-12d0-4c90-b173-9f04b2ede3d0
-factorial(32)
-
-# ╔═╡ 785e3c94-c385-4721-a232-56f26d072e33
-factorial(BigInt(32))
-
-# ╔═╡ e9b56975-891a-4cf9-b4e6-7ff72fa4235b
-let factorial(n) = n < 2 ? big(1) : n * factorial(n-1)
-	@show factorial(32)
-	@time factorial.(0:32)
-end
-
-# ╔═╡ e6e2109f-07f7-4bdb-a44b-075125de8cf1
-let
-	function factorial(n)
-		if !(n isa Integer)
-			throw(TypeError("input is not an integer"))
-		elseif n < 0
-			throw(ValueError("input cannot be negative"))
-		else
-			prod(1:big(n))
-		end
-	end
-	@time factorial.(0:32)
-end
-
-# ╔═╡ ef49a0fa-a322-480f-9981-4247a3647f38
-"Call the factorial function in the C library libgmp."
-function fact_c(n)
-    z = BigInt()
-    ccall((:__gmpz_fac_ui, :libgmp), Cvoid, (Ref{BigInt}, Culong), z, n)
-    return z
-end
-
-# ╔═╡ 4163b41b-03b3-45eb-8ada-adb8c697f10c
-@time fact_c.(0:32)
-
-# ╔═╡ 1396345b-8abf-48ac-8bfa-6c641a395c2c
-begin
-	inc = x -> x + 1  # anonymous function
-	double(f) = x -> f(f(x))
-	@show double(inc)(0)
-	triple(f) = f ∘ f ∘ f  # \circ -> ∘ (function composition)
-	@show triple(inc)(0)  # applies inc for 2^3 times
-	nfold(f, n) = foldr(∘, fill(f, n))
-	@show nfold(triple, 4)(inc)(0)
-end
-
-# ╔═╡ ac12297d-3358-45e7-8f76-3c0688a638bd
-binomial(100, 30)
-
-# ╔═╡ 7923655c-be6d-47ed-a996-061328a3255f
-function binom(n, k)
-	@assert 0 <= k <= n
-	missing
-end
-
-# ╔═╡ a438406b-80ae-467b-a29f-aaf4cc158719
-binom(10, 5)
-
-# ╔═╡ 3533d0ba-463e-493d-8a5b-132463842b6a
-let
-	results = [binom(n, k) == binomial(n, k) 
-		       for n in rand(1:20, 10) for k in rand(1:n)]
-	if all(ismissing, results)
-		Utilities.still_missing()
-	elseif all(results)
-		Utilities.correct()
-	else
-		Utilities.keep_working()
-	end
-end
-
-# ╔═╡ 5d57d740-4a92-48d7-aa43-9604c55cc4aa
-const Maybe{T} = Union{T, Nothing}
-
-# ╔═╡ d6c47c30-f589-430c-9b34-5d52274143cd
-mutable struct Node{K, V}
-	key :: K
-	val :: V
-	left :: Maybe{Node{K, V}}
-	right :: Maybe{Node{K, V}}
-	Node(k::K, v::V) where {K, V} = new{K, V}(k, v, nothing, nothing)
-end
-
-# ╔═╡ 845c2ef5-e05a-4b63-8098-abdc111900b4
-@kwdef mutable struct BST{K, V}
-	root :: Maybe{Node{K, V}} = nothing
-	size :: Int = 0
-end
-
-# ╔═╡ cf588263-39b6-42b5-bcba-814e273e3625
-function search(node::Node{K, V}, key::K) where {K, V}
-	if key == node.key
-		return node, :this
-	end
-	dir = key < node.key ? :left : :right
-	child = getfield(node, dir)
-	if child == nothing
-		return node, dir
-	else
-		return search(child, key)
-	end
-end
-
-# ╔═╡ 47f98ed2-2bfc-4b6b-9c23-3c09d97de395
-function Base.setindex!(tree::BST{K, V}, val::V, key::K) where {K, V}
-	if tree.root == nothing
-		tree.root = Node(key, val)
-	else
-		node, dir = search(tree.root, key)
-		if dir == :this
-			node.val = val  # overwrite
-		else
-			setfield!(node, dir, Node(key, val))
-			tree.size += 1
-		end
-	end
-end
-
-# ╔═╡ 20883c28-c142-4dab-ab47-1fbecbbbecb1
-begin
-	sharps = BST{String, Int}()
-	@which sharps["C"] = 0  # this will not execute the method
-end
-
-# ╔═╡ 2cd4262f-83ee-4f23-b9c2-986aaffedfd9
-begin
-	AbstractTrees.children(t::Node) = 
-		t.left == t.right == nothing ? [] : [t.left, t.right]
-	Base.show(io::IO, t::BST) = 
-		print_tree((io, t) -> print(io, isnothing(t) ? '/' : t.key => t.val), 
-				   io, t.root)
-end
-
-# ╔═╡ 3874b1e7-c20a-46a1-a1a4-d2a75eb45e23
-begin  
-	scales = map(String, split("C G D A E B F#"))
-	for (i, k) in enumerate(scales)
-		sharps[k] = i - 1
-	end
-	sharps  # number of sharps in a major scale
-end
-
-# ╔═╡ 45e8dd14-b2ff-448f-915a-56524bedf77d
-begin
-	function Base.getindex(tree::BST{K, V}, key::K) where {K, V}
-		missing  # hint: make use of `search(tree, key)`
-	end
-
-	sharps["D"]
-end
-
-# ╔═╡ 0939489d-79d2-4c1a-9841-17d9ae448d94
-md"# An Introduction to Julia Programming"
-
-# ╔═╡ 4efa23f3-e705-469e-8e82-fb6d0e4589a3
-md"## Basic Calculation"
-
-# ╔═╡ b4cb3a82-d740-4d02-b0f4-f18ec9500b4f
-md"""
-!!! tip "Tip"
-	Open the **Live Docs** at the bottom right and click a symbol to read its documentation. 
-"""
-
-# ╔═╡ 13104a6c-0eb7-42d7-961d-addc55f06588
-md"## Type System"
-
-# ╔═╡ 87c97051-6c29-43d9-abc6-5877ff03ee00
-md"ComplexF64 is a *composite* type as it is a collection of named fields."
-
-# ╔═╡ 2e034e29-8755-43d5-b557-d247df23f50e
-md"### Define Custom Types"
-
-# ╔═╡ f3b4eba4-5471-441e-b199-69fd07f528e2
-md"A piece of Julia code is called 'type-stable' if all input and output variables have a concrete type, either by explicit declaration or by inference from the Julia compiler. Type-stable code will run much faster as the compiler can generate statically typed code and optimize it at compile-time."
-
-# ╔═╡ 2e6521be-ff66-47a9-8c19-68216cb62f3d
-md"We can see that the length of the LLVM bitcodes generated from a piece of type-stable Julia code is much shorter than its type-instable version. The following example will compare their performance."
-
-# ╔═╡ 7b6e1d43-c72c-4bd9-b493-838b05e845c4
-md"## Arrays"
-
-# ╔═╡ 66cae8d2-8e20-4b1e-9dae-e120eee4d944
-md"### Linear Algebra"
-
-# ╔═╡ 6bcb5989-0012-458c-a5a2-5f977fc781d6
-md"## Functions"
-
-# ╔═╡ 7af106cf-3e7b-497d-95c1-b90c09b048e5
-md"### Higher Order Functions"
-
-# ╔═╡ 6042b2ff-d9fe-47c8-8f72-11f377299adc
-md"## Exercises"
-
-# ╔═╡ 0102faaf-c6cc-4a95-bd77-0a762f1ba680
-md"Similar to `factorial`, we would like to implement a variant of `binomial` that can handle integer overflow using `BigInt`/`big`."
-
-# ╔═╡ 085e2a09-1306-4ad1-bc83-554c2d214d50
-md"""
-!!! danger "Task"
-	Implement the binomial function using recursion and BigInt.
-"""
-
-# ╔═╡ 3e79c7ef-8e91-4072-8ade-a86e4e426ede
-md"""
-!!! hint
-	Recall the relation ``\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}``.
-"""
-
-# ╔═╡ 81230ae7-8aa7-4c5d-822b-013c15f655f5
-md"The following code implements the *binary search tree* (BST), which can store key-value mappings and support look-up with logarithmic time complexity. In other words, if a BST stores ``N`` key-value pairs, the user can look up the value corresponding to a given key in ``O(\log(N))`` time."
-
-# ╔═╡ d86a50bb-7eed-41fd-94f1-394e38d0c135
-md"The function `setindex!(a, v, k)` in the `Base` library of Julia can be called by `a[k] = v`. (Of course, you can also directly call `Base.setindex!(a, v, k)`.) Here we implement the `setindex!` method for our own `BST` instances. For the same function, Julia can figure out which method to execute based on the types of its arguments. This is called **multiple dispatch**."
-
-# ╔═╡ 502bfe2a-0847-4cac-b1c0-f57e24b66a71
-md"Now we overload the `Base.show` function to customize the way a BST is printed."
-
-# ╔═╡ 0737b8f7-8dbe-42f8-878d-7a304531bcdc
-md"""
-!!! danger "Task"
-	Evaluating `a[k]` will call the function `getindex(a, k)` in the `Base` library. Now implement the `getindex` method for BST.
-"""
-
-# ╔═╡ 0265d228-c26f-4969-8449-6ee23ea41f2e
-let
-	results = [try Base.getindex(sharps, k) == i-1 catch; true end 
-		       for (i, k) in enumerate([scales..., "C#"])]
-	if all(ismissing, results)
-		Utilities.still_missing()
-	elseif all(results)
-		Utilities.correct()
-	else
-		Utilities.keep_working()
-	end
-end
-
-# ╔═╡ 0c7f1a08-c4f9-4670-9c70-2ec539f8ec96
-md"""
-!!! danger "Task"
-	Implement a memoized verion of `binom` and compare its performance with the original version.
-"""
-
-# ╔═╡ 09fa49a6-439b-4a6a-8045-313f1a5cdc1d
-function binom_m(n, k, memo=BST{NTuple{2, Int}, BigInt}())
-	@assert 0 <= k <= n
-	try
-		missing
-	catch
-		missing
-	end
-end
-
-# ╔═╡ 73e474e7-5621-4abc-8dcf-d90bcfc4e57d
-begin
+	using ForwardDiff  # automatically finds the derivative of a function
 	using Plots
-	memo = BST{NTuple{2, Int}, BigInt}()
-	N = 100
-	@time bs = [binom_m(N, k, memo) for k in 0:N]
-	plot(0:N, bs, label="Binomial($N, k)", xlabel="k")
 end
 
-# ╔═╡ d77e5b32-f1c0-4eed-954b-cc63c04c0040
+# ╔═╡ c6b3bebe-32da-11ef-09ae-ad02d9296cab
+md"""### Estimate π using Monte Carlo
+![image](https://i.ytimg.com/vi/HUBNQicYDkU/maxresdefault.jpg)
+"""
+
+# ╔═╡ 2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
+pi_err(x) = (value=x, error=abs(x-π))
+
+# ╔═╡ 664e8ba5-6dd8-44af-a8e1-1df6f80510a2
+begin
+	using KernelAbstractions
+	# using CUDA: CuArray
+
+	@kernel function estimate_pi_kernel(a, n)
+		i = @index(Global)
+		k = prod(@groupsize())
+		@inbounds a[i] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+i:k:n)
+	end
+
+	@time let N = 300_000_000, K = 64
+		A = ones(K)
+		# A = CuArray(ones(K))
+		device = @show get_backend(A)  # CPU / GPU
+		run! = estimate_pi_kernel(device, K)
+		run!(A, N, ndrange=size(A))
+		synchronize(device)
+		2 * prod(A)
+	end |> pi_err
+end
+
+# ╔═╡ efe11271-fe46-4399-ad6b-089b5b5ceec3
+function estimate_pi_mc(n=600_000_000)
+	rng = MersenneTwister(0)
+	mean(1:n) do _
+		rand(rng)^2 + rand(rng)^2 < 1
+	end * 4
+end
+
+# ╔═╡ 447bdcf9-260f-4cba-977b-6a97b2280d35
+@time pi_err(estimate_pi_mc())
+
+# ╔═╡ ec0cd66a-eed0-4ac5-a2ab-d021ba003ebd
+let task = Threads.@spawn estimate_pi_mc()
+	@time fetch(@show task)
+end
+
+# ╔═╡ b4c16d52-45d6-421f-aefe-e9680977a176
+@time let N = 600_000_000, k = @show Threads.nthreads()
+	mean(fetch.(Threads.@spawn estimate_pi_mc(N÷k) for _ in 1:k)) |> pi_err
+end
+
+# ╔═╡ 5ffdecbf-9a8b-49e5-adbb-90f932075076
+md"""### Estimate π using the Wallis product
+
+In 1655, John Wallis published what is now known as [Wallis product](https://en.wikipedia.org/wiki/Wallis_product), an infinite product:
+
+$$π = \frac{2\cdot2\cdot4\cdot4\cdot6\cdot6\ldots}
+		   {1\cdot3\cdot3\cdot5\cdot5\cdot7\ldots}$$
+"""
+
+# ╔═╡ 71f9f677-9721-4626-b8d6-eae70e25c2d5
+function estimate_pi_wallis(N=300_000_000)
+	# generator (laze evaluation)
+	fracs = ((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 2:N)
+	# fracs = [(i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 2:N]
+	2prod(fracs)
+end
+
+# ╔═╡ ed0e646e-f8c6-4cb3-95e3-e1d39fa0b4c9
+@time estimate_pi_wallis() |> pi_err
+
+# ╔═╡ 4b0fd4e7-fa60-4115-9548-02f88f3b7a82
+md"""
+!!! danger "Task"
+	Implement a multithreaded version of `estimate_pi_wallis`
+"""
+
+# ╔═╡ 60ef1f4b-89ab-42ec-973f-1025d0161b96
+function estimate_pi_wallis_multithreaded(N=300_000_000)
+	missing # replace `missing` with your solution here
+end
+
+# ╔═╡ 658c4cca-a5c6-4c5d-80fb-f939728c1992
 let
-	results = [binom_m(n, k) == fact_c(n)/fact_c(k)/fact_c(n-k)
-			   for n in rand(1:30, 5) for k in rand(1:n, 2)]
-	if all(ismissing, results)
+	t0 = time()
+	result = @time estimate_pi_wallis_multithreaded()
+	dt = time() - t0
+	if ismissing(result)
 		Utilities.still_missing()
-	elseif all(results)
+	elseif dt > 0.6
+		Utilities.keep_working(md"Try reducing the time cost by distributing the computation on more threads.")
+	elseif abs(result - π) < 1e-8
 		Utilities.correct()
 	else
 		Utilities.keep_working()
 	end
 end
 
-# ╔═╡ c3b9c387-3c01-499a-b2e4-f2a70afd462c
-@time binom(24, 12)
+# ╔═╡ 9aeec0a9-9742-41e8-8c64-61744a86f653
+md"**Applying the `@Threads.threads` macro to a `for` loop:**"
 
-# ╔═╡ 9af7b7d3-1b03-4be2-ace9-adf6897a54d3
-@time binom_m(24, 12)
-
-# ╔═╡ fae78894-54a9-4696-8eda-9e7b067779fd
-memo
-
-# ╔═╡ e36c46d2-f745-48b7-bee1-a56c670c1e3c
-memo.size
-
-# ╔═╡ 8bc7e78b-ff6d-4553-b327-f03d21651121
-macro show_all(block)
-	if block.head == Symbol("let")
-		lines = block.args[2].args
-	elseif block.head == Symbol("block")
-		lines = block.args
-	else
-		return block
+# ╔═╡ 44d506a5-9b65-48c1-bbfb-5a1977abcde1
+let N = 300_000_000, K = 240
+	times = [Float64[] for _ in 1:Threads.nthreads()]
+	pi = @time let
+		A = ones(K)
+		@Threads.threads for k in 1:K
+			t0 = time()
+			@inbounds A[k] = prod((i ÷ 2 * 2) / ((i-1) ÷ 2 * 2 + 1) for i in 1+k:K:N)
+			push!(times[Threads.threadid()], time() - t0)
+		end
+		2prod(A)
 	end
-	foreach(enumerate(lines)) do (i, ex)
-		if ex isa Union{Symbol, Expr, Number}
-			lines[i] = :(@show $ex)
+	println(pi_err(pi))
+	[f(ts) for ts in times, f in [length, mean]]
+end
+
+# ╔═╡ 0c6a623d-ec6b-4234-8cf1-873e14158eb4
+md"**Writing a CPU/GPU kernel for parallel computing:**"
+
+# ╔═╡ c8bf3d51-570d-4668-a4b1-bfa6e8e475fe
+md"""### Estimate π using Newton's method
+
+Idea: ``\pi`` is a root of ``sin(x)``.
+"""
+
+# ╔═╡ 15603d34-3728-42ce-bac7-1608ef34ba3c
+begin  # Operator overloading
+	Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, x)
+	sin'(0), cos'(π/2)
+end
+
+# ╔═╡ 4b626ee4-44fb-4488-b630-888601587a54
+function newton_method(f, x; max_iter=1000, tol=1e-12, buf=nothing)
+	for i in 1:max_iter
+		dx = f(x) / f'(x)
+		x -= dx
+		if buf != nothing
+			push!(buf, x)
+		end
+		if abs(dx) < tol
+			@info "converged after $i iterations"
+			return x
 		end
 	end
-	return block
+	@warn "root not found after $max_iter iterations"
 end
 
-# ╔═╡ 936bc73b-681e-46a5-b7a5-4bb071cc91a5
-@show_all let T = Complex{Int64}
-	T<:Complex 
-	T<:Number 
-	T<:Complex{<:Real} 
-	T<:Complex{Real}
-	z isa Complex  # isa(z, Complex)
-	Dict(zip(fieldnames(T), fieldtypes(T)))
-end
+# ╔═╡ b6969c0f-c337-44a2-b458-10f916201484
+@time newton_method(sin, 2.0) |> pi_err
 
-# ╔═╡ fbd9a83b-17b4-47db-a46e-e7a9037b9090
-@show_all let a = -6:3:6, b = [1, 2, 3]
-	length(a)
-	reverse(a)
-	a .* 2
-	a[1:3:end]
-	a[end:-2:1]
-	maximum(a)  # max(a...)
-	abs.(a)
-	a .^ 2 |> sum  # sum of squares
-	count(iseven, a)
-	vcat(a, b)
-	zip(a, b) |> collect
-	map(-, a, b)
-	push!(b, 5, 4)
-	sort!(b)
-	deleteat!(b, 1)
-	accumulate(*, b)
-	foldl(-, b)  # 2 - 3 - 4 - 5 (starting from the left)
+# ╔═╡ fae4b543-03ac-4f27-bff6-07574fae5733
+let f = sin, x = range(-1, 5, 1000)
+	y = f.(x)
+	x0 = 2
+	xs = []
+	newton_method(f, x0, max_iter=30, buf=xs)
+	@gif for x1 in xs
+		plot(x, y, label="$f(x)", title="Newton's method")
+		plot!([x0, x1], [f(x0), 0], label="tagent line", markershape=:circle)
+		plot!([x1, x1], [0, f(x1)], label=nothing, linestyle=:dash)
+		annotate!(x0, f(x0), ("x = $(Float16(x0))", 8, :top))
+		x0 = x1
+	end fps=2
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
-AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-AbstractTrees = "~0.4.5"
+ForwardDiff = "~0.10.36"
+KernelAbstractions = "~0.9.20"
 Plots = "~1.40.4"
-PlutoUI = "~0.7.59"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -625,18 +207,17 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "d5be2c1efeddaf18a4d70ea211137e85ab4d3f80"
+project_hash = "b5b1c0de84e3555716139fab6955a818a4e481a9"
 
-[[deps.AbstractPlutoDingetjes]]
-deps = ["Pkg"]
-git-tree-sha1 = "6e1d2a35f2f90a4bc7c2ed98079b2ba09c35b83a"
-uuid = "6e696c72-6542-2067-7265-42206c756150"
-version = "1.3.2"
+[[deps.Adapt]]
+deps = ["LinearAlgebra", "Requires"]
+git-tree-sha1 = "6a55b747d1812e699320963ffde36f1ebdda4099"
+uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
+version = "4.0.4"
+weakdeps = ["StaticArrays"]
 
-[[deps.AbstractTrees]]
-git-tree-sha1 = "2d9c9a55f9c93e8887ad391fbae72f8ef55e1177"
-uuid = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
-version = "0.4.5"
+    [deps.Adapt.extensions]
+    AdaptStaticArraysExt = "StaticArrays"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -644,6 +225,12 @@ version = "1.1.1"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+
+[[deps.Atomix]]
+deps = ["UnsafeAtomics"]
+git-tree-sha1 = "c06a868224ecba914baa6942988e2f2aade419be"
+uuid = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
+version = "0.1.0"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -658,6 +245,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "9e2a6b69137e6969bab0152632dcb3bc108c8bdd"
 uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.8+1"
+
+[[deps.CEnum]]
+git-tree-sha1 = "389ad5c84de1ae7cf0e28e381131c98ea87d54fc"
+uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
+version = "0.5.0"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -688,18 +280,22 @@ deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "Requires", "Statist
 git-tree-sha1 = "a1f44953f2382ebb937d60dafbe2deea4bd23249"
 uuid = "c3611d14-8923-5661-9e6a-0046d554d3a4"
 version = "0.10.0"
+weakdeps = ["SpecialFunctions"]
 
     [deps.ColorVectorSpace.extensions]
     SpecialFunctionsExt = "SpecialFunctions"
-
-    [deps.ColorVectorSpace.weakdeps]
-    SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [[deps.Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
 git-tree-sha1 = "362a287c3aa50601b0bc359053d5c2468f0e7ce0"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.11"
+
+[[deps.CommonSubexpressions]]
+deps = ["MacroTools", "Test"]
+git-tree-sha1 = "7b8a93dba8af7e3b42fecabf646260105ac373f7"
+uuid = "bbf7d656-a473-5ed7-a52c-81e309532950"
+version = "0.3.0"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
@@ -747,6 +343,18 @@ deps = ["Mmap"]
 git-tree-sha1 = "9e2f36d3c96a820c678f2f1f1782582fcf685bae"
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 version = "1.9.1"
+
+[[deps.DiffResults]]
+deps = ["StaticArraysCore"]
+git-tree-sha1 = "782dd5f4561f5d267313f23853baaaa4c52ea621"
+uuid = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
+version = "1.1.0"
+
+[[deps.DiffRules]]
+deps = ["IrrationalConstants", "LogExpFunctions", "NaNMath", "Random", "SpecialFunctions"]
+git-tree-sha1 = "23163d55f885173722d1e4cf0f6110cdbaf7e272"
+uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
+version = "1.15.1"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -808,6 +416,16 @@ version = "2.13.96+0"
 git-tree-sha1 = "9c68794ef81b08086aeb32eeaf33531668d5f5fc"
 uuid = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
 version = "1.3.7"
+
+[[deps.ForwardDiff]]
+deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
+git-tree-sha1 = "cf0fe81336da9fb90944683b8c41984b08793dad"
+uuid = "f6369f11-7733-5829-9624-2563aa707210"
+version = "0.10.36"
+weakdeps = ["StaticArrays"]
+
+    [deps.ForwardDiff.extensions]
+    ForwardDiffStaticArraysExt = "StaticArrays"
 
 [[deps.FreeType2_jll]]
 deps = ["Artifacts", "Bzip2_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
@@ -874,24 +492,6 @@ git-tree-sha1 = "129acf094d168394e80ee1dc4bc06ec835e510a3"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "2.8.1+1"
 
-[[deps.Hyperscript]]
-deps = ["Test"]
-git-tree-sha1 = "179267cfa5e712760cd43dcae385d7ea90cc25a4"
-uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
-version = "0.0.5"
-
-[[deps.HypertextLiteral]]
-deps = ["Tricks"]
-git-tree-sha1 = "7134810b1afce04bbc1045ca1985fbe81ce17653"
-uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
-version = "0.9.5"
-
-[[deps.IOCapture]]
-deps = ["Logging", "Random"]
-git-tree-sha1 = "b6d6bfdd7ce25b0f9b2f6b3dd56b2673a66c8770"
-uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
-version = "0.2.5"
-
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
@@ -925,6 +525,18 @@ git-tree-sha1 = "c84a835e1a09b289ffcd2271bf2a337bbdda6637"
 uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
 version = "3.0.3+0"
 
+[[deps.KernelAbstractions]]
+deps = ["Adapt", "Atomix", "InteractiveUtils", "LinearAlgebra", "MacroTools", "PrecompileTools", "Requires", "SparseArrays", "StaticArrays", "UUIDs", "UnsafeAtomics", "UnsafeAtomicsLLVM"]
+git-tree-sha1 = "8e5a339882cc401688d79b811d923a38ba77d50a"
+uuid = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
+version = "0.9.20"
+
+    [deps.KernelAbstractions.extensions]
+    EnzymeExt = "EnzymeCore"
+
+    [deps.KernelAbstractions.weakdeps]
+    EnzymeCore = "f151be2c-9106-41f4-ab19-57ee4f262869"
+
 [[deps.LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "170b660facf5df5de098d866564877e119141cbd"
@@ -936,6 +548,24 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "bf36f528eec6634efc60d7ec062008f171071434"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
 version = "3.0.0+1"
+
+[[deps.LLVM]]
+deps = ["CEnum", "LLVMExtra_jll", "Libdl", "Preferences", "Printf", "Requires", "Unicode"]
+git-tree-sha1 = "389aea28d882a40b5e1747069af71bdbd47a1cae"
+uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
+version = "7.2.1"
+
+    [deps.LLVM.extensions]
+    BFloat16sExt = "BFloat16s"
+
+    [deps.LLVM.weakdeps]
+    BFloat16s = "ab4f0b2a-ad5b-11e8-123f-65d77653426b"
+
+[[deps.LLVMExtra_jll]]
+deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl", "TOML"]
+git-tree-sha1 = "88b916503aac4fb7f701bb625cd84ca5dd1677bc"
+uuid = "dad2f222-ce93-54a1-a47d-0025e8a3acab"
+version = "0.0.29+0"
 
 [[deps.LLVMOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -967,6 +597,10 @@ version = "0.16.3"
     [deps.Latexify.weakdeps]
     DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
     SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
+
+[[deps.LazyArtifacts]]
+deps = ["Artifacts", "Pkg"]
+uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -1072,11 +706,6 @@ git-tree-sha1 = "c1dd6d7978c12545b4179fb6153b9250c96b0075"
 uuid = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 version = "1.0.3"
 
-[[deps.MIMEs]]
-git-tree-sha1 = "65f28ad4b594aebe22157d6fac869786a255b7eb"
-uuid = "6c6e2e6c-3030-632d-7369-2d6c69616d65"
-version = "0.1.4"
-
 [[deps.MacroTools]]
 deps = ["Markdown", "Random"]
 git-tree-sha1 = "2fa9ee3e63fd3a4f7a9a4f4744a52f4856de82df"
@@ -1154,6 +783,12 @@ git-tree-sha1 = "a028ee3cb5641cccc4c24e90c36b0a4f7707bdf5"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
 version = "3.0.14+0"
 
+[[deps.OpenSpecFun_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "13652491f6856acfd2db29360e1bbcd4565d04f1"
+uuid = "efe28fd5-8261-553b-a9e1-b2916fc3738e"
+version = "0.5.5+0"
+
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "51a08fb14ec28da2ec7a927c4337e4332c2a4720"
@@ -1223,12 +858,6 @@ version = "1.40.4"
     IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
     ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
     Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
-
-[[deps.PlutoUI]]
-deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
-git-tree-sha1 = "ab55ee1510ad2af0ff674dbcced5e94921f867a9"
-uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.59"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
@@ -1327,6 +956,37 @@ deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 version = "1.10.0"
 
+[[deps.SpecialFunctions]]
+deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
+git-tree-sha1 = "2f5d4697f21388cbe1ff299430dd169ef97d7e14"
+uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
+version = "2.4.0"
+
+    [deps.SpecialFunctions.extensions]
+    SpecialFunctionsChainRulesCoreExt = "ChainRulesCore"
+
+    [deps.SpecialFunctions.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+
+[[deps.StaticArrays]]
+deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
+git-tree-sha1 = "6e00379a24597be4ae1ee6b2d882e15392040132"
+uuid = "90137ffa-7385-5640-81b9-e52037218182"
+version = "1.9.5"
+
+    [deps.StaticArrays.extensions]
+    StaticArraysChainRulesCoreExt = "ChainRulesCore"
+    StaticArraysStatisticsExt = "Statistics"
+
+    [deps.StaticArrays.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[[deps.StaticArraysCore]]
+git-tree-sha1 = "192954ef1208c7019899fbf8049e717f92959682"
+uuid = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+version = "1.4.3"
+
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -1378,11 +1038,6 @@ weakdeps = ["Random", "Test"]
     [deps.TranscodingStreams.extensions]
     TestExt = ["Test", "Random"]
 
-[[deps.Tricks]]
-git-tree-sha1 = "eae1bb484cd63b36999ee58be2de6c178105112f"
-uuid = "410a4b4d-49e4-4fbc-ab6d-cb71b17b3775"
-version = "0.1.8"
-
 [[deps.URIs]]
 git-tree-sha1 = "67db6cc7b3821e19ebe75791a9dd19c9b1188f2b"
 uuid = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
@@ -1420,6 +1075,17 @@ deps = ["LaTeXStrings", "Latexify", "Unitful"]
 git-tree-sha1 = "e2d817cc500e960fdbafcf988ac8436ba3208bfd"
 uuid = "45397f5d-5981-4c77-b2b3-fc36d6e9b728"
 version = "1.6.3"
+
+[[deps.UnsafeAtomics]]
+git-tree-sha1 = "6331ac3440856ea1988316b46045303bef658278"
+uuid = "013be700-e6cd-48c3-b4a1-df204f14c38f"
+version = "0.2.1"
+
+[[deps.UnsafeAtomicsLLVM]]
+deps = ["LLVM", "UnsafeAtomics"]
+git-tree-sha1 = "d9f5962fecd5ccece07db1ff006fb0b5271bdfdd"
+uuid = "d80eeb9a-aca5-4d75-85e5-170c8b632249"
+version = "0.1.4"
 
 [[deps.Unzip]]
 git-tree-sha1 = "ca0969166a028236229f63514992fc073799bb78"
@@ -1718,123 +1384,29 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
-# ╟─0939489d-79d2-4c1a-9841-17d9ae448d94
-# ╠═a025f4ac-9f39-4d05-9e0f-c12b9145d7c6
-# ╟─4efa23f3-e705-469e-8e82-fb6d0e4589a3
-# ╠═52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
-# ╠═50c86554-ff09-4e4a-94e8-0f30b83e8655
-# ╟─b4cb3a82-d740-4d02-b0f4-f18ec9500b4f
-# ╠═0f63f358-310c-4475-a17b-6376ce26f903
-# ╠═3ae5a286-cc9d-4837-a6de-c79bad078df4
-# ╠═b4de91e1-ef8a-44ae-ac31-ac99d0a041d2
-# ╠═79dd50f1-bd99-4384-b691-4bdb73096161
-# ╠═76f1b9df-46e4-4920-b62d-f6e802f9a8ec
-# ╟─13104a6c-0eb7-42d7-961d-addc55f06588
-# ╠═b9ddc629-f680-4a71-8374-f3b01bb53890
-# ╠═40ce6638-a83e-4928-beda-2aa4eaed6147
-# ╠═414f4132-8d04-48c0-a107-e77af3fe928c
-# ╠═bcacdf8c-695f-4590-b7d8-29d28086bd46
-# ╟─87c97051-6c29-43d9-abc6-5877ff03ee00
-# ╠═06ec1ee6-817b-45df-899a-3f8b0c541257
-# ╠═eb50833d-3de0-431c-a12b-8b0169a221e7
-# ╠═5fcf5830-5a7e-47fe-910c-f3c7831bee6f
-# ╠═936bc73b-681e-46a5-b7a5-4bb071cc91a5
-# ╠═002bd083-00d2-4fd6-965f-9415d85f23f6
-# ╠═18aab5fb-7add-4ada-b42e-2bc62968d6bc
-# ╠═0c4a6998-8863-404e-96c2-952df70839ab
-# ╠═a9561c08-2b07-4590-b901-d9cbd60355ee
-# ╟─2e034e29-8755-43d5-b557-d247df23f50e
-# ╠═e3f7a77a-8c9e-4f15-af47-551fd959b2a6
-# ╠═0f2aff9d-778b-4a08-9c33-c1866279c686
-# ╠═48e93319-299b-40b9-bbf9-09d18d683c9c
-# ╠═fa1283d5-b3d5-46d4-a34c-4cddc32ab284
-# ╠═322ea469-2961-46b0-a93c-20e2c8f94328
-# ╠═ec5238e4-f445-491c-bd14-8e1aba59049f
-# ╠═cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
-# ╟─f3b4eba4-5471-441e-b199-69fd07f528e2
-# ╠═c6739f52-f87f-4bef-8c32-ce3ec4942342
-# ╠═035f9794-43ea-4e19-860c-a66fd0ea1a14
-# ╠═57f30a3c-7d28-4819-958a-bf1859d6947c
-# ╠═024aa7d5-a569-4639-851f-b7d491855202
-# ╠═f640df71-ae15-4b67-a30e-c806ea532a19
-# ╟─2e6521be-ff66-47a9-8c19-68216cb62f3d
-# ╠═149a64ba-6d5b-4416-bc2d-8e1ae897c71d
-# ╠═04780b58-ff08-4e77-b573-68a7d9fdf4da
-# ╠═e64bf54d-681b-4117-815a-734e69925b7d
-# ╟─7b6e1d43-c72c-4bd9-b493-838b05e845c4
-# ╠═69283b2e-bd47-4c3c-890f-677b253183e7
-# ╠═d7186b34-117c-4a11-8907-91766a038425
-# ╠═a2c92fca-fbab-4396-b472-a53d7a858abe
-# ╠═3cfce228-b634-4e31-b3f3-ddadb6c7a53d
-# ╠═4f62d53f-11bb-4e53-b759-d6f49eec5cd4
-# ╠═952db525-9d54-4b56-a09f-3014a9ca9293
-# ╠═21844a9b-54d3-4429-ba9d-3e3c2bc6ad65
-# ╠═fbd9a83b-17b4-47db-a46e-e7a9037b9090
-# ╠═6b3a83eb-e316-46b5-a097-233145ab1bcc
-# ╠═d02b8c20-6e43-435c-ba9f-870b1bb5fae9
-# ╠═b5eb64a4-6572-405f-bed4-7e483f6e50e5
-# ╠═8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
-# ╠═d1ca8fb0-580f-4625-aba3-dd18e054ee48
-# ╠═8ea9ecaf-6d66-4e57-8606-e79fdc8415e5
-# ╠═2f512a32-8e03-4ef1-9a09-d5a388f06823
-# ╠═12008adf-5162-484c-af6b-30b2d43f46b5
-# ╠═d1fb6a87-ef5f-49f8-be44-84889e4dfd39
-# ╠═9cb3f794-5696-4c9d-adf1-5d1f31ae8c00
-# ╠═a4e1bde7-2de3-4df9-8dc3-f25aafac7dfd
-# ╠═c252cdaf-6334-4ddc-a114-5e7ea0d2ea63
-# ╠═65f92119-b389-491c-b809-fab91636c53a
-# ╠═c41480a9-e6d8-48b7-ac5c-326706e84d62
-# ╠═9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
-# ╠═6b95a054-c3f7-4777-bbcd-ccbd12741234
-# ╠═17eeffee-701d-4251-aca7-308e456487da
-# ╟─66cae8d2-8e20-4b1e-9dae-e120eee4d944
-# ╠═5af22ae0-effd-4589-bd1f-d375299b6848
-# ╠═e3201408-e6b6-49be-b693-65d55b20be5f
-# ╠═83d0d182-c876-4aa2-a6f3-dfa92477bdcd
-# ╠═6287eddc-9b35-489e-b584-8197c09cb228
-# ╠═5ee4f31b-ebae-4d8f-8ccc-6df671de6965
-# ╠═3f6fbfd0-b35a-4af9-86cd-55d7e4188301
-# ╟─6bcb5989-0012-458c-a5a2-5f977fc781d6
-# ╠═72bdde5a-a503-4cc4-bd06-de49794e53b5
-# ╠═39a9ed81-ad29-45ef-a199-045a4634eee0
-# ╠═7996e940-12d0-4c90-b173-9f04b2ede3d0
-# ╠═785e3c94-c385-4721-a232-56f26d072e33
-# ╠═e9b56975-891a-4cf9-b4e6-7ff72fa4235b
-# ╠═e6e2109f-07f7-4bdb-a44b-075125de8cf1
-# ╠═ef49a0fa-a322-480f-9981-4247a3647f38
-# ╠═4163b41b-03b3-45eb-8ada-adb8c697f10c
-# ╟─7af106cf-3e7b-497d-95c1-b90c09b048e5
-# ╠═1396345b-8abf-48ac-8bfa-6c641a395c2c
-# ╟─6042b2ff-d9fe-47c8-8f72-11f377299adc
-# ╠═ac12297d-3358-45e7-8f76-3c0688a638bd
-# ╟─0102faaf-c6cc-4a95-bd77-0a762f1ba680
-# ╟─085e2a09-1306-4ad1-bc83-554c2d214d50
-# ╟─3e79c7ef-8e91-4072-8ade-a86e4e426ede
-# ╠═7923655c-be6d-47ed-a996-061328a3255f
-# ╠═a438406b-80ae-467b-a29f-aaf4cc158719
-# ╟─3533d0ba-463e-493d-8a5b-132463842b6a
-# ╟─81230ae7-8aa7-4c5d-822b-013c15f655f5
-# ╠═5d57d740-4a92-48d7-aa43-9604c55cc4aa
-# ╠═845c2ef5-e05a-4b63-8098-abdc111900b4
-# ╠═d6c47c30-f589-430c-9b34-5d52274143cd
-# ╠═cf588263-39b6-42b5-bcba-814e273e3625
-# ╟─d86a50bb-7eed-41fd-94f1-394e38d0c135
-# ╠═47f98ed2-2bfc-4b6b-9c23-3c09d97de395
-# ╠═20883c28-c142-4dab-ab47-1fbecbbbecb1
-# ╟─502bfe2a-0847-4cac-b1c0-f57e24b66a71
-# ╠═2cd4262f-83ee-4f23-b9c2-986aaffedfd9
-# ╠═3874b1e7-c20a-46a1-a1a4-d2a75eb45e23
-# ╟─0737b8f7-8dbe-42f8-878d-7a304531bcdc
-# ╠═45e8dd14-b2ff-448f-915a-56524bedf77d
-# ╟─0265d228-c26f-4969-8449-6ee23ea41f2e
-# ╟─0c7f1a08-c4f9-4670-9c70-2ec539f8ec96
-# ╠═09fa49a6-439b-4a6a-8045-313f1a5cdc1d
-# ╟─d77e5b32-f1c0-4eed-954b-cc63c04c0040
-# ╠═c3b9c387-3c01-499a-b2e4-f2a70afd462c
-# ╠═9af7b7d3-1b03-4be2-ace9-adf6897a54d3
-# ╠═73e474e7-5621-4abc-8dcf-d90bcfc4e57d
-# ╠═fae78894-54a9-4696-8eda-9e7b067779fd
-# ╠═e36c46d2-f745-48b7-bee1-a56c670c1e3c
-# ╟─8bc7e78b-ff6d-4553-b327-f03d21651121
+# ╟─c6b3bebe-32da-11ef-09ae-ad02d9296cab
+# ╠═47789e98-5de0-413f-8677-29918719278a
+# ╠═2f6e0b90-dfd5-4f70-bb25-4eecf9a30768
+# ╠═efe11271-fe46-4399-ad6b-089b5b5ceec3
+# ╠═c79e8873-789a-4db8-8af5-d915c465d72b
+# ╠═447bdcf9-260f-4cba-977b-6a97b2280d35
+# ╠═ec0cd66a-eed0-4ac5-a2ab-d021ba003ebd
+# ╠═b4c16d52-45d6-421f-aefe-e9680977a176
+# ╟─5ffdecbf-9a8b-49e5-adbb-90f932075076
+# ╠═71f9f677-9721-4626-b8d6-eae70e25c2d5
+# ╠═ed0e646e-f8c6-4cb3-95e3-e1d39fa0b4c9
+# ╠═4b0fd4e7-fa60-4115-9548-02f88f3b7a82
+# ╠═60ef1f4b-89ab-42ec-973f-1025d0161b96
+# ╟─658c4cca-a5c6-4c5d-80fb-f939728c1992
+# ╟─9aeec0a9-9742-41e8-8c64-61744a86f653
+# ╠═44d506a5-9b65-48c1-bbfb-5a1977abcde1
+# ╟─0c6a623d-ec6b-4234-8cf1-873e14158eb4
+# ╠═664e8ba5-6dd8-44af-a8e1-1df6f80510a2
+# ╟─c8bf3d51-570d-4668-a4b1-bfa6e8e475fe
+# ╠═d685eff6-ab91-4bee-bf7a-957b2ae644f0
+# ╠═15603d34-3728-42ce-bac7-1608ef34ba3c
+# ╠═4b626ee4-44fb-4488-b630-888601587a54
+# ╠═b6969c0f-c337-44a2-b458-10f916201484
+# ╠═fae4b543-03ac-4f27-bff6-07574fae5733
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

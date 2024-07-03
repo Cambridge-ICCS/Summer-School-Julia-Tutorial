@@ -17,6 +17,19 @@ end
 # ╔═╡ b79e1b65-56e5-471b-a665-65c41d8bce38
 using Images, OffsetArrays, LinearAlgebra, ImageFiltering, FFTW, SparseArrays, PlutoUI
 
+# ╔═╡ fd6958ab-42bc-4478-bfb5-dbbc98566c55
+md"""# Image Processing in Julia
+
+**Main Topics:**
+
+- Images are Matrices of RGB values
+- Interactive widgets from PlutoUI
+- Image compression using SVD and FFT
+- Image filtering
+- Sparse arrays
+- OffsetArray
+"""
+
 # ╔═╡ 62c81910-330a-11ef-2304-250af46959c0
 img = let url = "https://images.fineartamerica.com/images-medium-large-5/1-earth-from-space-kevin-a-horganscience-photo-library.jpg"
 	load(@show download(url))
@@ -34,7 +47,19 @@ let c = RGB(.2, .3, .4)
 end
 
 # ╔═╡ 68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
-0.5(RGB(1, 0, 0) + RGB(0, 0, 1))
+0.5(RGB(1, 0, 0) + RGB(0, 0, 1))  # linear combination of RGB values
+
+# ╔═╡ 9df9548b-6dd1-48df-ac8c-474f7fc753ff
+md"W: $(@bind W Slider(100:300, default=200, show_value=true))"
+
+# ╔═╡ 058c74e5-8e54-41f5-aa11-9c743d3da5c7
+md"X: $(@bind X Slider(1:900-W, default=320, show_value=true))"
+
+# ╔═╡ 761b73c7-f5f9-43ac-907d-2e65537e5c46
+md"Y: $(@bind Y Slider(1:900-W, default=130, show_value=true))"
+
+# ╔═╡ 09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
+cropped_img = @view img[Y:Y+W, X:X+W]  # avoid making copy
 
 # ╔═╡ 3d52bc87-c24a-45b8-abc5-22c42fc4f265
 md"## Image Linear Transformation"
@@ -45,11 +70,16 @@ function borders(a::AbstractArray)
 	[(r.start, r.stop) for r in ax_ranges]
 end
 
+# ╔═╡ c2e6970b-703e-4af2-92be-611df5b00954
+borders(img)
+
+# ╔═╡ e41efceb-b244-4c37-b4aa-333dadb48154
+borders(centered(img))
+
 # ╔═╡ fd12f674-74b3-4ffa-bdfd-9533380add0b
 function transform_image(img::AbstractMatrix{<:RGB}, basis::Matrix{<:Real})
 	M, N = size(img)
-	# A = OffsetMatrix(img, -M÷2, -N÷2)
-	A = centered(img)
+	A = centered(img)  # => OffsetMatrix(img, -M÷2, -N÷2)
 	(i0, i1), (j0, j1) = borders(A)
 	sx, sy = svd(basis).S  # singular values (x scale, y scale)
 	P = Iterators.product((i0*sy):(i1*sy), (j0*sx):(j1*sx))
@@ -1447,14 +1477,21 @@ version = "17.4.0+2"
 """
 
 # ╔═╡ Cell order:
+# ╟─fd6958ab-42bc-4478-bfb5-dbbc98566c55
 # ╠═b79e1b65-56e5-471b-a665-65c41d8bce38
 # ╠═62c81910-330a-11ef-2304-250af46959c0
 # ╠═699b06a0-d706-470e-aca8-8d882b85c09a
 # ╠═cb18c751-11ac-4ac7-9a51-b5a81ac9d553
 # ╠═09d1fff1-443f-47f5-a465-edb919f612d3
 # ╠═68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
+# ╟─9df9548b-6dd1-48df-ac8c-474f7fc753ff
+# ╟─058c74e5-8e54-41f5-aa11-9c743d3da5c7
+# ╟─761b73c7-f5f9-43ac-907d-2e65537e5c46
+# ╠═09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
 # ╟─3d52bc87-c24a-45b8-abc5-22c42fc4f265
 # ╠═d4b8edee-760b-44ae-901c-5b9028a091d7
+# ╠═c2e6970b-703e-4af2-92be-611df5b00954
+# ╠═e41efceb-b244-4c37-b4aa-333dadb48154
 # ╠═fd12f674-74b3-4ffa-bdfd-9533380add0b
 # ╟─cf464513-0fe3-4e3c-8d3e-2e673a485bdb
 # ╠═74cd3cc8-f897-449e-be69-cadea4da9e3c

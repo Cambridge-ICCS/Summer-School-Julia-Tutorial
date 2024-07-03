@@ -12,18 +12,20 @@ begin
 end
 
 # ╔═╡ d584e21d-3c8e-4fd9-9818-33cadb782ac9
-md"""### Key Take-away Features
+md"""# Earth Energy Balance Model
 
-- The SciML community
+**Main Topics:**
+
+- The [SciML](https://sciml.ai/) Organization
+- DataFrames
 - Data Visualization
-- Neural ODE
+- Differential Equations
+- [Flux.jl](https://fluxml.ai/Flux.jl/stable/) and Neural ODE
 """
 
 # ╔═╡ c5765cae-28fd-439e-b5ce-844b5637d2e4
 begin
-	# https://dataframes.juliadata.org/stable/man/comparisons/
 	CO2_historical_path = download("https://www.epa.gov/system/files/other-files/2022-07/ghg-concentrations_fig-1.csv")
-	# CO2_historical_path = "/home/tcai/Downloads/total-ghg-emissions.csv"
 
 	offset = findfirst(startswith("Year"), readlines(CO2_historical_path))
 
@@ -38,13 +40,18 @@ end
 begin
 	CO2_historical_data = subset(CO2_historical_data_raw, "Year" => y -> y .>= 1850)
 	values = replace(Matrix(CO2_historical_data[:,2:end]), missing=>NaN)
-	CO2_historical_data.CO2 = reshape(nanmean(values, dims=2), :)
+	CO2_historical_data.CO2 = reshape(nanmean(values, dims=2), :) # flatten the array
 	select!(CO2_historical_data, :Year, :CO2)
 	first(CO2_historical_data, 5), last(CO2_historical_data, 5)
 end
 
+# ╔═╡ 96e1e5c6-f4b2-48f1-8a85-c031c915e1d5
+md"More information on how to use dataframes in Julia, in comparison with Pandas in Python: [https://dataframes.juliadata.org/stable/man/comparisons/](https://dataframes.juliadata.org/stable/man/comparisons/)."
+
+# ╔═╡ 52891ead-46a3-4ceb-8be9-e6539fb5aa54
+md"#### Fit a cubic curve to the CO2 time series"
+
 # ╔═╡ 8264a6cf-803c-4f37-b516-b82be1000a38
-# Fit a polynomial to the Keeling curve
 begin
 	CO2_PreIndust = 280
 	time_features(t) = let x = t .- 1850; @. [x x^2 x^3] end
@@ -52,7 +59,7 @@ begin
 	CO2_params = let
 		X = time_features(CO2_historical_data[:, "Year"])
 		y = CO2_historical_data[:, "CO2"] .- CO2_PreIndust
-		p = X \ y  # least squares
+		p = X \ y  # equivalent to pinv(X) * y, gives the least squares approximation
 	end
 end
 
@@ -68,7 +75,17 @@ begin
 end
 
 # ╔═╡ e39a69fe-0c82-482d-9a69-a5b028610c62
-md"Reference: [https://florianboergel.github.io/climateoftheocean/2020-11-11-energy-model.html](https://florianboergel.github.io/climateoftheocean/2020-11-11-energy-model.html)"
+md"""
+![ebm](https://raw.githubusercontent.com/hdrake/hdrake.github.io/master/figures/planetary_energy_balance.png)
+
+**Incoming Solar Insolation:**
+
+![solar insolation](https://www.open.edu/openlearn/3d/e9/3de9a965b64327e11964efcf028b4371fa80934f?response-content-disposition=inline%3Bfilename%3D%22s250_3_002i.jpg%22&response-content-type=image%2Fjpeg&Expires=1720087560&Signature=YqK4lcyR4ymj9CJGGn~aftIgCoc-zADqJAPC9eEpWW29EQlQyTdkMINt00v8OZwOLS1YVoeMFqvDTOOjRXKhWtH06u0kExlRbsjdETm3OxkvSaKdbnRMRSaa97T4wJ-GPW~WSSshjme4fCd84B7CKkNYw1n0WB5ozgsQ2ENcdnv7Phkpkg6OJ4RBYC~IZtPabw5mT-FeAVZ8DCIGNO9AJmm2LPbfIIM~EDe~kOqn9ppESxxwWdBVxZGd9M8XFVoQkZEIJpyR1QW5cF~C2FB6m8-FlDT3oRCLttdmhDncyVhvyhlsUKbv4c2j9W~pnnt9FG5CQGE6DYdXngTVwKzUVQ__&Key-Pair-Id=K87HJKWMK329B)
+
+**Reference:** 
+
+- [https://computationalthinking.mit.edu/Fall24/climate\_science/our\_first\_climate_model/](https://computationalthinking.mit.edu/Fall24/climate_science/our_first_climate_model/)
+- [https://florianboergel.github.io/climateoftheocean/2020-11-11-energy-model.html](https://florianboergel.github.io/climateoftheocean/2020-11-11-energy-model.html)"""
 
 # ╔═╡ c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
 begin
@@ -96,14 +113,14 @@ end
 # ╔═╡ 4084d556-5673-444f-bb9f-e77a502799d5
 begin
 	T0 = 14.0
-	ini = [T => T0]  # initial condition (assume thermal equilibrium)
+	ini = [T => T0]  # initial condition
 	ps = [  # parameters
-		a => 5.,  # CO2 forcing coefficient [W/m^2]
-		α => 0.3,  # albedo
-		C => 51.,  # atmosphere and upper-ocean heat capacity
+		a => 5.,     # CO2 forcing coefficient [W/m^2]
+		α => 0.3,    # albedo
+		C => 51.,    # atmosphere and upper-ocean heat capacity
 		S => 1368.,  # solar insolation
-		B => -1.3,  # climate feedback parameter [W/m^2/°C]
-		T_0 => T0,
+		B => -1.3,   # climate feedback parameter [W/m^2/°C]
+		T_0 => T0,   # preindustrial time (assume thermal equilibrium)
 	]
 	tspan = (1850, 2024)
 	prob = ODEProblem(sys, ini, tspan, ps)
@@ -144,8 +161,8 @@ md"Let's fit a neural ODE to better approximate the real observations. We will u
 
 # ╔═╡ 68b04370-7d3e-4b6a-a07a-e11b90ce440e
 begin
-	@variables NN(t)
-	new_sys = substitute(sys, [ps; G => NN; R => sys.eqs[3].rhs])
+	@variables G_NN(T, t)
+	new_sys = substitute(sys, [ps; G => G_NN; R => sys.eqs[3].rhs])
 end
 
 # ╔═╡ 9a93642b-7fca-4346-914b-e9a1ab6c2bc9
@@ -155,12 +172,18 @@ new_dT = simplify(new_sys.eqs[1].rhs, expand=true)
 begin
 	using Flux, SciMLSensitivity
 
+	"The outgoing radiation term `G(T, t)` estimated by the NN."
+	function nn_term(nn::Chain, T, t; T0=T0)
+		x = (t - 1850) / 200
+		u = (T - T0) .^ [0 1 2]
+		c = nn([x, x^2, x^3])
+		only(u * c)  # c[0] + c[1](T-T0) + c[2](T-T0)^2
+	end
+
 	function dTdt(dT, T, ps, yr)
 		nn = reconstruct(ps)
-		x = (yr - 1850) / 200
-		u = T .^ [0 1 2]
-		c = nn([x, x^2, x^3])  # ODE parameters estimated by the NN
-		dT[1] = substitute(new_dT, Dict(NN => only(u * c), t => yr))
+		g = nn_term(nn, T[1], yr)
+		dT[1] = substitute(new_dT, Dict(G_NN => g, t => yr))
 	end
 
 	init = Flux.orthogonal
@@ -181,7 +204,7 @@ begin
 	loss() = sum(abs2, predict_temp() .- true_temp) / length(true_temp)
 	
 	data = Iterators.repeated((), 160)  # () is the input to the loss function
-	opt = ADAM(0.02)
+	opt = ADAM(0.01)
 
 	losses = []
 	history = []
@@ -195,7 +218,10 @@ begin
 end
 
 # ╔═╡ 512c0d2e-25ed-44fe-a0f9-f09af0d1be49
-plot(losses)
+plot(losses, label="average error", xlabel="epoch", ylabel="°C")
+
+# ╔═╡ d16cea4f-8139-423a-af49-cdadac7e116f
+md"Average error: $(round(loss(), digits=2))°C"
 
 # ╔═╡ 840b3aae-3ea6-4726-bfea-569ddb69e103
 @gif for p in history[2:2:end]
@@ -204,17 +230,26 @@ plot(losses)
 end
 
 # ╔═╡ ea8427d8-37f5-4e69-ab1f-e53f4031610d
-begin
+begin  # forecast into the future
 	ts = (1880, 2050)
-	pred = Vector(solve(nn_prob, Tsit5(), tspan=ts, saveat=1))
+	pred = Vector(solve(nn_prob, Tsit5(), p=params, tspan=ts, saveat=1))
 	plot(range(ts...), pred, label="Predicted Temperature", legend=:topleft)
 	plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
 end
 
+# ╔═╡ e39b3544-b348-4d93-ad5d-02a774576f0e
+md"## Take-home Exercises"
+
 # ╔═╡ e3cb923a-f3c6-41d4-8072-9f4b183d77a0
 md"""
 !!! danger "Task"
-	Compare ``\frac{dT}{dt}`` between the original ODE and the neural ODE.
+	Plot the average global temperature data provided by NASA, together with the predictions over the time span of 1850-2050 produced by both the original ODE and the neural ODE.
+"""
+
+# ╔═╡ 461898ec-3f89-4795-a238-f217ca072607
+md"""
+!!! danger "Task"
+	Given the solutions of temperature `T(t)`, calculate the outgoing thermal radiation `G(T(t), t)` over 1850-2050 for both the original ODE and the neural ODE. Plot the results together in a single figure.
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -3157,6 +3192,8 @@ version = "1.4.1+1"
 # ╠═1fbb5414-3483-11ef-2f91-affe69c5f577
 # ╠═c5765cae-28fd-439e-b5ce-844b5637d2e4
 # ╠═d6ecc837-be55-4db7-bac7-8446e7a3cfa2
+# ╟─96e1e5c6-f4b2-48f1-8a85-c031c915e1d5
+# ╟─52891ead-46a3-4ceb-8be9-e6539fb5aa54
 # ╠═8264a6cf-803c-4f37-b516-b82be1000a38
 # ╠═f539ddd6-041f-4b84-91c0-aca74131c960
 # ╟─e39a69fe-0c82-482d-9a69-a5b028610c62
@@ -3174,8 +3211,11 @@ version = "1.4.1+1"
 # ╠═981f864e-da3f-4f27-996b-3172ae0fe76f
 # ╠═af156b54-629a-48e7-8065-e426b17e8224
 # ╠═512c0d2e-25ed-44fe-a0f9-f09af0d1be49
+# ╠═d16cea4f-8139-423a-af49-cdadac7e116f
 # ╠═840b3aae-3ea6-4726-bfea-569ddb69e103
 # ╠═ea8427d8-37f5-4e69-ab1f-e53f4031610d
+# ╟─e39b3544-b348-4d93-ad5d-02a774576f0e
 # ╟─e3cb923a-f3c6-41d4-8072-9f4b183d77a0
+# ╟─461898ec-3f89-4795-a238-f217ca072607
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
