@@ -177,11 +177,11 @@ begin
 	using Flux, SciMLSensitivity
 
 	"The outgoing radiation term `G(T, t)` estimated by the NN."
-	function nn_term(nn::Chain, T, t; T0=14.0)
+	function nn_term(nn::Chain, T, t)
 		x = (t - 1850) / 200
-		u = (T - T0) .^ [0 1 2]
+		u = T .^ [0 1 2]
 		c = nn([x, x^2, x^3])
-		only(u * c)  # c[0] + c[1](T-T0) + c[2](T-T0)^2
+		only(u * c)  # c[0] + c[1]T + c[2]T^2
 	end
 
 	function dTdt(dT, T, ps, yr)
@@ -208,7 +208,7 @@ begin
 	loss() = sum(abs2, predict_temp() .- true_temp) / length(true_temp)
 	
 	data = Iterators.repeated((), 160)  # () is the input to the loss function
-	opt = ADAM(0.01)
+	opt = ADAM(0.002)
 
 	losses = []
 	history = []
