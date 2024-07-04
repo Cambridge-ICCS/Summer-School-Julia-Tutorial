@@ -82,6 +82,10 @@ md"""
 
 ![solar insolation](https://www.open.edu/openlearn/3d/e9/3de9a965b64327e11964efcf028b4371fa80934f?response-content-disposition=inline%3Bfilename%3D%22s250_3_002i.jpg%22&response-content-type=image%2Fjpeg&Expires=1720087560&Signature=YqK4lcyR4ymj9CJGGn~aftIgCoc-zADqJAPC9eEpWW29EQlQyTdkMINt00v8OZwOLS1YVoeMFqvDTOOjRXKhWtH06u0kExlRbsjdETm3OxkvSaKdbnRMRSaa97T4wJ-GPW~WSSshjme4fCd84B7CKkNYw1n0WB5ozgsQ2ENcdnv7Phkpkg6OJ4RBYC~IZtPabw5mT-FeAVZ8DCIGNO9AJmm2LPbfIIM~EDe~kOqn9ppESxxwWdBVxZGd9M8XFVoQkZEIJpyR1QW5cF~C2FB6m8-FlDT3oRCLttdmhDncyVhvyhlsUKbv4c2j9W~pnnt9FG5CQGE6DYdXngTVwKzUVQ__&Key-Pair-Id=K87HJKWMK329B)
 
+**Outgoing thermal radiation:**
+
+**Greenhouse effect:**
+
 **Reference:** 
 
 - [https://computationalthinking.mit.edu/Fall24/climate\_science/our\_first\_climate_model/](https://computationalthinking.mit.edu/Fall24/climate_science/our_first_climate_model/)
@@ -173,7 +177,7 @@ begin
 	using Flux, SciMLSensitivity
 
 	"The outgoing radiation term `G(T, t)` estimated by the NN."
-	function nn_term(nn::Chain, T, t; T0=T0)
+	function nn_term(nn::Chain, T, t; T0=14.0)
 		x = (t - 1850) / 200
 		u = (T - T0) .^ [0 1 2]
 		c = nn([x, x^2, x^3])
@@ -3196,7 +3200,7 @@ version = "1.4.1+1"
 # ╟─52891ead-46a3-4ceb-8be9-e6539fb5aa54
 # ╠═8264a6cf-803c-4f37-b516-b82be1000a38
 # ╠═f539ddd6-041f-4b84-91c0-aca74131c960
-# ╟─e39a69fe-0c82-482d-9a69-a5b028610c62
+# ╠═e39a69fe-0c82-482d-9a69-a5b028610c62
 # ╠═c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
 # ╠═70db5d4d-e346-476a-8bba-50070260abe5
 # ╠═4084d556-5673-444f-bb9f-e77a502799d5

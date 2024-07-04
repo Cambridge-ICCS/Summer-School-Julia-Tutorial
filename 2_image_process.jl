@@ -26,13 +26,12 @@ md"""# Image Processing in Julia
 - Interactive widgets from PlutoUI
 - Image compression using SVD and FFT
 - Image filtering
-- Sparse arrays
-- OffsetArray
+- Multithread parallelization
 """
 
 # ╔═╡ 62c81910-330a-11ef-2304-250af46959c0
 img = let url = "https://images.fineartamerica.com/images-medium-large-5/1-earth-from-space-kevin-a-horganscience-photo-library.jpg"
-	load(@show download(url))
+	load(download(url))
 end
 
 # ╔═╡ 699b06a0-d706-470e-aca8-8d882b85c09a
@@ -50,7 +49,7 @@ end
 0.5(RGB(1, 0, 0) + RGB(0, 0, 1))  # linear combination of RGB values
 
 # ╔═╡ 9df9548b-6dd1-48df-ac8c-474f7fc753ff
-md"W: $(@bind W Slider(100:300, default=200, show_value=true))"
+md"W: $(@bind W Slider(100:500, default=200, show_value=true))"
 
 # ╔═╡ 058c74e5-8e54-41f5-aa11-9c743d3da5c7
 md"X: $(@bind X Slider(1:900-W, default=320, show_value=true))"
@@ -58,8 +57,11 @@ md"X: $(@bind X Slider(1:900-W, default=320, show_value=true))"
 # ╔═╡ 761b73c7-f5f9-43ac-907d-2e65537e5c46
 md"Y: $(@bind Y Slider(1:900-W, default=130, show_value=true))"
 
+# ╔═╡ 69d8314f-5b88-4ccd-b1e5-c85673ffbe43
+md"D: $(@bind D Slider(1:10, default=1, show_value=true))"
+
 # ╔═╡ 09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
-cropped_img = @view img[Y:Y+W, X:X+W]  # avoid making copy
+cropped_img = @view img[Y:D:Y+W, X:D:X+W]  # avoid making copy
 
 # ╔═╡ 3d52bc87-c24a-45b8-abc5-22c42fc4f265
 md"## Image Linear Transformation"
@@ -181,18 +183,18 @@ mapreduce(*, +, [1,2,3], [3,2,1])
 # ==> sum(a * b for (a, b) in zip([1,2,3], [3,2,1]))
 
 # ╔═╡ 5fa0ba4f-6b18-42a8-b1ae-63a42fac4675
-md"A bit of digression into multithread parallelization in Julia."
+md"A bit of digression into multithreading in Julia:"
 
 # ╔═╡ 04de16bf-b5a6-47fb-a72a-7af0331e3fed
 let K = @show Threads.nthreads()
 	function task(t)
 		println("start sleeping for $t seconds (in thread $(Threads.threadid()))")
 		sleep(t)
-		println("waking up (in thread $(Threads.threadid()))")
+		println("waking up")
 		return t
 	end
 	
-	ts = fill(.1, 6)
+	ts = fill(.2, 3)
 	
 	@time @assert sum(task, ts) == sum(ts)
 	println()
@@ -207,8 +209,8 @@ let K = @show Threads.nthreads()
 		a += task(t)  # race condition!
 	end
 	@show a
-	# `a` is written by multiple threads at the same time
-	# in effect, its value is only increased for once
+	# Read more about race condition at https://en.wikipedia.org/wiki/Race_condition
+	# and https://docs.julialang.org/en/v1/manual/multi-threading/#Atomic-Operations
 end
 
 # ╔═╡ d5fb7160-2d63-4da9-9f8e-53450f5a8dd3
@@ -245,13 +247,17 @@ run(`rm /tmp/my_earth.png`)
 md"""## Exercise 1
 
 !!! danger "Task"
-	Write a function that inverts the pixel colors of an image, i.e. converts `(r, g, b)` to `(1 - r, 1 - g, 1 - b)`.
+	Write a function that inverts an RGB color, i.e. converts `(r, g, b)` to `(1 - r, 1 - g, 1 - b)`. Then overload this function with a method that inverts all pixel colors of an image.
 """
+
+# ╔═╡ 582f5e4c-2797-4276-9876-49e9364644ae
+function invert(RGB::RGB)
+	return missing  # your code here!
+end
 
 # ╔═╡ 2ed6065b-7779-4bd3-bde2-57f0e05b8e27
 function invert(image::AbstractMatrix{<:RGB})
-	# your code here!
-	return missing
+	return missing  # your code here!
 end
 
 # ╔═╡ 1a0d0798-561b-49bc-987b-b2089ca5e863
@@ -276,20 +282,24 @@ end
 @time map_image(c -> RGB(c.r, 0., 0.), img)
 
 # ╔═╡ dc86fd91-a9e6-4869-abb9-1fe9cfdf08a1
-@time map_image(c -> RGB(1-c.r, 1-c.g, 1-c.b), img)
-
-# ╔═╡ 24444576-935c-4d5f-a412-3a799270bdb1
-# sample solution of parallelized map_image
-function map_image_parallel(f::Function, image::AbstractMatrix{<:RGB})
-	out = similar(image)
-	Threads.@threads for i in 1:length(image)
-		out[i] = f(image[i])
-	end
-	out
-end
+@time map_image(invert, img)
 
 # ╔═╡ e43fb1d4-ca68-475f-8a05-211d045e4734
-@time map_image_parallel(c -> RGB(1-c.r, 1-c.g, 1-c.b), img);
+if isdefined(@__MODULE__, :map_image_parallel)
+	@time map_image_parallel(invert, img);
+end
+
+# ╔═╡ 24444576-935c-4d5f-a412-3a799270bdb1
+begin
+	md"(Show this cell for a sample solution)"
+	# function map_image_parallel(f::Function, image::AbstractMatrix{<:RGB})
+	# 	out = similar(image)
+	# 	Threads.@threads for i in 1:length(image)
+	# 		out[i] = f(image[i])
+	# 	end
+	# 	out
+	# end
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1487,6 +1497,7 @@ version = "17.4.0+2"
 # ╟─9df9548b-6dd1-48df-ac8c-474f7fc753ff
 # ╟─058c74e5-8e54-41f5-aa11-9c743d3da5c7
 # ╟─761b73c7-f5f9-43ac-907d-2e65537e5c46
+# ╟─69d8314f-5b88-4ccd-b1e5-c85673ffbe43
 # ╠═09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
 # ╟─3d52bc87-c24a-45b8-abc5-22c42fc4f265
 # ╠═d4b8edee-760b-44ae-901c-5b9028a091d7
@@ -1516,6 +1527,7 @@ version = "17.4.0+2"
 # ╠═7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 # ╠═f01f1a2d-002d-4372-b3be-887e0b30b092
 # ╟─2da4d930-dce3-4680-bea7-f8140b0fb62a
+# ╠═582f5e4c-2797-4276-9876-49e9364644ae
 # ╠═2ed6065b-7779-4bd3-bde2-57f0e05b8e27
 # ╠═1a0d0798-561b-49bc-987b-b2089ca5e863
 # ╟─f33c6690-f55c-4580-8ea0-b58aa6864bd2
