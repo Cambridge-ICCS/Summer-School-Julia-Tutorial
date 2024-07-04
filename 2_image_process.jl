@@ -48,17 +48,14 @@ end
 # ╔═╡ 68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
 0.5(RGB(1, 0, 0) + RGB(0, 0, 1))  # linear combination of RGB values
 
-# ╔═╡ 9df9548b-6dd1-48df-ac8c-474f7fc753ff
-md"W: $(@bind W Slider(100:500, default=200, show_value=true))"
-
 # ╔═╡ 058c74e5-8e54-41f5-aa11-9c743d3da5c7
-md"X: $(@bind X Slider(1:900-W, default=320, show_value=true))"
+md"""
+W: $(@bind W Slider(100:500, default=200, show_value=true)) ``\qquad\qquad``
+D: $(@bind D Slider(1:5, default=1, show_value=true))
 
-# ╔═╡ 761b73c7-f5f9-43ac-907d-2e65537e5c46
-md"Y: $(@bind Y Slider(1:900-W, default=130, show_value=true))"
-
-# ╔═╡ 69d8314f-5b88-4ccd-b1e5-c85673ffbe43
-md"D: $(@bind D Slider(1:10, default=1, show_value=true))"
+X: $(@bind X Slider(1:900-W, default=320, show_value=true)) ``\qquad\qquad\;``
+Y: $(@bind Y Slider(1:900-W, default=130, show_value=true))
+"""
 
 # ╔═╡ 09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
 cropped_img = @view img[Y:D:Y+W, X:D:X+W]  # avoid making copy
@@ -228,17 +225,17 @@ convolve2D(img2, kernel, callback=clipRGB)
 # ╔═╡ 4ab78bbc-aa89-4325-b8ee-906f7cba6075
 md"We can directly use the `imfilter` method provided by the `Images` library."
 
-# ╔═╡ c252841d-aba3-4a78-8b18-8a3924aab24b
-md"""Try these kernels provided by the `ImageFiltering` library to filter the image:
-- `Kernel.Laplacian()`
-- `Kernel.gaussian(3)`
-"""
-
 # ╔═╡ 7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 let 
 	# kernel = Kernel.gaussian(3)
 	imfilter(load("/tmp/my_earth.png"), kernel)
 end
+
+# ╔═╡ c252841d-aba3-4a78-8b18-8a3924aab24b
+md"""Try these kernels provided by the `ImageFiltering` library to filter the image:
+- `Kernel.Laplacian()`
+- `Kernel.gaussian(3)`
+"""
 
 # ╔═╡ f01f1a2d-002d-4372-b3be-887e0b30b092
 run(`rm /tmp/my_earth.png`)
@@ -1494,10 +1491,7 @@ version = "17.4.0+2"
 # ╠═cb18c751-11ac-4ac7-9a51-b5a81ac9d553
 # ╠═09d1fff1-443f-47f5-a465-edb919f612d3
 # ╠═68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
-# ╟─9df9548b-6dd1-48df-ac8c-474f7fc753ff
 # ╟─058c74e5-8e54-41f5-aa11-9c743d3da5c7
-# ╟─761b73c7-f5f9-43ac-907d-2e65537e5c46
-# ╟─69d8314f-5b88-4ccd-b1e5-c85673ffbe43
 # ╠═09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
 # ╟─3d52bc87-c24a-45b8-abc5-22c42fc4f265
 # ╠═d4b8edee-760b-44ae-901c-5b9028a091d7
@@ -1519,12 +1513,12 @@ version = "17.4.0+2"
 # ╠═6c38ac7a-302d-4c32-a78a-4ac78e1aacf0
 # ╟─5fa0ba4f-6b18-42a8-b1ae-63a42fac4675
 # ╠═04de16bf-b5a6-47fb-a72a-7af0331e3fed
-# ╠═d5fb7160-2d63-4da9-9f8e-53450f5a8dd3
+# ╟─d5fb7160-2d63-4da9-9f8e-53450f5a8dd3
 # ╠═06150612-5c8f-419d-abf9-f644851559df
 # ╠═268529fe-cb2d-460d-86a5-afb88e54137b
 # ╟─4ab78bbc-aa89-4325-b8ee-906f7cba6075
-# ╟─c252841d-aba3-4a78-8b18-8a3924aab24b
 # ╠═7fb19257-a0b2-4f7d-8912-5c8a250a85cd
+# ╟─c252841d-aba3-4a78-8b18-8a3924aab24b
 # ╠═f01f1a2d-002d-4372-b3be-887e0b30b092
 # ╟─2da4d930-dce3-4680-bea7-f8140b0fb62a
 # ╠═582f5e4c-2797-4276-9876-49e9364644ae

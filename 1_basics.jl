@@ -178,7 +178,7 @@ end
 # ╔═╡ 40c36c39-b3b7-4c12-a116-7c0ddb079085
 begin  # begin...end groups code into a block without creating a local scope
 	func('a', 2, 3, 4, c=3, e=7)
-	func(1, c=7)
+	func(1, b=2, c=7)
 end
 
 # ╔═╡ 4a851df6-3894-42a9-9acd-eb25a56f5535
@@ -192,17 +192,15 @@ begin
 	
 	triple(f) = f ∘ f ∘ f  # \circ <tab> -> ∘ (function composition)
 	@show triple(inc)(0)
-	
-	nfold(f, n) = reduce(∘, Iterators.repeated(f, n))
-	@show nfold(triple, 4)(inc)(0)  # applies `inc` for 3^4 times
 end
 
-# ╔═╡ 41f7af8e-28b2-4216-aac6-2827dda5e6db
-md"Estimate π using fixed point iteration:"
-
 # ╔═╡ ef02cbb9-11af-49e9-a996-f2c44c9c1191
-1 |> nfold(x -> x + sin(x), 5)
-# `a |> f` (pipe operator) is equivalent to `f(a)`
+begin
+	nfold(f, n) = reduce(∘, Iterators.repeated(f, n))
+	println(1 |> nfold(x -> x + sin(x), 5))
+	# `a |> f` (pipe operator) is equivalent to `f(a)`
+	md"(Optional) Estimate π using fixed point iteration:"
+end
 
 # ╔═╡ c7bff4de-88ca-4264-bf83-4a2f08728395
 md"### Recursive Functions"
@@ -359,6 +357,14 @@ end
 # ╔═╡ ce603931-baa5-48aa-ba13-82b458962ddf
 md"**Matrix:**"
 
+# ╔═╡ 3cfce228-b634-4e31-b3f3-ddadb6c7a53d
+Array{Int, 2}
+
+# ╔═╡ 6b3a83eb-e316-46b5-a097-233145ab1bcc
+[1 2 3
+ 5 6 4
+ 9 7 8]  # or [1 2 3; 5 6 4; 9 7 8]
+
 # ╔═╡ 4f62d53f-11bb-4e53-b759-d6f49eec5cd4
 let a = Array{Float64}(undef, 2, 3)  # initialize a 2x3 Matrix of Float64s
 	for i in 1:2, j in 1:3  # equivalent to a nested loop (inner loop is on j)
@@ -367,16 +373,8 @@ let a = Array{Float64}(undef, 2, 3)  # initialize a 2x3 Matrix of Float64s
 	a
 end
 
-# ╔═╡ 3cfce228-b634-4e31-b3f3-ddadb6c7a53d
-Array{Int, 2}
-
 # ╔═╡ 952db525-9d54-4b56-a09f-3014a9ca9293
 [i * j for i in 1:2, j in 1:3]  # array comprehension
-
-# ╔═╡ 6b3a83eb-e316-46b5-a097-233145ab1bcc
-[1 2 3
- 5 6 4
- 9 7 8]  # or [1 2 3; 5 6 4; 9 7 8]
 
 # ╔═╡ d02b8c20-6e43-435c-ba9f-870b1bb5fae9
 zeros(3, 3)
@@ -411,6 +409,9 @@ mean(A)
 # ╔═╡ 9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
 mean(A, dims=1)
 
+# ╔═╡ 6c256b8c-96ca-402e-9826-c0f140295f66
+md"Multiple dispatch in Julia: a function has several methods and Julia will determine which method to call based on the numbers and types of input arguments."
+
 # ╔═╡ 47aae1fe-5c76-4f47-ab94-d8c784c59c35
 methods(mean)
 
@@ -421,18 +422,12 @@ methodswith(StepRange)
 @which mean(1:100)
 
 # ╔═╡ fad551be-abbc-45c6-b08c-5e8d4ddccdb0
-md"**Generic functions of iterable types:**"
+md"**Generic functions of iterable types (Polymorphism):**"
 
 # ╔═╡ 26f43214-3b99-4c99-9512-398a28f9ae0a
 md"""
 !!! danger "Task"
-	Generate a 1000×2 random matrix of float numbers from the normal distribution ``N(0, 1)`` and assign it to `Q`.
-"""
-
-# ╔═╡ f942be94-a50f-4bd5-9987-ed0124531dd3
-md"""
-!!! hint
-	Use the function `randn`.
+	Generate a 1000×2 random matrix of float numbers from the normal distribution ``N(0, 1)`` using the `randn` function and assign it to `Q`.
 """
 
 # ╔═╡ b226106d-6f21-4d72-951c-c4d9d01cbbcb
@@ -464,6 +459,8 @@ S = [2.0 -1.0; 1.2 0.6]
 # ╔═╡ 50cb4c19-1d76-4844-8bc7-bc564aa34ab8
 begin
 	md"(Show this cell for a sample solution)"
+	# Q .= S[2, :]' .* Q .+ S[1, :]'
+	# OR
 	# @. Q = S[2, :]' * Q + S[1, :]'  # @. converts all operators to a broacasting one
 end
 
@@ -620,25 +617,24 @@ end
 @show_all let a = -6:3:6, b = [1, 2, 3], c = (4, 5, 6)
 	length(a)
 	maximum(a)
-	max(b...)
 	sum(b)
 	reverse(b)
+	map(abs2, a)
 
 	zip(a, b, c) |> collect
 	count(iseven, a)
 	findfirst(iszero, a)
 	map(-, a, b)
-	mapreduce(-, +, a, b)  # == reduce(+, map(-, a, b)) == sum(map(-, a, b))
 	
-	d = Dict(zip(b, c))  # a Dict is a collection of key-value pairs
-	
-	push!(b, 5, 4)
+	push!(b, 5, 4)  # functions having side effects often ends with a !
 	sort!(b)
 	deleteat!(b, 1)
 	
-	d[1], d[2]
-	d[4] = 7
-	delete!(d, 1)
+	d = Dict(zip(b, c))  # a Dict is a collection of key-value pairs
+	
+	d[2], d[3]
+	d[2] = 7
+	delete!(d, 3)
 	keys(d), values(d)
 end
 
@@ -1786,14 +1782,13 @@ version = "1.4.1+1"
 # ╟─ccd1d5e8-88b6-40af-a850-e16deb9718e9
 # ╠═0c05213d-5390-40e0-8c92-676774067e28
 # ╟─01e35e8d-cb99-45fb-8770-2e23f3ec7c7c
-# ╠═8d8c7053-1a23-485f-90c5-2db999f7581d
+# ╟─8d8c7053-1a23-485f-90c5-2db999f7581d
 # ╟─b5b168db-b896-41bb-afeb-08e328d7b28e
 # ╠═8bed8fcc-1ea4-414f-a188-910b74632085
 # ╠═40c36c39-b3b7-4c12-a116-7c0ddb079085
 # ╟─4a851df6-3894-42a9-9acd-eb25a56f5535
 # ╠═1396345b-8abf-48ac-8bfa-6c641a395c2c
-# ╟─41f7af8e-28b2-4216-aac6-2827dda5e6db
-# ╠═ef02cbb9-11af-49e9-a996-f2c44c9c1191
+# ╟─ef02cbb9-11af-49e9-a996-f2c44c9c1191
 # ╟─c7bff4de-88ca-4264-bf83-4a2f08728395
 # ╠═82b29e45-827c-44b9-9225-17ae863c34bd
 # ╠═0fcdc4f2-f369-4d09-ac6c-c42d2a8172ce
@@ -1850,10 +1845,10 @@ version = "1.4.1+1"
 # ╟─4aa0d597-49b7-4e8f-807e-0181f6d75dae
 # ╠═760ff5fd-689b-4afe-9336-cc480fb6b486
 # ╟─ce603931-baa5-48aa-ba13-82b458962ddf
-# ╠═4f62d53f-11bb-4e53-b759-d6f49eec5cd4
 # ╠═3cfce228-b634-4e31-b3f3-ddadb6c7a53d
-# ╠═952db525-9d54-4b56-a09f-3014a9ca9293
 # ╠═6b3a83eb-e316-46b5-a097-233145ab1bcc
+# ╠═4f62d53f-11bb-4e53-b759-d6f49eec5cd4
+# ╠═952db525-9d54-4b56-a09f-3014a9ca9293
 # ╠═d02b8c20-6e43-435c-ba9f-870b1bb5fae9
 # ╠═b5eb64a4-6572-405f-bed4-7e483f6e50e5
 # ╠═8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
@@ -1865,17 +1860,17 @@ version = "1.4.1+1"
 # ╠═12008adf-5162-484c-af6b-30b2d43f46b5
 # ╠═8efda77f-e3d5-4866-8b64-159b6c3a6114
 # ╠═d9f9542f-8d4f-4c0c-b4ea-986eefc07636
+# ╠═17eeffee-701d-4251-aca7-308e456487da
 # ╠═a4e1bde7-2de3-4df9-8dc3-f25aafac7dfd
 # ╠═65f92119-b389-491c-b809-fab91636c53a
 # ╠═9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
+# ╟─6c256b8c-96ca-402e-9826-c0f140295f66
 # ╠═47aae1fe-5c76-4f47-ab94-d8c784c59c35
 # ╠═2db6eff5-e28a-4594-a13b-3ed429d47140
 # ╠═6b95a054-c3f7-4777-bbcd-ccbd12741234
-# ╠═17eeffee-701d-4251-aca7-308e456487da
 # ╟─fad551be-abbc-45c6-b08c-5e8d4ddccdb0
 # ╠═fbd9a83b-17b4-47db-a46e-e7a9037b9090
 # ╟─26f43214-3b99-4c99-9512-398a28f9ae0a
-# ╟─f942be94-a50f-4bd5-9987-ed0124531dd3
 # ╠═b226106d-6f21-4d72-951c-c4d9d01cbbcb
 # ╟─aa0c8fec-254b-4805-bf07-b1ce7266685c
 # ╟─03c85588-2237-4d17-9755-bd3386f8e348

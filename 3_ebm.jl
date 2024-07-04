@@ -51,10 +51,13 @@ md"More information on how to use dataframes in Julia, in comparison with Pandas
 # ╔═╡ 52891ead-46a3-4ceb-8be9-e6539fb5aa54
 md"#### Fit a cubic curve to the CO2 time series"
 
+# ╔═╡ cf34b409-c007-4458-814d-40c383f18542
+md"We assume net-zero can be achieved by 2050."
+
 # ╔═╡ 8264a6cf-803c-4f37-b516-b82be1000a38
 begin
 	CO2_PreIndust = 280
-	time_features(t) = let x = t .- 1850; @. [x x^2 x^3] end
+	time_features(ts) = let x = ts .- 1850; [x x.^2 x.^3] end
 	CO2(t) = time_features(t) * CO2_params .+ CO2_PreIndust
 	CO2_params = let
 		X = time_features(CO2_historical_data[:, "Year"])
@@ -136,8 +139,9 @@ solution = solve(prob)
 # ╔═╡ 29f5d3a1-b805-4c90-b602-0d2de83d0152
 begin
 	temps = vcat(solution.(1880:2030)...)
-	plot(1880:2030, temps, lw=2, legend=:topleft,
+	plot(1880:2030, temps, lw=2, legend=:bottomright,
 		 label="Predicted Temperature from model")
+	title!("Global Average Temperature")
 	xlabel!("year")
 	ylabel!("Temp °C")
 end
@@ -154,8 +158,7 @@ begin
 end
 
 # ╔═╡ 7f4af72c-9ca1-4b65-8557-9d59880ba261
-plot!(T_df[:, :year], T_df[:, :temp], 
-	  color=:black, label="NASA Observations", legend=:topleft)
+plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
 
 # ╔═╡ a2bd2e6c-4908-472a-9cd7-b7bf22c313e2
 md"""The reason why the predicted temperature is lower than the observation is probably that we have not taken into account other greenhouse gases and feedback factors such as sea-ice albedo and water vapour."""
@@ -174,14 +177,13 @@ new_dT = simplify(new_sys.eqs[1].rhs, expand=true)
 
 # ╔═╡ 981f864e-da3f-4f27-996b-3172ae0fe76f
 begin
-	using Flux, SciMLSensitivity
+	using Flux, SciMLSensitivity, Random
 
-	"The outgoing radiation term `G(T, t)` estimated by the NN."
+	"The outgoing thermal radiation term `G(T, t)` estimated by the NN."
 	function nn_term(nn::Chain, T, t)
 		x = (t - 1850) / 200
-		u = T .^ [0 1 2]
 		c = nn([x, x^2, x^3])
-		only(u * c)  # c[0] + c[1]T + c[2]T^2
+		return c[1] + c[2]T
 	end
 
 	function dTdt(dT, T, ps, yr)
@@ -190,14 +192,19 @@ begin
 		dT[1] = substitute(new_dT, Dict(G_NN => g, t => yr))
 	end
 
-	init = Flux.orthogonal
+	Random.seed!(32)
+	
+	init = Flux.kaiming_normal
 	nn = Chain(Dense(3,16,selu,init=init),
-		       Dense(16,3,init=init)) |> f64  # float32 by default
+		       Dense(16,2,init=init)) |> f64  # float32 by default
 
 	params, reconstruct = Flux.destructure(nn)
 
 	nn_prob = ODEProblem(dTdt, [T0], tspan, params)
 end
+
+# ╔═╡ a26ea0a3-2554-4510-8275-b194801cdd8b
+[1 [2]]
 
 # ╔═╡ af156b54-629a-48e7-8065-e426b17e8224
 begin
@@ -205,10 +212,7 @@ begin
 
 	mask = T_df.year[1] .<= range(tspan...) .<= T_df.year[end]
 	predict_temp() = Vector(solve(nn_prob, Tsit5(), p=params, saveat=1))[mask]
-	loss() = sum(abs2, predict_temp() .- true_temp) / length(true_temp)
-	
-	data = Iterators.repeated((), 160)  # () is the input to the loss function
-	opt = ADAM(0.002)
+	loss() = sum(abs2, predict_temp() .- true_temp)
 
 	losses = []
 	history = []
@@ -217,20 +221,31 @@ begin
 		push!(losses, loss())
 		push!(history, predict_temp())
 	end
-	
+
+	# training phase 1 (initial error is huge)
+	opt = Adam(0.5)
+	data = Iterators.repeated((), 100)  # () is the input to the loss function
+	Flux.train!(loss, Flux.params(params), data, opt, cb=callback)
+	foreach(println, losses)
+
+	# training phase 2 (for faster convergence)
+	opt = Adam(0.01)
+	data = Iterators.repeated((), 200)  # () is the input to the loss function
+	empty!(losses)
 	Flux.train!(loss, Flux.params(params), data, opt, cb=callback)
 end
 
 # ╔═╡ 512c0d2e-25ed-44fe-a0f9-f09af0d1be49
-plot(losses, label="average error", xlabel="epoch", ylabel="°C")
+plot(losses, label="training loss", xlabel="epoch")
 
 # ╔═╡ d16cea4f-8139-423a-af49-cdadac7e116f
-md"Average error: $(round(loss(), digits=2))°C"
+md"Average error: $(round(sqrt(loss() / size(T_df, 1)), digits=2))°C"
 
 # ╔═╡ 840b3aae-3ea6-4726-bfea-569ddb69e103
 @gif for p in history[2:2:end]
 	plot(T_df[:, :year], p, ylim=(13.6,15.4), label="Predicted Temperature")
 	plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
+	title!("Globle Average Temperature")
 end
 
 # ╔═╡ ea8427d8-37f5-4e69-ab1f-e53f4031610d
@@ -241,14 +256,23 @@ begin  # forecast into the future
 	plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
 end
 
+# ╔═╡ 6731f051-55c0-4a52-9995-05e975d5fb36
+md"""Our result shows that if GHG emissions keep the current tendency of growth, it's likely that we will approach **2°C** global warming above to the pre-industrial level.
+
+The following figure shows global warming predictions in the [IPCC 6th Assessment Report](https://www.ipcc.ch/report/ar6/syr/) ([Figure SPM.4](https://www.ipcc.ch/report/ar6/syr/figures/figure-spm-4)) for reference:
+![globwarm](https://cms.accuweather.com/wp-content/uploads/2023/04/Screenshot-2023-04-12-at-4.52.34-PM.png?w=632)
+"""
+
+# ╔═╡ 587767ef-3a3a-4e29-9427-7d8fcb806abd
+md"""## Further Reading
+
+- [A Degree of Concern: Why Global Temperatures Matter](https://climate.nasa.gov/news/2865/a-degree-of-concern-why-global-temperatures-matter/)
+- [What is the Paris climate agreement and why does 1.5C matter?](https://www.bbc.co.uk/news/science-environment-35073297)
+- [Why did the IPCC choose 2° C as the goal for limiting global warming?](https://climate.mit.edu/ask-mit/why-did-ipcc-choose-2deg-c-goal-limiting-global-warming)
+"""
+
 # ╔═╡ e39b3544-b348-4d93-ad5d-02a774576f0e
 md"## Take-home Exercises"
-
-# ╔═╡ e3cb923a-f3c6-41d4-8072-9f4b183d77a0
-md"""
-!!! danger "Task"
-	Plot the average global temperature data provided by NASA, together with the predictions over the time span of 1850-2050 produced by both the original ODE and the neural ODE.
-"""
 
 # ╔═╡ 461898ec-3f89-4795-a238-f217ca072607
 md"""
@@ -267,6 +291,7 @@ ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 NaNStatistics = "b946abbf-3ea7-4610-9019-9858bfdeaf2d"
 PlotlyJS = "f0f68f2c-4968-5e81-91da-67840de0976a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SciMLSensitivity = "1ed8b502-d754-442c-8d5d-10ac956f44a1"
 
 [compat]
@@ -287,7 +312,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "2141d08d4696a690968503e2226c6729a75c9915"
+project_hash = "b12c7dd4f618b75d0071b7b353a3aeed22e0a4f7"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "fa0822e5baee6e23081c2685ae27265dabee23d8"
@@ -3198,6 +3223,7 @@ version = "1.4.1+1"
 # ╠═d6ecc837-be55-4db7-bac7-8446e7a3cfa2
 # ╟─96e1e5c6-f4b2-48f1-8a85-c031c915e1d5
 # ╟─52891ead-46a3-4ceb-8be9-e6539fb5aa54
+# ╟─cf34b409-c007-4458-814d-40c383f18542
 # ╠═8264a6cf-803c-4f37-b516-b82be1000a38
 # ╠═f539ddd6-041f-4b84-91c0-aca74131c960
 # ╠═e39a69fe-0c82-482d-9a69-a5b028610c62
@@ -3212,14 +3238,16 @@ version = "1.4.1+1"
 # ╟─75cad6f3-ea0d-48d6-b314-df2660f3fe61
 # ╠═68b04370-7d3e-4b6a-a07a-e11b90ce440e
 # ╠═9a93642b-7fca-4346-914b-e9a1ab6c2bc9
+# ╠═a26ea0a3-2554-4510-8275-b194801cdd8b
 # ╠═981f864e-da3f-4f27-996b-3172ae0fe76f
 # ╠═af156b54-629a-48e7-8065-e426b17e8224
 # ╠═512c0d2e-25ed-44fe-a0f9-f09af0d1be49
-# ╠═d16cea4f-8139-423a-af49-cdadac7e116f
+# ╟─d16cea4f-8139-423a-af49-cdadac7e116f
 # ╠═840b3aae-3ea6-4726-bfea-569ddb69e103
 # ╠═ea8427d8-37f5-4e69-ab1f-e53f4031610d
+# ╟─6731f051-55c0-4a52-9995-05e975d5fb36
+# ╟─587767ef-3a3a-4e29-9427-7d8fcb806abd
 # ╟─e39b3544-b348-4d93-ad5d-02a774576f0e
-# ╟─e3cb923a-f3c6-41d4-8072-9f4b183d77a0
 # ╟─461898ec-3f89-4795-a238-f217ca072607
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
