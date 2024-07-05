@@ -186,14 +186,15 @@ md"### Higher Order Functions"
 
 # ╔═╡ 1396345b-8abf-48ac-8bfa-6c641a395c2c
 begin
-	double(f) = x -> f(f(x))  # a simpler way of function definition
 	inc = x -> x + 1  # anonymous function
+	
+	double(f) = x -> f(f(x))  # a shorthand of `function double(f) ... end`
 	@show double(inc)(0)
 	
-	triple(f) = f ∘ f ∘ f  # \circ <tab> -> ∘ (function composition)
+	triple(f) = f ∘ f ∘ f  # \circ <tab> => ∘ (function composition)
 	@show triple(inc)(0)
 
-	@show triple(double)(inc)(0)  # 2 ^ 3
+	@show double(triple)(double)(inc)(0)  # 2 ^ (3 ^ 2)
 end
 
 # ╔═╡ ef02cbb9-11af-49e9-a996-f2c44c9c1191
