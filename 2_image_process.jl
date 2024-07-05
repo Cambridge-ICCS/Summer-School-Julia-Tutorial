@@ -46,7 +46,10 @@ let c = RGB(.2, .3, .4)
 end
 
 # ╔═╡ 68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
-0.5(RGB(1, 0, 0) + RGB(0, 0, 1))  # linear combination of RGB values
+0.5(RGB(1, 0, 0) + RGB(0, 0, 1))  # RGB values can be combined linearly
+
+# ╔═╡ 982b19dc-b99d-4ecf-855f-3c22d101bea6
+[RGB(i, 0, j) for i in 0:0.1:1, j in 0:0.1:1]
 
 # ╔═╡ 058c74e5-8e54-41f5-aa11-9c743d3da5c7
 md"""
@@ -61,7 +64,7 @@ Y: $(@bind Y Slider(1:900-W, default=130, show_value=true))
 cropped_img = @view img[Y:D:Y+W, X:D:X+W]  # avoid making copy
 
 # ╔═╡ 3d52bc87-c24a-45b8-abc5-22c42fc4f265
-md"## Image Linear Transformation"
+md"## Image Transformation"
 
 # ╔═╡ d4b8edee-760b-44ae-901c-5b9028a091d7
 function borders(a::AbstractArray)
@@ -77,16 +80,14 @@ borders(centered(img))
 
 # ╔═╡ fd12f674-74b3-4ffa-bdfd-9533380add0b
 function transform_image(img::AbstractMatrix{<:RGB}, basis::Matrix{<:Real})
-	M, N = size(img)
 	A = centered(img)  # => OffsetMatrix(img, -M÷2, -N÷2)
 	(i0, i1), (j0, j1) = borders(A)
 	sx, sy = svd(basis).S  # singular values (x scale, y scale)
-	P = Iterators.product((i0*sy):(i1*sy), (j0*sx):(j1*sx))
-	Idx = Int32.(floor.(inv(basis) * reshape(collect(Iterators.flatten(P)), 2, :)))
-	blank = RGB(0, 0, 0)
-	color(i, j) = i0 <= i <= i1 && j0 <= j <= j1 ? A[i,j] : blank
-	C = color.(eachrow(Idx)...)
-	reshape(C, length.(P.iterators)...)
+	iT = inv(basis)
+	Idx = [round.(Int, iT * [i,j]) for i in (i0*sy):(i1*sy), j in (j0*sx):(j1*sx)]
+	black = RGB(N0f8(0), N0f8(0), N0f8(0))
+	getpixel((i, j)) = i0 <= i <= i1 && j0 <= j <= j1 ? A[i,j] : black
+	getpixel.(Idx)
 end
 
 # ╔═╡ cf464513-0fe3-4e3c-8d3e-2e673a485bdb
@@ -109,8 +110,8 @@ begin
 	scaley(a) = [a 0; 0 1]
 	scalex(a) = [1 0; 0 a]
 
-	trans = rotate(-T.ϕ * π/180) * scalex(T.x) * scaley(T.y) * rotate(T.θ * π/180)
-	img2 = transform_image(img, trans)
+	tran = rotate(-T.ϕ * π/180) * scalex(T.x) * scaley(T.y) * rotate(T.θ * π/180)
+	img2 = transform_image(img, tran)
 end
 
 # ╔═╡ ccdb123d-53db-4b54-a96b-90453df0d619
@@ -129,7 +130,6 @@ SVD_results = [svd(f.(img)) for f in [red, green, blue]];
 let
 	data = @time map(SVD_results) do (U, Σ, V)
 		U_K = U[:, 1:K]
-		@show issorted(Σ, rev=true)
 		Σ_K = Diagonal(Σ[1:K])
 		V_K = V[:, 1:K]
 		println("Data size: ", sum(length(a) for a in [U_K, Σ_K, V_K]))
@@ -1491,15 +1491,16 @@ version = "17.4.0+2"
 # ╠═cb18c751-11ac-4ac7-9a51-b5a81ac9d553
 # ╠═09d1fff1-443f-47f5-a465-edb919f612d3
 # ╠═68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
+# ╠═982b19dc-b99d-4ecf-855f-3c22d101bea6
 # ╟─058c74e5-8e54-41f5-aa11-9c743d3da5c7
 # ╠═09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
 # ╟─3d52bc87-c24a-45b8-abc5-22c42fc4f265
 # ╠═d4b8edee-760b-44ae-901c-5b9028a091d7
 # ╠═c2e6970b-703e-4af2-92be-611df5b00954
 # ╠═e41efceb-b244-4c37-b4aa-333dadb48154
-# ╠═fd12f674-74b3-4ffa-bdfd-9533380add0b
 # ╟─cf464513-0fe3-4e3c-8d3e-2e673a485bdb
 # ╠═74cd3cc8-f897-449e-be69-cadea4da9e3c
+# ╟─fd12f674-74b3-4ffa-bdfd-9533380add0b
 # ╠═ccdb123d-53db-4b54-a96b-90453df0d619
 # ╟─dbbe16ae-dd77-458c-8a65-1dec362c06d8
 # ╠═019cbf4d-49b2-4d74-aa10-ab23c7c18ddb

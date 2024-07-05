@@ -192,13 +192,15 @@ begin
 	
 	triple(f) = f ∘ f ∘ f  # \circ <tab> -> ∘ (function composition)
 	@show triple(inc)(0)
+
+	@show triple(double)(inc)(0)  # 2 ^ 3
 end
 
 # ╔═╡ ef02cbb9-11af-49e9-a996-f2c44c9c1191
 begin
 	nfold(f, n) = reduce(∘, Iterators.repeated(f, n))
-	println(1 |> nfold(x -> x + sin(x), 5))
-	# `a |> f` (pipe operator) is equivalent to `f(a)`
+	est_pi = nfold(x -> x + sin(x), 5)
+	println(est_pi(1))
 	md"(Optional) Estimate π using fixed point iteration:"
 end
 
@@ -621,7 +623,7 @@ end
 	reverse(b)
 	map(abs2, a)
 
-	zip(a, b, c) |> collect
+	zip(a, b, c) |> collect  # `a |> f` (pipe operator) is equivalent to `f(a)`
 	count(iseven, a)
 	findfirst(iszero, a)
 	map(-, a, b)
