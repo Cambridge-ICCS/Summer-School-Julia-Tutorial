@@ -45,11 +45,9 @@ let c = RGB(.2, .3, .4)
 	red(c), green(c), blue(c)
 end
 
-# ╔═╡ 68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
-0.5(RGB(1, 0, 0) + RGB(0, 0, 1))  # RGB values can be combined linearly
-
 # ╔═╡ 982b19dc-b99d-4ecf-855f-3c22d101bea6
-[RGB(i, 0, j) for i in 0:0.1:1, j in 0:0.1:1]
+[i * RGB(1, 0, 0) + j * RGB(0, 0, 1)  # RGB values can be combined linearly
+ for i in 0:0.1:1, j in 0:0.1:1]
 
 # ╔═╡ 058c74e5-8e54-41f5-aa11-9c743d3da5c7
 md"""
@@ -67,28 +65,16 @@ cropped_img = @view img[Y:D:Y+W, X:D:X+W]  # avoid making copy
 md"## Image Transformation"
 
 # ╔═╡ d4b8edee-760b-44ae-901c-5b9028a091d7
-function borders(a::AbstractArray)
+function bounds(a::AbstractArray)
 	ax_ranges = convert.(UnitRange, axes(a))
 	[(r.start, r.stop) for r in ax_ranges]
 end
 
 # ╔═╡ c2e6970b-703e-4af2-92be-611df5b00954
-borders(img)
+bounds(img)
 
 # ╔═╡ e41efceb-b244-4c37-b4aa-333dadb48154
-borders(centered(img))
-
-# ╔═╡ fd12f674-74b3-4ffa-bdfd-9533380add0b
-function transform_image(img::AbstractMatrix{<:RGB}, basis::Matrix{<:Real})
-	A = centered(img)  # => OffsetMatrix(img, -M÷2, -N÷2)
-	(i0, i1), (j0, j1) = borders(A)
-	sx, sy = svd(basis).S  # singular values (x scale, y scale)
-	iT = inv(basis)
-	Idx = [round.(Int, iT * [i,j]) for i in (i0*sy):(i1*sy), j in (j0*sx):(j1*sx)]
-	black = RGB(N0f8(0), N0f8(0), N0f8(0))
-	getpixel((i, j)) = i0 <= i <= i1 && j0 <= j <= j1 ? A[i,j] : black
-	getpixel.(Idx)
-end
+bounds(centered(img))
 
 # ╔═╡ cf464513-0fe3-4e3c-8d3e-2e673a485bdb
 @bind T PlutoUI.combine() do Child
@@ -102,6 +88,18 @@ end
 	1. vertical scale: $y
 	1. rotation: $ϕ``^\degree``
 	"""
+end
+
+# ╔═╡ fd12f674-74b3-4ffa-bdfd-9533380add0b
+function transform_image(img::AbstractMatrix{<:RGB}, basis::Matrix{<:Real})
+	A = centered(img)  # => OffsetMatrix(img, -M÷2, -N÷2)
+	(i0, i1), (j0, j1) = bounds(A)
+	sx, sy = svd(basis).S  # singular values (x scale, y scale)
+	iT = inv(basis)
+	Idx = [round.(Int, iT * [i,j]) for i in (i0*sy):(i1*sy), j in (j0*sx):(j1*sx)]
+	black = RGB(N0f8(0), N0f8(0), N0f8(0))
+	getpixel((i, j)) = i0 <= i <= i1 && j0 <= j <= j1 ? A[i,j] : black
+	getpixel.(Idx)
 end
 
 # ╔═╡ 74cd3cc8-f897-449e-be69-cadea4da9e3c
@@ -162,14 +160,14 @@ md"## Image Filtering"
 # ╔═╡ b32e2e9c-5b67-4104-989b-16620268bbfb
 function convolve2D(image::AbstractMatrix, kernel::AbstractMatrix; callback=x->x)
 	kernel = centered(kernel)
-	(t, b), (l, r) = borders(kernel)  # top, bottom, left, right
+	(t, b), (l, r) = bounds(kernel)  # top, bottom, left, right
 	out = similar(image)
 	pa = padarray(image, Pad(:replicate, (-t, -l), (b, r)))
 	@Threads.threads for idx in CartesianIndices(image)  # multi-threading
 		i, j = idx.I
-		patch = @view pa[i+t:i+b, j+l:j+r]  # @view avoids making a copy
-		out[i, j] = callback(mapreduce(*, +, kernel.parent, patch))
-		# .parent gets the original array
+		patch = @view pa[i+t:i+b, j+l:j+r]
+		@inbounds out[i, j] = callback(mapreduce(*, +, kernel.parent, patch))
+		# @inbounds avoids array bounds checking to save time
 	end
 	return out
 end
@@ -211,7 +209,7 @@ let K = @show Threads.nthreads()
 end
 
 # ╔═╡ d5fb7160-2d63-4da9-9f8e-53450f5a8dd3
-function clipRGB(c::RGB, lo=0.0, hi=1.0)
+function clipRGB(c::RGB, lo=N0f8(0), hi=N0f8(1))
 	f(x) = min(hi, max(lo, x))
 	RGB(f(c.r), f(c.g), f(c.b))
 end
@@ -220,7 +218,7 @@ end
 kernel = [1 2 -1; 2 0 -2; -1 -2 1]
 
 # ╔═╡ 268529fe-cb2d-460d-86a5-afb88e54137b
-convolve2D(img2, kernel, callback=clipRGB)
+@time convolve2D(img2, kernel, callback=clipRGB)
 
 # ╔═╡ 4ab78bbc-aa89-4325-b8ee-906f7cba6075
 md"We can directly use the `imfilter` method provided by the `Images` library."
@@ -228,7 +226,7 @@ md"We can directly use the `imfilter` method provided by the `Images` library."
 # ╔═╡ 7fb19257-a0b2-4f7d-8912-5c8a250a85cd
 let 
 	# kernel = Kernel.gaussian(3)
-	imfilter(load("/tmp/my_earth.png"), kernel)
+	@time imfilter(load("/tmp/my_earth.png"), kernel)
 end
 
 # ╔═╡ c252841d-aba3-4a78-8b18-8a3924aab24b
@@ -1490,7 +1488,6 @@ version = "17.4.0+2"
 # ╠═699b06a0-d706-470e-aca8-8d882b85c09a
 # ╠═cb18c751-11ac-4ac7-9a51-b5a81ac9d553
 # ╠═09d1fff1-443f-47f5-a465-edb919f612d3
-# ╠═68ff46c6-1e5f-47f3-b87c-b3b947e2bc38
 # ╠═982b19dc-b99d-4ecf-855f-3c22d101bea6
 # ╟─058c74e5-8e54-41f5-aa11-9c743d3da5c7
 # ╠═09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
