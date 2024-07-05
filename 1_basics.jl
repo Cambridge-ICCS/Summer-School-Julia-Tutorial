@@ -168,7 +168,7 @@ md"## Function Definition"
 # the names args and kwargs are conventional for these extra arguments
 # the string above the function definiction is documentation
 
-"My custon function."
+"A function demonstrating the syntax of input arguments."
 function func(a, b=0, args...; c, d=1, kwargs...)
 	@show a b args c d kwargs
 	println()
@@ -199,7 +199,7 @@ end
 
 # ╔═╡ ef02cbb9-11af-49e9-a996-f2c44c9c1191
 begin
-	nfold(f, n) = reduce(∘, Iterators.repeated(f, n))
+	nfold(f, n) = reduce(∘, Iterators.repeated(f, n))  # generalize double and triple
 	est_pi = nfold(x -> x + sin(x), 5)
 	println(est_pi(1))
 	md"(Optional) Estimate π using fixed point iteration:"
