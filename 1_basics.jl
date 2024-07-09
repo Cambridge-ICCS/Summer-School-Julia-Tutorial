@@ -42,9 +42,6 @@ md"## Basic Calculation"
 # ╔═╡ 52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
 (1 + 2) * 3 ^ 2
 
-# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
-@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
-
 # ╔═╡ 1cd98952-cd47-4632-a71a-903f1809d6be
 md"`@show` is a macro that prints expressions and their evaluated values. Read more about macros [here](https://docs.julialang.org/en/v1/manual/metaprogramming/#man-macros)."
 
@@ -76,8 +73,7 @@ md"## Compound expressions and binding"
 md"Local binding with `let`"
 
 # ╔═╡ 79dd50f1-bd99-4384-b691-4bdb73096161
-let θ = rand()
-	z = exp(im * θ)  # let...end binds variables locally
+let θ = rand(), z = exp(im * θ)  # let...end binds variables locally
 	# θ is a random float number in [0, 1)
 	@show θ abs(z) angle(z) cos(θ) real(z) sin(θ) imag(z)
 end
@@ -91,6 +87,9 @@ begin # after executing `a` and `b` will now be in the global scope.
 	b = 2
 	a + b
 end
+
+# ╔═╡ 0d376fb5-3b55-4607-903b-1a1777f77215
+a
 
 # ╔═╡ 5dedb5f1-1e4e-4b47-9e28-46d9d901f6ca
 md"begin..end can be treated as an expression: it has a value"
@@ -108,13 +107,8 @@ md"## Control Structures"
 # ╔═╡ 1423d00d-8d72-4d84-ad47-95131d8b4bad
 md"**For Loop:**"
 
-# ╔═╡ 1c3363d5-53b7-4c9e-9ca9-a6db35e7d69e
-for x in [1, 2, 3]
-	print(x)
-end
-
 # ╔═╡ 6366c0dd-5ec4-435f-9b1e-27e5215f4cf9
-for x in 1:3
+for x in 1:10 # This is a range and we'll come back to it
 	print(x)
 end
 
@@ -122,8 +116,10 @@ end
 md"**If expression block:**"
 
 # ╔═╡ e94003d4-580e-454e-9330-b35bfe0bfce0
-if true
+if 1 < 2
  	print("true")
+elseif 2 < 5
+	print("true alternative")
 else
 	print("false")
 end
