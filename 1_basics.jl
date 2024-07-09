@@ -42,6 +42,9 @@ md"## Basic Calculation"
 # ╔═╡ 52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
 (1 + 2) * 3 ^ 2
 
+# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
+@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
+
 # ╔═╡ 1cd98952-cd47-4632-a71a-903f1809d6be
 md"`@show` is a macro that prints expressions and their evaluated values. Read more about macros [here](https://docs.julialang.org/en/v1/manual/metaprogramming/#man-macros)."
 
@@ -66,34 +69,67 @@ md"It's a common problem of floating point arithmetic. [All positional (base-N) 
 # ╔═╡ 5c64daca-361a-4c3b-92e0-b179c834a63e
 z ≈ -1 ? print("Hurray!") : print("Why?")  # \approx <tab> => ≈
 
+# ╔═╡ 9cde569d-7db4-4c06-8e03-346b32afaa16
+md"## Compound expressions and binding"
+
+# ╔═╡ f2496da6-a024-44eb-b1ee-6cd5e213a86a
+md"Local binding with `let`"
+
 # ╔═╡ 79dd50f1-bd99-4384-b691-4bdb73096161
-let θ = rand(), z = exp(im * θ)  # let...end binds variables locally
+let θ = rand()
+	z = exp(im * θ)  # let...end binds variables locally
 	# θ is a random float number in [0, 1)
 	@show θ abs(z) angle(z) cos(θ) real(z) sin(θ) imag(z)
+end
+
+# ╔═╡ 45737508-e741-445d-86ef-850ab9915039
+md"Non-local binding via `begin`"
+
+# ╔═╡ 88c296f4-51c7-4968-84d4-7d7d66288d8c
+begin # after executing `a` and `b` will now be in the global scope. 
+	a = 1
+	b = 2
+	a + b
+end
+
+# ╔═╡ 5dedb5f1-1e4e-4b47-9e28-46d9d901f6ca
+md"begin..end can be treated as an expression: it has a value"
+
+# ╔═╡ 636db2a4-c4f7-49ff-8cd6-9956e15e5f6e
+three = begin
+	c = 1
+	d = 2
+	c + d
 end
 
 # ╔═╡ b541204e-3054-4504-b8f4-913209f19913
 md"## Control Structures"
 
-# ╔═╡ efe4fd6a-b130-4f95-a95c-b0473022ffe9
-md"**Error Handling:**"
+# ╔═╡ 1423d00d-8d72-4d84-ad47-95131d8b4bad
+md"**For Loop:**"
 
-# ╔═╡ 76f1b9df-46e4-4920-b62d-f6e802f9a8ec
-try  # try running this cell for multiple times to see different results
-	let a = rand((1, true, false))  # a random item in this tuple
-		@show a
-		a && θ || error("a is false")  # && and || have short-circuit evaluation
-	end
-catch e
-	@show e
-	if e isa TypeError  # a == 1
-		throw(ErrorException("1 is not Boolean!"))
-	elseif e isa UndefVarError  # a == true
-		println("$(e.var) is not defined!")
-	else  # a == false
-		rethrow()
-	end
+# ╔═╡ 1c3363d5-53b7-4c9e-9ca9-a6db35e7d69e
+for x in [1, 2, 3]
+	print(x)
 end
+
+# ╔═╡ 6366c0dd-5ec4-435f-9b1e-27e5215f4cf9
+for x in 1:3
+	print(x)
+end
+
+# ╔═╡ 7c5c7303-474f-4214-a26e-ff98bcc1272b
+md"**If expression block:**"
+
+# ╔═╡ e94003d4-580e-454e-9330-b35bfe0bfce0
+if true
+ 	print("true")
+else
+	print("false")
+end
+
+# ╔═╡ 70b0e880-be05-4170-98fc-9d0e2ff1df96
+md"## Type structure"
 
 # ╔═╡ e68d2aa6-f69b-47ad-9319-44a91d678097
 Tz = typeof(z)
@@ -105,9 +141,6 @@ The curly brackets in `Complex{Float64}` means `Complex` is a parametric type, a
 
 # ╔═╡ 559143b7-a4e1-4532-adde-523ba70e7d36
 typeof(1+im)
-
-# ╔═╡ 536ddaff-814b-4dd9-bbac-27008527f43c
-md"**For Loop:**"
 
 # ╔═╡ 8af405f5-01c3-45e3-8451-3e3ac287466f
 for s in fieldnames(Tz)
@@ -158,6 +191,23 @@ md"(Show this cell for a sample solution)"
 
 # ╔═╡ b5b168db-b896-41bb-afeb-08e328d7b28e
 md"## Function Definition"
+
+# ╔═╡ 52de688b-58c8-4aa4-8f92-4068488342e7
+function identity(x)
+	x
+end
+
+# ╔═╡ 7ae98bfb-d650-4bf2-b516-edc03ea68cde
+identity(42)
+
+# ╔═╡ 8b4fcefa-d53a-461a-a347-38c0acbf73ac
+function early_return(x)
+	return x
+	42
+end
+
+# ╔═╡ b0e25850-9c6b-4898-8bcd-4a4cd4d2a1cb
+early_return(100)
 
 # ╔═╡ 8bed8fcc-1ea4-414f-a188-910b74632085
 # arguments before the ; are positional, after are keyword
