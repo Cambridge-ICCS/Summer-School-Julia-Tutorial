@@ -14,7 +14,7 @@ end
 # ╔═╡ d584e21d-3c8e-4fd9-9818-33cadb782ac9
 md"""# Earth Energy Balance Model
 
-**Main Topics:**
+**Key Topics:**
 
 - The [SciML](https://sciml.ai/) Organization
 - DataFrames

@@ -345,6 +345,9 @@ md"Vectors are column vectors."
 # ╔═╡ 90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
 vcat(-v, 2v)  # concatenate vertically
 
+# ╔═╡ 8cc1e1ca-207e-4dc3-b860-2c5c2114a49a
+[v; v]
+
 # ╔═╡ 071a0163-3071-4398-bc46-d12c11bbcba0
 hcat(v[1:3], v[1:2:end], v[end-1:-1:2])  # concatenate horizontally
 
@@ -370,7 +373,7 @@ Array{Int, 2}
 
 # ╔═╡ 4f62d53f-11bb-4e53-b759-d6f49eec5cd4
 let a = Array{Float64}(undef, 2, 3)  # initialize a 2x3 Matrix of Float64s
-	for i in 1:2, j in 1:3  # equivalent to a nested loop (inner loop is on j)
+	for i=1:2, j in 1:3  # equivalent to a nested loop (inner loop is on j)
 		a[i, j] = i * j
 	end
 	a
@@ -380,13 +383,13 @@ end
 [i * j for i in 1:2, j in 1:3]  # array comprehension
 
 # ╔═╡ d02b8c20-6e43-435c-ba9f-870b1bb5fae9
-zeros(3, 3)
+zeros(3, 3)  # or ones
 
 # ╔═╡ b5eb64a4-6572-405f-bed4-7e483f6e50e5
 rand(2, 2, 2)
 
 # ╔═╡ 8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
-A = rand(ComplexF64, (3, 2))
+A = rand(ComplexF64, 3, 2)
 
 # ╔═╡ d1ca8fb0-580f-4625-aba3-dd18e054ee48
 size(A), size(A, 1)
@@ -401,10 +404,13 @@ reshape(A, :, 3)  # same as A.reshape(-1, 3) in Python
 [A; A]  # concat vertically (same as vcat(A, A))
 
 # ╔═╡ 9bb81880-067c-4bde-a12f-c37eb4be2846
-[A A]  # concat horizontally (same as hcat(A, A))
+[A A]  # concat horizontally (same as hcat(A, A) and [A;; A])
+
+# ╔═╡ 27be59f3-4a50-4518-bacc-6850025e7aa5
+md"More on array concatenation at [https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation](https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation)."
 
 # ╔═╡ 12008adf-5162-484c-af6b-30b2d43f46b5
-sum(abs2, A, dims=2)  # map abs2 to A first, then sum along the 2nd axis
+sum(A, dims=2)  # map abs2 to A first, then sum along the 2nd axis
 
 # ╔═╡ 65f92119-b389-491c-b809-fab91636c53a
 mean(A)
@@ -1844,6 +1850,7 @@ version = "1.4.1+1"
 # ╠═b3321c01-db3d-42ed-9ea7-142e8773bc28
 # ╟─0f5a46ab-6108-4683-80e0-8f1acaec7c7f
 # ╠═90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
+# ╠═8cc1e1ca-207e-4dc3-b860-2c5c2114a49a
 # ╠═071a0163-3071-4398-bc46-d12c11bbcba0
 # ╟─4aa0d597-49b7-4e8f-807e-0181f6d75dae
 # ╠═760ff5fd-689b-4afe-9336-cc480fb6b486
@@ -1860,6 +1867,7 @@ version = "1.4.1+1"
 # ╠═1603ceb6-e8a8-486e-8bff-c721b57ab2eb
 # ╠═8ea9ecaf-6d66-4e57-8606-e79fdc8415e5
 # ╠═9bb81880-067c-4bde-a12f-c37eb4be2846
+# ╟─27be59f3-4a50-4518-bacc-6850025e7aa5
 # ╠═12008adf-5162-484c-af6b-30b2d43f46b5
 # ╠═8efda77f-e3d5-4866-8b64-159b6c3a6114
 # ╠═d9f9542f-8d4f-4c0c-b4ea-986eefc07636

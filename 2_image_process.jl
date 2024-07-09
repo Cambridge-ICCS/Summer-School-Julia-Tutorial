@@ -20,7 +20,7 @@ using Images, OffsetArrays, LinearAlgebra, ImageFiltering, FFTW, SparseArrays, P
 # ╔═╡ fd6958ab-42bc-4478-bfb5-dbbc98566c55
 md"""# Image Processing in Julia
 
-**Main Topics:**
+**Key Topics:**
 
 - Images are Matrices of RGB values
 - Interactive widgets from PlutoUI
@@ -215,7 +215,7 @@ function clipRGB(c::RGB, lo=N0f8(0), hi=N0f8(1))
 end
 
 # ╔═╡ 06150612-5c8f-419d-abf9-f644851559df
-kernel = [1 2 -1; 2 0 -2; -1 -2 1]
+kernel = [1 2 -1; 2 0 -2; -1 -2 1]  # highlights edges
 
 # ╔═╡ 268529fe-cb2d-460d-86a5-afb88e54137b
 @time convolve2D(img2, kernel, callback=clipRGB)
