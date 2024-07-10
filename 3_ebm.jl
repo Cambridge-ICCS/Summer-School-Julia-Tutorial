@@ -56,7 +56,7 @@ md"We assume net-zero can be achieved by 2050."
 
 # ╔═╡ 8264a6cf-803c-4f37-b516-b82be1000a38
 begin
-	CO2_PreIndust = 280
+	CO2_PreIndust = first(CO2_historical_data).CO2
 	time_features(ts) = let x = ts .- 1850; [x x.^2 x.^3] end
 	CO2(t) = time_features(t) * CO2_params .+ CO2_PreIndust
 	CO2_params = let
@@ -83,11 +83,17 @@ md"""
 
 **Incoming Solar Insolation:**
 
-![solar insolation](https://www.open.edu/openlearn/3d/e9/3de9a965b64327e11964efcf028b4371fa80934f?response-content-disposition=inline%3Bfilename%3D%22s250_3_002i.jpg%22&response-content-type=image%2Fjpeg&Expires=1720087560&Signature=YqK4lcyR4ymj9CJGGn~aftIgCoc-zADqJAPC9eEpWW29EQlQyTdkMINt00v8OZwOLS1YVoeMFqvDTOOjRXKhWtH06u0kExlRbsjdETm3OxkvSaKdbnRMRSaa97T4wJ-GPW~WSSshjme4fCd84B7CKkNYw1n0WB5ozgsQ2ENcdnv7Phkpkg6OJ4RBYC~IZtPabw5mT-FeAVZ8DCIGNO9AJmm2LPbfIIM~EDe~kOqn9ppESxxwWdBVxZGd9M8XFVoQkZEIJpyR1QW5cF~C2FB6m8-FlDT3oRCLttdmhDncyVhvyhlsUKbv4c2j9W~pnnt9FG5CQGE6DYdXngTVwKzUVQ__&Key-Pair-Id=K87HJKWMK329B)
+The incoming solar insolation is proportional to the cross-sectional area ``S=\pi R^2`` of the Earth.
+![solar insolation](https://www.open.edu/openlearn/pluginfile.php/101161/mod_oucontent/oucontent/890/639dcd57/ce3f1c3a/s250_3_002i.jpg)
 
 **Outgoing thermal radiation:**
 
+The outgoing thermal radiation is primarily a function of the global temperature, involving processes like blackbody radiation, water vapor feedback, etc. Since it's very complicated, we use a linear model to approximate it.
+
 **Greenhouse effect:**
+
+Empirically, the greenhouse effect is known to be a logarithmic function of carbon dioxide (CO₂) concentrations in the atmosphere.
+![](https://florianboergel.github.io/climateoftheocean/_images/112d5306cd402934165c11ada6d2dee2bb8839d45f60e8f6918198e9b17bc86b.png)
 
 **Reference:** 
 
@@ -202,9 +208,6 @@ begin
 
 	nn_prob = ODEProblem(dTdt, [T0], tspan, params)
 end
-
-# ╔═╡ a26ea0a3-2554-4510-8275-b194801cdd8b
-[1 [2]]
 
 # ╔═╡ af156b54-629a-48e7-8065-e426b17e8224
 begin
@@ -3226,7 +3229,7 @@ version = "1.4.1+1"
 # ╟─cf34b409-c007-4458-814d-40c383f18542
 # ╠═8264a6cf-803c-4f37-b516-b82be1000a38
 # ╠═f539ddd6-041f-4b84-91c0-aca74131c960
-# ╠═e39a69fe-0c82-482d-9a69-a5b028610c62
+# ╟─e39a69fe-0c82-482d-9a69-a5b028610c62
 # ╠═c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
 # ╠═70db5d4d-e346-476a-8bba-50070260abe5
 # ╠═4084d556-5673-444f-bb9f-e77a502799d5
@@ -3238,7 +3241,6 @@ version = "1.4.1+1"
 # ╟─75cad6f3-ea0d-48d6-b314-df2660f3fe61
 # ╠═68b04370-7d3e-4b6a-a07a-e11b90ce440e
 # ╠═9a93642b-7fca-4346-914b-e9a1ab6c2bc9
-# ╠═a26ea0a3-2554-4510-8275-b194801cdd8b
 # ╠═981f864e-da3f-4f27-996b-3172ae0fe76f
 # ╠═af156b54-629a-48e7-8065-e426b17e8224
 # ╠═512c0d2e-25ed-44fe-a0f9-f09af0d1be49
