@@ -29,20 +29,23 @@ begin
 
 	offset = findfirst(startswith("Year"), readlines(CO2_historical_path))
 
-	CO2_historical_data_raw = CSV.read(
+	CO2_historical_data = CSV.read(
 		CO2_historical_path, DataFrame; 
 		header=offset, 
 		skipto=offset+2,
 	)
 end
 
+# ╔═╡ 503a198e-6021-43f2-b30e-9b10372c86d1
+@view CO2_historical_data[end-250:end, :]  # avoid copying data
+
 # ╔═╡ d6ecc837-be55-4db7-bac7-8446e7a3cfa2
 begin
-	CO2_historical_data = subset(CO2_historical_data_raw, "Year" => y -> y .>= 1850)
-	values = replace(Matrix(CO2_historical_data[:,2:end]), missing=>NaN)
-	CO2_historical_data.CO2 = reshape(nanmean(values, dims=2), :) # flatten the array
-	select!(CO2_historical_data, :Year, :CO2)
-	first(CO2_historical_data, 5), last(CO2_historical_data, 5)
+	CO2_ts = CO2_historical_data[CO2_historical_data.Year .>= 1850, :]
+	values = replace(Matrix(CO2_ts[:,2:end]), missing=>NaN)
+	CO2_ts.CO2 .= nanmean(values, dims=2)
+	select!(CO2_ts, :Year, :CO2)  # drop other columns in-place
+	first(CO2_ts, 5), last(CO2_ts, 5)
 end
 
 # ╔═╡ 96e1e5c6-f4b2-48f1-8a85-c031c915e1d5
@@ -56,24 +59,23 @@ md"We assume net-zero can be achieved by 2050."
 
 # ╔═╡ 8264a6cf-803c-4f37-b516-b82be1000a38
 begin
-	CO2_PreIndust = first(CO2_historical_data).CO2
+	CO2_PreIndust = first(CO2_ts).CO2
 	time_features(ts) = let x = ts .- 1850; [x x.^2 x.^3] end
 	CO2(t) = time_features(t) * CO2_params .+ CO2_PreIndust
 	CO2_params = let
-		X = time_features(CO2_historical_data[:, "Year"])
-		y = CO2_historical_data[:, "CO2"] .- CO2_PreIndust
+		X = time_features(CO2_ts[:, "Year"])
+		y = CO2_ts[:, "CO2"] .- CO2_PreIndust
 		p = X \ y  # equivalent to pinv(X) * y, gives the least squares approximation
 	end
+	CO2(1850:1900)
 end
 
 # ╔═╡ f539ddd6-041f-4b84-91c0-aca74131c960
 begin
 	years = 1850:2030
-	let df = CO2_historical_data
-		plot(df[:, "Year"] , df[:, "CO2"], 
-			 label="Global atmospheric CO₂ concentration")
-		plot!(years, CO2(years), label="Fitted curve", legend=:bottomright)
-	end
+	plot(CO2_ts[:, "Year"] , CO2_ts[:, "CO2"], 
+		 label="Global atmospheric CO₂ concentration")
+	plot!(years, CO2(years), label="Fitted curve", legend=:bottomright)
 	title!("CO₂ observations and fit")
 end
 
@@ -245,7 +247,7 @@ plot(losses, label="training loss", xlabel="epoch")
 md"Average error: $(round(sqrt(loss() / size(T_df, 1)), digits=2))°C"
 
 # ╔═╡ 840b3aae-3ea6-4726-bfea-569ddb69e103
-@gif for p in history[2:2:end]
+@gif for p in history[2:2:end]  # plot each frame in this for-loop to make animation
 	plot(T_df[:, :year], p, ylim=(13.6,15.4), label="Predicted Temperature")
 	plot!(T_df[:, :year], T_df[:, :temp], color=:black, label="NASA Observations")
 	title!("Globle Average Temperature")
@@ -260,9 +262,9 @@ begin  # forecast into the future
 end
 
 # ╔═╡ 6731f051-55c0-4a52-9995-05e975d5fb36
-md"""Our result shows that if GHG emissions keep the current tendency of growth, it's likely that we will approach **2°C** global warming above to the pre-industrial level.
+md"""Our result shows that if GHG emissions keep the current tendency of growth, it's likely that we will approach **2°C** global warming above the pre-industrial level.
 
-The following figure shows global warming predictions in the [IPCC 6th Assessment Report](https://www.ipcc.ch/report/ar6/syr/) ([Figure SPM.4](https://www.ipcc.ch/report/ar6/syr/figures/figure-spm-4)) for reference:
+The following figure shows global warming predictions in the [IPCC 6th Assessment Report](https://www.ipcc.ch/report/ar6/syr/) ([Figure SPM.4](https://www.ipcc.ch/report/ar6/syr/figures/figure-spm-4)) for reference. We can see that even with the *intermediate* emission scenario, a 2°C of global warming is very likely to happen by 2050. The prediction of our model is in accord with this result.
 ![globwarm](https://cms.accuweather.com/wp-content/uploads/2023/04/Screenshot-2023-04-12-at-4.52.34-PM.png?w=632)
 """
 
@@ -3223,6 +3225,7 @@ version = "1.4.1+1"
 # ╟─d584e21d-3c8e-4fd9-9818-33cadb782ac9
 # ╠═1fbb5414-3483-11ef-2f91-affe69c5f577
 # ╠═c5765cae-28fd-439e-b5ce-844b5637d2e4
+# ╠═503a198e-6021-43f2-b30e-9b10372c86d1
 # ╠═d6ecc837-be55-4db7-bac7-8446e7a3cfa2
 # ╟─96e1e5c6-f4b2-48f1-8a85-c031c915e1d5
 # ╟─52891ead-46a3-4ceb-8be9-e6539fb5aa54
