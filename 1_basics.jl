@@ -42,9 +42,6 @@ md"## Basic Calculation"
 # ╔═╡ 52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
 (1 + 2) * 3 ^ 2
 
-# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
-@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
-
 # ╔═╡ 1cd98952-cd47-4632-a71a-903f1809d6be
 md"`@show` is a macro that prints expressions and their evaluated values. Read more about macros [here](https://docs.julialang.org/en/v1/manual/metaprogramming/#man-macros)."
 
@@ -353,87 +350,11 @@ md"### Define Custom Types"
 # ╔═╡ e3f7a77a-8c9e-4f15-af47-551fd959b2a6
 abstract type Distribution end
 
-# ╔═╡ 0f2aff9d-778b-4a08-9c33-c1866279c686
-begin
-	abstract type AbstractNormal <: Distribution end
-	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √(2π))  # \sqrt => √
-end
-
-# ╔═╡ 47cd214a-ba2b-486f-b576-f2a583b50b7e
-begin
-	mean(p::AbstractNormal) = p.μ
-	std(p::AbstractNormal) = p.σ
-	var(p::AbstractNormal) = p.σ ^ 2
-end
-
-# ╔═╡ 76d61e6d-16e8-440d-99f7-51a3775694b9
-mean(1:10)
-
-# ╔═╡ 9f56480f-52b2-4770-bf6e-9d7676756a87
-methods(mean)
-
-# ╔═╡ 0c371cea-44f9-4703-964f-13d1a9f55535
-methodswith(AbstractNormal)
-
-# ╔═╡ 48e93319-299b-40b9-bbf9-09d18d683c9c
-struct NormalUntyped <: AbstractNormal
-	μ
-	σ
-end
-
-# ╔═╡ fa1283d5-b3d5-46d4-a34c-4cddc32ab284
-fieldtypes(NormalUntyped)
-
-# ╔═╡ 322ea469-2961-46b0-a93c-20e2c8f94328
-p1 = NormalUntyped(0, 1)
-
-# ╔═╡ cc45cdea-38c6-4c06-b62c-09a36559bfd6
-@which mean(p1)
-
 # ╔═╡ beb7b5f4-ee86-4130-aa61-d3f8498ff4ed
 md"In multiple dispatch, Julia determines which method to call based on the numbers and types of input arguments."
 
-# ╔═╡ ec5238e4-f445-491c-bd14-8e1aba59049f
-p1(0)
-
 # ╔═╡ f3b4eba4-5471-441e-b199-69fd07f528e2
 md"A piece of Julia code is called 'type-stable' if all input and output variables have a concrete type, either by explicit declaration or by inference from the Julia compiler. Type-stable code will run much faster as the compiler can generate statically typed code and optimize it at compile-time."
-
-# ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
-@code_warntype p1(0)
-
-# ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
-@code_llvm p1(0)
-
-# ╔═╡ 035f9794-43ea-4e19-860c-a66fd0ea1a14
-struct Normal <: AbstractNormal
-	μ :: Float64
-	σ :: Float64
-end
-
-# ╔═╡ 57f30a3c-7d28-4819-958a-bf1859d6947c
-p2 = Normal(0, 1)
-
-# ╔═╡ 024aa7d5-a569-4639-851f-b7d491855202
-@code_warntype p2(0)
-
-# ╔═╡ f640df71-ae15-4b67-a30e-c806ea532a19
-@code_llvm p2(0)
-
-# ╔═╡ 76d2cfde-bdd8-4e45-83dd-92d3c651691f
-struct NormalParametric{T} <: AbstractNormal
-	μ :: T
-	σ :: T
-end
-
-# ╔═╡ 1e36bd1d-cb83-4e48-a5dc-f88bf04636ca
-p3 = NormalParametric(0f0, 5f-1)  # float32 version of 5e-1
-
-# ╔═╡ 00ed2dc6-f770-49da-9eac-35042f437b6e
-NormalParametric([0.0, 0.1], [0.5, 1.0])
-
-# ╔═╡ b088c77f-9732-4c63-88f9-9bcd911e461c
-@code_warntype p3(0)
 
 # ╔═╡ 2e6521be-ff66-47a9-8c19-68216cb62f3d
 md"We can see that the length of the LLVM bitcodes generated from a piece of type-stable Julia code is much shorter than its type-instable version. The following example will compare their performance."
@@ -442,15 +363,6 @@ md"We can see that the length of the LLVM bitcodes generated from a piece of typ
 function probability(P::Distribution, lo::Float64, hi::Float64; step=1e-6)
 	step * sum(P(x) for x in lo:step:hi)
 end
-
-# ╔═╡ d00e9d96-59c7-4bd6-9667-340505d5ed5f
-@time probability(p1, -1.96, 1.96)
-
-# ╔═╡ 8e8a900f-1d6c-4d65-afda-b03e64f3c9c8
-@time probability(p2, -1.96, 1.96)
-
-# ╔═╡ af5fffbd-baf5-46e4-b285-3a98a5d01e55
-@time probability(p3, -1.96, 1.96)
 
 # ╔═╡ 7b6e1d43-c72c-4bd9-b493-838b05e845c4
 md"## Collection Data Types"
@@ -473,23 +385,26 @@ length(v)
 # ╔═╡ 2c0b579b-302c-458e-bfb0-75ce768de5bd
 v .* 2  # broadcasting
 
-# ╔═╡ 176bb2e7-dde9-4696-ab01-eea38a1081b8
-v ./ v
-
 # ╔═╡ b3321c01-db3d-42ed-9ea7-142e8773bc28
 sqrt.(v)
 
-# ╔═╡ 0736e6cc-9d23-47ff-8398-8c0ca4b1e452
-log.(v, v)
+# ╔═╡ dbdbd2b6-5831-48da-a9a0-8052e96a5586
+push!(v, 0)
+
+# ╔═╡ 5e438baa-fc94-423a-a924-280405fa4255
+deleteat!(v, 5)
+
+# ╔═╡ 89b93f51-6e10-482e-85e2-9fc6ece8bf53
+sort!(v)
 
 # ╔═╡ 0f5a46ab-6108-4683-80e0-8f1acaec7c7f
-md"Vectors are column vectors."
-
-# ╔═╡ 90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
-vcat(-v, 2v)  # concatenate vertically
+md"Julia adopts [column major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order)."
 
 # ╔═╡ 8cc1e1ca-207e-4dc3-b860-2c5c2114a49a
-[v; v]
+[v; v]  # concatenate vertically
+
+# ╔═╡ 90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
+vcat(-v, 2v)
 
 # ╔═╡ 071a0163-3071-4398-bc46-d12c11bbcba0
 hcat(v[1:3], v[1:2:end], v[end-1:-1:2])  # concatenate horizontally
@@ -516,6 +431,7 @@ Array{Int, 2}
 
 # ╔═╡ 4f62d53f-11bb-4e53-b759-d6f49eec5cd4
 let a = Array{Float64}(undef, 2, 3)  # initialize a 2x3 Matrix of Float64s
+	@show a
 	for i=1:2, j in 1:3  # equivalent to a nested loop (inner loop is on j)
 		a[i, j] = i * j
 	end
@@ -534,17 +450,17 @@ rand(2, 2, 2)
 # ╔═╡ 8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
 A = rand(ComplexF64, 3, 2)
 
-# ╔═╡ 61f1ef4a-8457-4b39-aba5-e760070df95d
-A .+ [1, 2, 3]
-
 # ╔═╡ b2d92744-576d-4611-af48-1ff6641a24e1
 length(A)
 
 # ╔═╡ d1ca8fb0-580f-4625-aba3-dd18e054ee48
 size(A), size(A, 1)
 
+# ╔═╡ 6036d669-f880-4852-86ca-bfc3f2ab52d2
+A[4]
+
 # ╔═╡ 9fc3a808-5a53-44e9-9f45-5939d9064c30
-A[1:2:end, 2:2]
+A[1:2:end, [2]]
 
 # ╔═╡ 1603ceb6-e8a8-486e-8bff-c721b57ab2eb
 reshape(A, :, 3)  # same as A.reshape(-1, 3) in Python
@@ -558,27 +474,14 @@ reshape(A, :, 3)  # same as A.reshape(-1, 3) in Python
 # ╔═╡ 27be59f3-4a50-4518-bacc-6850025e7aa5
 md"More on array concatenation at [https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation](https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation)."
 
+# ╔═╡ 61f1ef4a-8457-4b39-aba5-e760070df95d
+A .+ [1, 2, 3]
+
+# ╔═╡ 3d8c4cc1-7c02-453f-a6dd-106b1390896a
+A .+ [1 2]
+
 # ╔═╡ 12008adf-5162-484c-af6b-30b2d43f46b5
-sum(A, dims=2)  # map abs2 to A first, then sum along the 2nd axis
-
-# ╔═╡ 8efda77f-e3d5-4866-8b64-159b6c3a6114
-transpose(A)
-
-# ╔═╡ d9f9542f-8d4f-4c0c-b4ea-986eefc07636
-A'  # complex conjugate followed by transpose
-
-# ╔═╡ 17eeffee-701d-4251-aca7-308e456487da
-let B = reshape(A, 2, 3), C = A'  # all share the same underlying data
-	B[1, 2] = NaN
-	C[1, 2] = NaN
-	A, B, C
-end
-
-# ╔═╡ 65f92119-b389-491c-b809-fab91636c53a
-mean(A)
-
-# ╔═╡ 9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
-mean(A, dims=1)
+sum(A, dims=2)  # sum along the 2nd axis
 
 # ╔═╡ fad551be-abbc-45c6-b08c-5e8d4ddccdb0
 md"**Generic functions of iterable types (Polymorphism):**"
@@ -593,6 +496,7 @@ md"""
 Q = missing  # replace missing with your answer
 
 # ╔═╡ 820f0070-98b9-4bf6-a8db-65383e7c3c17
+# plots will be generated after you finish the tasks
 if !ismissing(Q)
 	using Plots
 	plt1 = scatter(Q[:, 1], Q[:, 2])
@@ -635,9 +539,6 @@ begin
 	# [mean(R, dims=1); std(R, dims=1)]
 end
 
-# ╔═╡ f3c91cce-8c59-4cae-9dcb-19d446ba88c5
-md"Some plotting:"
-
 # ╔═╡ 66cae8d2-8e20-4b1e-9dae-e120eee4d944
 md"## Linear Algebra"
 
@@ -650,6 +551,123 @@ begin
 	rank(M), tr(M), det(M), diag(M)
 end
 
+# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
+@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
+
+# ╔═╡ 0f2aff9d-778b-4a08-9c33-c1866279c686
+begin
+	abstract type AbstractNormal <: Distribution end
+	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √(2π))  # \sqrt => √
+end
+
+# ╔═╡ 47cd214a-ba2b-486f-b576-f2a583b50b7e
+begin  # method overloading
+	Statistics.mean(p::AbstractNormal) = p.μ
+	Statistics.std(p::AbstractNormal) = p.σ
+	Statistics.var(p::AbstractNormal) = p.σ ^ 2
+end
+
+# ╔═╡ 76d61e6d-16e8-440d-99f7-51a3775694b9
+mean(1:10)
+
+# ╔═╡ 9f56480f-52b2-4770-bf6e-9d7676756a87
+methods(mean)
+
+# ╔═╡ 65f92119-b389-491c-b809-fab91636c53a
+mean(A)
+
+# ╔═╡ 9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
+mean(A, dims=1)
+
+# ╔═╡ 0c371cea-44f9-4703-964f-13d1a9f55535
+methodswith(AbstractNormal)
+
+# ╔═╡ 48e93319-299b-40b9-bbf9-09d18d683c9c
+struct NormalUntyped <: AbstractNormal
+	μ
+	σ
+end
+
+# ╔═╡ fa1283d5-b3d5-46d4-a34c-4cddc32ab284
+fieldtypes(NormalUntyped)
+
+# ╔═╡ 322ea469-2961-46b0-a93c-20e2c8f94328
+p1 = NormalUntyped(0, 1)
+
+# ╔═╡ cc45cdea-38c6-4c06-b62c-09a36559bfd6
+@which mean(p1)
+
+# ╔═╡ ec5238e4-f445-491c-bd14-8e1aba59049f
+p1(0)
+
+# ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
+@code_warntype p1(0)
+
+# ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
+@code_llvm p1(0)
+
+# ╔═╡ d00e9d96-59c7-4bd6-9667-340505d5ed5f
+@time probability(p1, -1.96, 1.96)
+
+# ╔═╡ 035f9794-43ea-4e19-860c-a66fd0ea1a14
+struct Normal <: AbstractNormal
+	μ :: Float64
+	σ :: Float64
+end
+
+# ╔═╡ 57f30a3c-7d28-4819-958a-bf1859d6947c
+p2 = Normal(0, 1)
+
+# ╔═╡ 024aa7d5-a569-4639-851f-b7d491855202
+@code_warntype p2(0)
+
+# ╔═╡ f640df71-ae15-4b67-a30e-c806ea532a19
+@code_llvm p2(0)
+
+# ╔═╡ 8e8a900f-1d6c-4d65-afda-b03e64f3c9c8
+@time probability(p2, -1.96, 1.96)
+
+# ╔═╡ 76d2cfde-bdd8-4e45-83dd-92d3c651691f
+struct NormalParametric{T} <: AbstractNormal
+	μ :: T
+	σ :: T
+end
+
+# ╔═╡ 1e36bd1d-cb83-4e48-a5dc-f88bf04636ca
+p3 = NormalParametric(0f0, 5f-1)  # float32 version of 5e-1
+
+# ╔═╡ b088c77f-9732-4c63-88f9-9bcd911e461c
+@code_warntype p3(0)
+
+# ╔═╡ af5fffbd-baf5-46e4-b285-3a98a5d01e55
+@time probability(p3, -1.96, 1.96)
+
+# ╔═╡ 00ed2dc6-f770-49da-9eac-35042f437b6e
+NormalParametric([0.0, 0.1], [0.5, 1.0])
+
+# ╔═╡ 176bb2e7-dde9-4696-ab01-eea38a1081b8
+v ./ v
+
+# ╔═╡ 1cc93533-0edb-4db9-9016-4f52f3822b0a
+v' * v  # inner product
+
+# ╔═╡ b977a080-5e47-45fb-ad78-8080f93fa650
+v * v'  # outer product
+
+# ╔═╡ 8efda77f-e3d5-4866-8b64-159b6c3a6114
+transpose(A)
+
+# ╔═╡ d9f9542f-8d4f-4c0c-b4ea-986eefc07636
+A'  # adjoint: complex conjugate followed by transpose
+
+# ╔═╡ 17eeffee-701d-4251-aca7-308e456487da
+let B = reshape(A, 2, 3), C = A', D = A[1:2,:]  # A,B,C share the same underlying data
+	B[1, 2] = NaN
+	C[1, 2] = NaN
+	D[:] .= NaN  # sets all values of D to NaN
+	A, B, C, D
+end
+
 # ╔═╡ 493a6c95-3820-43aa-8e6c-939757aecf2b
 M - I  # I is identity matrix
 
@@ -659,7 +677,11 @@ M ^ -1 * M ≈ I  # M ^ -1 == inv(M)
 # ╔═╡ 6287eddc-9b35-489e-b584-8197c09cb228
 let b = [1, 2, 3]
 	x = inv(M) * b  # or M \ b
-	M * x
+	@show M * x
+	M = [M rand(3)]  # size(M) = (3, 4)
+	y = M \ b
+	@show y
+	M * y  # or pinv(M) * b (least squares)
 end
 
 # ╔═╡ 3f6fbfd0-b35a-4af9-86cd-55d7e4188301
@@ -694,28 +716,17 @@ macro show_all(block)
 end
 
 # ╔═╡ fbd9a83b-17b4-47db-a46e-e7a9037b9090
-@show_all let a = -6:3:6, b = [1, 2, 3], c = (4, 5, 6)
+@show_all let a = -6:6:6, b = [1, 2, 3], c = (4, 5, 6)
 	length(a)
 	maximum(a)
 	sum(b)
 	reverse(b)
 	map(abs2, a)
-
-	zip(a, b, c) |> collect  # `a |> f` (pipe operator) is equivalent to `f(a)`
-	count(iseven, a)
-	findfirst(iszero, a)
 	map(-, a, b)
-	
-	push!(b, 5, 4)  # functions having side effects often ends with a !
-	sort!(b)
-	deleteat!(b, 1)
-	
-	d = Dict(zip(b, c))  # a Dict is a collection of key-value pairs
-	
-	d[2], d[3]
-	d[2] = 7
-	delete!(d, 3)
-	keys(d), values(d)
+	map(min, a, b, c)
+	zip(a, b, c) |> collect  # `a |> f` (pipe operator) is equivalent to `f(a)`
+	count(iseven, b)
+	findfirst(iszero, a)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1941,11 +1952,15 @@ version = "1.4.1+1"
 # ╠═2c0b579b-302c-458e-bfb0-75ce768de5bd
 # ╠═176bb2e7-dde9-4696-ab01-eea38a1081b8
 # ╠═b3321c01-db3d-42ed-9ea7-142e8773bc28
-# ╠═0736e6cc-9d23-47ff-8398-8c0ca4b1e452
+# ╠═dbdbd2b6-5831-48da-a9a0-8052e96a5586
+# ╠═5e438baa-fc94-423a-a924-280405fa4255
+# ╠═89b93f51-6e10-482e-85e2-9fc6ece8bf53
 # ╟─0f5a46ab-6108-4683-80e0-8f1acaec7c7f
-# ╠═90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
 # ╠═8cc1e1ca-207e-4dc3-b860-2c5c2114a49a
+# ╠═90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
 # ╠═071a0163-3071-4398-bc46-d12c11bbcba0
+# ╠═1cc93533-0edb-4db9-9016-4f52f3822b0a
+# ╠═b977a080-5e47-45fb-ad78-8080f93fa650
 # ╟─4aa0d597-49b7-4e8f-807e-0181f6d75dae
 # ╠═760ff5fd-689b-4afe-9336-cc480fb6b486
 # ╟─ce603931-baa5-48aa-ba13-82b458962ddf
@@ -1956,20 +1971,22 @@ version = "1.4.1+1"
 # ╠═d02b8c20-6e43-435c-ba9f-870b1bb5fae9
 # ╠═b5eb64a4-6572-405f-bed4-7e483f6e50e5
 # ╠═8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
-# ╠═61f1ef4a-8457-4b39-aba5-e760070df95d
 # ╠═b2d92744-576d-4611-af48-1ff6641a24e1
 # ╠═d1ca8fb0-580f-4625-aba3-dd18e054ee48
+# ╠═6036d669-f880-4852-86ca-bfc3f2ab52d2
 # ╠═9fc3a808-5a53-44e9-9f45-5939d9064c30
 # ╠═1603ceb6-e8a8-486e-8bff-c721b57ab2eb
 # ╠═8ea9ecaf-6d66-4e57-8606-e79fdc8415e5
 # ╠═9bb81880-067c-4bde-a12f-c37eb4be2846
 # ╟─27be59f3-4a50-4518-bacc-6850025e7aa5
-# ╠═12008adf-5162-484c-af6b-30b2d43f46b5
+# ╠═61f1ef4a-8457-4b39-aba5-e760070df95d
+# ╠═3d8c4cc1-7c02-453f-a6dd-106b1390896a
 # ╠═8efda77f-e3d5-4866-8b64-159b6c3a6114
 # ╠═d9f9542f-8d4f-4c0c-b4ea-986eefc07636
-# ╠═17eeffee-701d-4251-aca7-308e456487da
+# ╠═12008adf-5162-484c-af6b-30b2d43f46b5
 # ╠═65f92119-b389-491c-b809-fab91636c53a
 # ╠═9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
+# ╠═17eeffee-701d-4251-aca7-308e456487da
 # ╟─fad551be-abbc-45c6-b08c-5e8d4ddccdb0
 # ╠═fbd9a83b-17b4-47db-a46e-e7a9037b9090
 # ╟─26f43214-3b99-4c99-9512-398a28f9ae0a
@@ -1980,7 +1997,6 @@ version = "1.4.1+1"
 # ╟─50cb4c19-1d76-4844-8bc7-bc564aa34ab8
 # ╟─8615c4ca-7e2b-49fb-bb0f-078347a7c56b
 # ╟─be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
-# ╟─f3c91cce-8c59-4cae-9dcb-19d446ba88c5
 # ╠═820f0070-98b9-4bf6-a8db-65383e7c3c17
 # ╟─66cae8d2-8e20-4b1e-9dae-e120eee4d944
 # ╠═5af22ae0-effd-4589-bd1f-d375299b6848
@@ -1989,8 +2005,8 @@ version = "1.4.1+1"
 # ╠═6287eddc-9b35-489e-b584-8197c09cb228
 # ╠═5ee4f31b-ebae-4d8f-8ccc-6df671de6965
 # ╠═3f6fbfd0-b35a-4af9-86cd-55d7e4188301
-# ╠═5fbbf58e-2c28-4b80-b524-49f881258f46
 # ╠═2dde11e3-dcc7-416b-b351-bcf526f3deaa
+# ╠═5fbbf58e-2c28-4b80-b524-49f881258f46
 # ╟─8bc7e78b-ff6d-4553-b327-f03d21651121
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
