@@ -1,7 +1,9 @@
 module Utilities
 
 using Markdown
-export almost, still_missing, keep_working, correct
+export identity, almost, still_missing, keep_working, correct
+
+identity(x) = x
 
 almost(text) = Markdown.MD(Markdown.Admonition("warning", "Almost there!", [text]))
 still_missing(text=md"Replace `missing` with your answer.") = Markdown.MD(Markdown.Admonition("warning", "Here we go!", [text]))

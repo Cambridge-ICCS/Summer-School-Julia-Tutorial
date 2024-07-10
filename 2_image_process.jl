@@ -20,7 +20,7 @@ using Images, OffsetArrays, LinearAlgebra, ImageFiltering, FFTW, SparseArrays, P
 # ╔═╡ fd6958ab-42bc-4478-bfb5-dbbc98566c55
 md"""# Image Processing in Julia
 
-**Key Topics:**
+**Main Topics:**
 
 - Images are Matrices of RGB values
 - Interactive widgets from PlutoUI
@@ -31,7 +31,7 @@ md"""# Image Processing in Julia
 
 # ╔═╡ 62c81910-330a-11ef-2304-250af46959c0
 img = let url = "https://images.fineartamerica.com/images-medium-large-5/1-earth-from-space-kevin-a-horganscience-photo-library.jpg"
-	load(download(url))
+	load(@show download(url))
 end
 
 # ╔═╡ 699b06a0-d706-470e-aca8-8d882b85c09a
@@ -53,9 +53,12 @@ end
 md"""
 W: $(@bind W Slider(100:500, default=200, show_value=true)) ``\qquad\qquad``
 D: $(@bind D Slider(1:5, default=1, show_value=true))
+"""
 
-X: $(@bind X Slider(1:900-W, default=320, show_value=true)) ``\qquad\qquad\;``
-Y: $(@bind Y Slider(1:900-W, default=130, show_value=true))
+# ╔═╡ 72be3a43-8ded-45bc-946d-a15f11358821
+md"""
+X: $(@bind X Slider(1:(900-W), default=320, show_value=true)) ``\qquad\qquad\;``
+Y: $(@bind Y Slider(1:(900-W), default=130, show_value=true))
 """
 
 # ╔═╡ 09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
@@ -74,7 +77,10 @@ end
 bounds(img)
 
 # ╔═╡ e41efceb-b244-4c37-b4aa-333dadb48154
-bounds(centered(img))
+let a = centered(img)
+	@show typeof(a)
+	bounds(a)
+end
 
 # ╔═╡ cf464513-0fe3-4e3c-8d3e-2e673a485bdb
 @bind T PlutoUI.combine() do Child
@@ -84,8 +90,8 @@ bounds(centered(img))
 	y = Child("y", Slider(0.1:0.02:1, show_value=true, default=0.5))
 	md"""
 	1. rotation: $θ``^\degree``
-	1. horizontal scale: $x
-	1. vertical scale: $y
+	1. horizontal scaling: $x
+	1. vertical scaling: $y
 	1. rotation: $ϕ``^\degree``
 	"""
 end
@@ -155,7 +161,10 @@ let
 end
 
 # ╔═╡ 79fa4049-f8f8-463e-b8bd-6a4792a5d15b
-md"## Image Filtering"
+md"""## Image Filtering
+
+![](https://miro.medium.com/v2/resize:fit:640/format:webp/1*1okwhewf5KCtIPaFib4XaA.gif)
+"""
 
 # ╔═╡ b32e2e9c-5b67-4104-989b-16620268bbfb
 function convolve2D(image::AbstractMatrix, kernel::AbstractMatrix; callback=x->x)
@@ -168,6 +177,7 @@ function convolve2D(image::AbstractMatrix, kernel::AbstractMatrix; callback=x->x
 		patch = @view pa[i+t:i+b, j+l:j+r]
 		@inbounds out[i, j] = callback(mapreduce(*, +, kernel.parent, patch))
 		# @inbounds avoids array bounds checking to save time
+		# OffsetArray.parent gives the original array without coordinate offset
 	end
 	return out
 end
@@ -189,7 +199,7 @@ let K = @show Threads.nthreads()
 		return t
 	end
 	
-	ts = fill(.2, 3)
+	ts = [0.1, 0.2, 0.3]
 	
 	@time @assert sum(task, ts) == sum(ts)
 	println()
@@ -215,7 +225,7 @@ function clipRGB(c::RGB, lo=N0f8(0), hi=N0f8(1))
 end
 
 # ╔═╡ 06150612-5c8f-419d-abf9-f644851559df
-kernel = [1 2 -1; 2 0 -2; -1 -2 1]  # highlights edges
+kernel = [1 2 -1; 2 0 -2; -1 -2 1]
 
 # ╔═╡ 268529fe-cb2d-460d-86a5-afb88e54137b
 @time convolve2D(img2, kernel, callback=clipRGB)
@@ -273,28 +283,26 @@ function map_image(f::Function, image::AbstractMatrix{<:RGB})
 	return missing
 end
 
-# ╔═╡ 3cc07495-bce9-4b1f-8223-9829b1f943c3
-@time map_image(c -> RGB(c.r, 0., 0.), img)
-
 # ╔═╡ dc86fd91-a9e6-4869-abb9-1fe9cfdf08a1
 @time map_image(invert, img)
 
-# ╔═╡ e43fb1d4-ca68-475f-8a05-211d045e4734
-if isdefined(@__MODULE__, :map_image_parallel)
-	@time map_image_parallel(invert, img);
-end
+# ╔═╡ 3cc07495-bce9-4b1f-8223-9829b1f943c3
+@time map_image(c -> clipRGB(RGB(1.8c.r, 0.7c.g, 0.3c.b)), img)
 
 # ╔═╡ 24444576-935c-4d5f-a412-3a799270bdb1
 begin
+	function map_image_parallel(f::Function, image::AbstractMatrix{<:RGB})
+		out = similar(image)
+		Threads.@threads for i in 1:length(image)
+			@inbounds out[i] = f(image[i])
+		end
+		out
+	end
 	md"(Show this cell for a sample solution)"
-	# function map_image_parallel(f::Function, image::AbstractMatrix{<:RGB})
-	# 	out = similar(image)
-	# 	Threads.@threads for i in 1:length(image)
-	# 		out[i] = f(image[i])
-	# 	end
-	# 	out
-	# end
 end
+
+# ╔═╡ e43fb1d4-ca68-475f-8a05-211d045e4734
+@time map_image_parallel(c -> clipRGB(RGB(1.8c.r, 0.7c.g, 0.3c.b)), img);
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1490,6 +1498,7 @@ version = "17.4.0+2"
 # ╠═09d1fff1-443f-47f5-a465-edb919f612d3
 # ╠═982b19dc-b99d-4ecf-855f-3c22d101bea6
 # ╟─058c74e5-8e54-41f5-aa11-9c743d3da5c7
+# ╟─72be3a43-8ded-45bc-946d-a15f11358821
 # ╠═09b8a6cd-3bad-4305-8a0b-067cd91f0dbb
 # ╟─3d52bc87-c24a-45b8-abc5-22c42fc4f265
 # ╠═d4b8edee-760b-44ae-901c-5b9028a091d7
@@ -1505,7 +1514,7 @@ version = "17.4.0+2"
 # ╠═ed7b0ce7-7b45-4109-83b8-d82597802f8d
 # ╠═b114d895-79e6-4309-b881-9bc9bd1db58e
 # ╠═26719593-1dbb-4eba-8426-2c8a702eb626
-# ╟─09071740-a203-4837-841a-41f52283d3a1
+# ╠═09071740-a203-4837-841a-41f52283d3a1
 # ╟─79fa4049-f8f8-463e-b8bd-6a4792a5d15b
 # ╠═b32e2e9c-5b67-4104-989b-16620268bbfb
 # ╠═6c38ac7a-302d-4c32-a78a-4ac78e1aacf0
@@ -1524,8 +1533,8 @@ version = "17.4.0+2"
 # ╠═1a0d0798-561b-49bc-987b-b2089ca5e863
 # ╟─f33c6690-f55c-4580-8ea0-b58aa6864bd2
 # ╠═22523aa4-f1c1-4c40-b344-9c2020c94544
-# ╠═3cc07495-bce9-4b1f-8223-9829b1f943c3
 # ╠═dc86fd91-a9e6-4869-abb9-1fe9cfdf08a1
+# ╠═3cc07495-bce9-4b1f-8223-9829b1f943c3
 # ╠═e43fb1d4-ca68-475f-8a05-211d045e4734
 # ╟─24444576-935c-4d5f-a412-3a799270bdb1
 # ╟─00000000-0000-0000-0000-000000000001
