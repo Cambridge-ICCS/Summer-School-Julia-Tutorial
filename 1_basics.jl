@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
@@ -21,7 +21,7 @@ begin
 	print_tree(Number)
 end
 
-# ╔═╡ a4e1bde7-2de3-4df9-8dc3-f25aafac7dfd
+# ╔═╡ 3c74c07d-98a5-48b8-bf6c-2a25e85597d5
 begin
 	using Statistics
 	names(Statistics)
@@ -41,6 +41,9 @@ md"## Basic Calculation"
 
 # ╔═╡ 52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
 (1 + 2) * 3 ^ 2
+
+# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
+@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
 
 # ╔═╡ 1cd98952-cd47-4632-a71a-903f1809d6be
 md"`@show` is a macro that prints expressions and their evaluated values. Read more about macros [here](https://docs.julialang.org/en/v1/manual/metaprogramming/#man-macros)."
@@ -350,8 +353,87 @@ md"### Define Custom Types"
 # ╔═╡ e3f7a77a-8c9e-4f15-af47-551fd959b2a6
 abstract type Distribution end
 
+# ╔═╡ 0f2aff9d-778b-4a08-9c33-c1866279c686
+begin
+	abstract type AbstractNormal <: Distribution end
+	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √(2π))  # \sqrt => √
+end
+
+# ╔═╡ 47cd214a-ba2b-486f-b576-f2a583b50b7e
+begin
+	mean(p::AbstractNormal) = p.μ
+	std(p::AbstractNormal) = p.σ
+	var(p::AbstractNormal) = p.σ ^ 2
+end
+
+# ╔═╡ 76d61e6d-16e8-440d-99f7-51a3775694b9
+mean(1:10)
+
+# ╔═╡ 9f56480f-52b2-4770-bf6e-9d7676756a87
+methods(mean)
+
+# ╔═╡ 0c371cea-44f9-4703-964f-13d1a9f55535
+methodswith(AbstractNormal)
+
+# ╔═╡ 48e93319-299b-40b9-bbf9-09d18d683c9c
+struct NormalUntyped <: AbstractNormal
+	μ
+	σ
+end
+
+# ╔═╡ fa1283d5-b3d5-46d4-a34c-4cddc32ab284
+fieldtypes(NormalUntyped)
+
+# ╔═╡ 322ea469-2961-46b0-a93c-20e2c8f94328
+p1 = NormalUntyped(0, 1)
+
+# ╔═╡ cc45cdea-38c6-4c06-b62c-09a36559bfd6
+@which mean(p1)
+
+# ╔═╡ beb7b5f4-ee86-4130-aa61-d3f8498ff4ed
+md"In multiple dispatch, Julia determines which method to call based on the numbers and types of input arguments."
+
+# ╔═╡ ec5238e4-f445-491c-bd14-8e1aba59049f
+p1(0)
+
 # ╔═╡ f3b4eba4-5471-441e-b199-69fd07f528e2
 md"A piece of Julia code is called 'type-stable' if all input and output variables have a concrete type, either by explicit declaration or by inference from the Julia compiler. Type-stable code will run much faster as the compiler can generate statically typed code and optimize it at compile-time."
+
+# ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
+@code_warntype p1(0)
+
+# ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
+@code_llvm p1(0)
+
+# ╔═╡ 035f9794-43ea-4e19-860c-a66fd0ea1a14
+struct Normal <: AbstractNormal
+	μ :: Float64
+	σ :: Float64
+end
+
+# ╔═╡ 57f30a3c-7d28-4819-958a-bf1859d6947c
+p2 = Normal(0, 1)
+
+# ╔═╡ 024aa7d5-a569-4639-851f-b7d491855202
+@code_warntype p2(0)
+
+# ╔═╡ f640df71-ae15-4b67-a30e-c806ea532a19
+@code_llvm p2(0)
+
+# ╔═╡ 76d2cfde-bdd8-4e45-83dd-92d3c651691f
+struct NormalParametric{T} <: AbstractNormal
+	μ :: T
+	σ :: T
+end
+
+# ╔═╡ 1e36bd1d-cb83-4e48-a5dc-f88bf04636ca
+p3 = NormalParametric(0f0, 5f-1)  # float32 version of 5e-1
+
+# ╔═╡ 00ed2dc6-f770-49da-9eac-35042f437b6e
+NormalParametric([0.0, 0.1], [0.5, 1.0])
+
+# ╔═╡ b088c77f-9732-4c63-88f9-9bcd911e461c
+@code_warntype p3(0)
 
 # ╔═╡ 2e6521be-ff66-47a9-8c19-68216cb62f3d
 md"We can see that the length of the LLVM bitcodes generated from a piece of type-stable Julia code is much shorter than its type-instable version. The following example will compare their performance."
@@ -360,6 +442,15 @@ md"We can see that the length of the LLVM bitcodes generated from a piece of typ
 function probability(P::Distribution, lo::Float64, hi::Float64; step=1e-6)
 	step * sum(P(x) for x in lo:step:hi)
 end
+
+# ╔═╡ d00e9d96-59c7-4bd6-9667-340505d5ed5f
+@time probability(p1, -1.96, 1.96)
+
+# ╔═╡ 8e8a900f-1d6c-4d65-afda-b03e64f3c9c8
+@time probability(p2, -1.96, 1.96)
+
+# ╔═╡ af5fffbd-baf5-46e4-b285-3a98a5d01e55
+@time probability(p3, -1.96, 1.96)
 
 # ╔═╡ 7b6e1d43-c72c-4bd9-b493-838b05e845c4
 md"## Collection Data Types"
@@ -382,8 +473,14 @@ length(v)
 # ╔═╡ 2c0b579b-302c-458e-bfb0-75ce768de5bd
 v .* 2  # broadcasting
 
+# ╔═╡ 176bb2e7-dde9-4696-ab01-eea38a1081b8
+v ./ v
+
 # ╔═╡ b3321c01-db3d-42ed-9ea7-142e8773bc28
 sqrt.(v)
+
+# ╔═╡ 0736e6cc-9d23-47ff-8398-8c0ca4b1e452
+log.(v, v)
 
 # ╔═╡ 0f5a46ab-6108-4683-80e0-8f1acaec7c7f
 md"Vectors are column vectors."
@@ -437,6 +534,12 @@ rand(2, 2, 2)
 # ╔═╡ 8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
 A = rand(ComplexF64, 3, 2)
 
+# ╔═╡ 61f1ef4a-8457-4b39-aba5-e760070df95d
+A .+ [1, 2, 3]
+
+# ╔═╡ b2d92744-576d-4611-af48-1ff6641a24e1
+length(A)
+
 # ╔═╡ d1ca8fb0-580f-4625-aba3-dd18e054ee48
 size(A), size(A, 1)
 
@@ -458,23 +561,24 @@ md"More on array concatenation at [https://docs.julialang.org/en/v1/manual/array
 # ╔═╡ 12008adf-5162-484c-af6b-30b2d43f46b5
 sum(A, dims=2)  # map abs2 to A first, then sum along the 2nd axis
 
+# ╔═╡ 8efda77f-e3d5-4866-8b64-159b6c3a6114
+transpose(A)
+
+# ╔═╡ d9f9542f-8d4f-4c0c-b4ea-986eefc07636
+A'  # complex conjugate followed by transpose
+
+# ╔═╡ 17eeffee-701d-4251-aca7-308e456487da
+let B = reshape(A, 2, 3), C = A'  # all share the same underlying data
+	B[1, 2] = NaN
+	C[1, 2] = NaN
+	A, B, C
+end
+
 # ╔═╡ 65f92119-b389-491c-b809-fab91636c53a
 mean(A)
 
 # ╔═╡ 9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
 mean(A, dims=1)
-
-# ╔═╡ 6c256b8c-96ca-402e-9826-c0f140295f66
-md"Multiple dispatch in Julia: a function has several methods and Julia will determine which method to call based on the numbers and types of input arguments."
-
-# ╔═╡ 47aae1fe-5c76-4f47-ab94-d8c784c59c35
-methods(mean)
-
-# ╔═╡ 2db6eff5-e28a-4594-a13b-3ed429d47140
-methodswith(StepRange)
-
-# ╔═╡ 6b95a054-c3f7-4777-bbcd-ccbd12741234
-@which mean(1:100)
 
 # ╔═╡ fad551be-abbc-45c6-b08c-5e8d4ddccdb0
 md"**Generic functions of iterable types (Polymorphism):**"
@@ -544,85 +648,6 @@ M = rand(3, 3)
 begin
 	using LinearAlgebra
 	rank(M), tr(M), det(M), diag(M)
-end
-
-# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
-@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
-
-# ╔═╡ 0f2aff9d-778b-4a08-9c33-c1866279c686
-begin
-	abstract type AbstractNormal <: Distribution end
-	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √(2π))  # \sqrt => √
-end
-
-# ╔═╡ 48e93319-299b-40b9-bbf9-09d18d683c9c
-struct NormalUntyped <: AbstractNormal
-	μ
-	σ
-end
-
-# ╔═╡ fa1283d5-b3d5-46d4-a34c-4cddc32ab284
-fieldtypes(NormalUntyped)
-
-# ╔═╡ 322ea469-2961-46b0-a93c-20e2c8f94328
-p1 = NormalUntyped(0, 1)
-
-# ╔═╡ ec5238e4-f445-491c-bd14-8e1aba59049f
-p1(0)
-
-# ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
-@code_warntype p1(0)
-
-# ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
-@code_llvm p1(0)
-
-# ╔═╡ d00e9d96-59c7-4bd6-9667-340505d5ed5f
-@time probability(p1, -1.96, 1.96)
-
-# ╔═╡ 035f9794-43ea-4e19-860c-a66fd0ea1a14
-struct Normal <: AbstractNormal
-	μ :: Float64
-	σ :: Float64
-end
-
-# ╔═╡ 57f30a3c-7d28-4819-958a-bf1859d6947c
-p2 = Normal(0, 1)
-
-# ╔═╡ 024aa7d5-a569-4639-851f-b7d491855202
-@code_warntype p2(0)
-
-# ╔═╡ f640df71-ae15-4b67-a30e-c806ea532a19
-@code_llvm p2(0)
-
-# ╔═╡ 8e8a900f-1d6c-4d65-afda-b03e64f3c9c8
-@time probability(p2, -1.96, 1.96)
-
-# ╔═╡ 76d2cfde-bdd8-4e45-83dd-92d3c651691f
-struct NormalParametric{T} <: AbstractNormal
-	μ :: T
-	σ :: T
-end
-
-# ╔═╡ 1e36bd1d-cb83-4e48-a5dc-f88bf04636ca
-p3 = NormalParametric(0f0, 5f-1)  # float32 version of 8e-1
-
-# ╔═╡ b088c77f-9732-4c63-88f9-9bcd911e461c
-@code_warntype p3(0)
-
-# ╔═╡ af5fffbd-baf5-46e4-b285-3a98a5d01e55
-@time probability(p3, -1.96, 1.96)
-
-# ╔═╡ 8efda77f-e3d5-4866-8b64-159b6c3a6114
-transpose(A)
-
-# ╔═╡ d9f9542f-8d4f-4c0c-b4ea-986eefc07636
-A'  # complex conjugate followed by transpose
-
-# ╔═╡ 17eeffee-701d-4251-aca7-308e456487da
-let B = reshape(A, 2, 3), C = A'  # all share the same underlying data
-	B[1, 2] = NaN
-	C[1, 2] = NaN
-	A, B, C
 end
 
 # ╔═╡ 493a6c95-3820-43aa-8e6c-939757aecf2b
@@ -712,7 +737,7 @@ PlutoUI = "~0.7.59"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.5"
+julia_version = "1.10.4"
 manifest_format = "2.0"
 project_hash = "d5be2c1efeddaf18a4d70ea211137e85ab4d3f80"
 
@@ -754,18 +779,6 @@ git-tree-sha1 = "a2f1c8c668c8e3cb4cca4e57a8efdb09067bb3fd"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.18.0+2"
 
-[[deps.ChainRulesCore]]
-deps = ["Compat", "LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "71acdbf594aab5bbb2cec89b208c41b4c411e49f"
-uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.24.0"
-
-[[deps.ChangesOfVariables]]
-deps = ["InverseFunctions", "LinearAlgebra", "Test"]
-git-tree-sha1 = "2fba81a302a7be671aefe194f0525ef231104e7f"
-uuid = "9e997f8a-9a97-42d5-a9f1-ce6bfc15e2c0"
-version = "0.1.8"
-
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
 git-tree-sha1 = "59939d8a997469ee05c4b4944560a820f9ba0d73"
@@ -790,6 +803,12 @@ git-tree-sha1 = "a1f44953f2382ebb937d60dafbe2deea4bd23249"
 uuid = "c3611d14-8923-5661-9e6a-0046d554d3a4"
 version = "0.10.0"
 
+    [deps.ColorVectorSpace.extensions]
+    SpecialFunctionsExt = "SpecialFunctions"
+
+    [deps.ColorVectorSpace.weakdeps]
+    SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
 [[deps.Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
 git-tree-sha1 = "362a287c3aa50601b0bc359053d5c2468f0e7ce0"
@@ -797,27 +816,25 @@ uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.11"
 
 [[deps.Compat]]
-deps = ["Dates", "LinearAlgebra", "TOML", "UUIDs"]
+deps = ["TOML", "UUIDs"]
 git-tree-sha1 = "b1c55339b7c6c350ee89f2c1604299660525b248"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
 version = "4.15.0"
+weakdeps = ["Dates", "LinearAlgebra"]
+
+    [deps.Compat.extensions]
+    CompatLinearAlgebraExt = "LinearAlgebra"
 
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.1+0"
+version = "1.1.1+0"
 
 [[deps.ConcurrentUtilities]]
 deps = ["Serialization", "Sockets"]
 git-tree-sha1 = "6cbbd4d241d7e6579ab354737f4dd95ca43946e1"
 uuid = "f0e56b4a-5159-44fe-b623-3e5288b988bb"
 version = "2.4.1"
-
-[[deps.ConstructionBase]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "260fd2400ed2dab602a7c15cf10c1933c59930a2"
-uuid = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
-version = "1.5.5"
 
 [[deps.Contour]]
 git-tree-sha1 = "439e35b0b36e2e5881738abc8857bd92ad6ff9a8"
@@ -841,7 +858,9 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
 [[deps.DelimitedFiles]]
 deps = ["Mmap"]
+git-tree-sha1 = "9e2f36d3c96a820c678f2f1f1782582fcf685bae"
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+version = "1.9.1"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -991,12 +1010,6 @@ version = "0.2.5"
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
-[[deps.InverseFunctions]]
-deps = ["Dates", "Test"]
-git-tree-sha1 = "e7cbed5032c4c397a6ac23d1493f3289e01231c4"
-uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
-version = "0.1.14"
-
 [[deps.IrrationalConstants]]
 git-tree-sha1 = "630b497eafcc20001bba38a4651b327dcfc491d2"
 uuid = "92d709cd-6900-40b7-9082-c6be49f344b6"
@@ -1061,24 +1074,37 @@ git-tree-sha1 = "e0b5cd21dc1b44ec6e64f351976f961e6f31d6c4"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 version = "0.16.3"
 
+    [deps.Latexify.extensions]
+    DataFramesExt = "DataFrames"
+    SymEngineExt = "SymEngine"
+
+    [deps.Latexify.weakdeps]
+    DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+    SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
+
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.6.3"
+version = "0.6.4"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
-version = "7.84.0+0"
+version = "8.4.0+0"
 
 [[deps.LibGit2]]
-deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
+deps = ["Base64", "LibGit2_jll", "NetworkOptions", "Printf", "SHA"]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
+
+[[deps.LibGit2_jll]]
+deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll"]
+uuid = "e37daf67-58a4-590a-8e99-b0245dd2ffc5"
+version = "1.6.4+0"
 
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
-version = "1.10.2+0"
+version = "1.11.0+1"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -1132,14 +1158,24 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.40.1+0"
 
 [[deps.LinearAlgebra]]
-deps = ["Libdl", "libblastrampoline_jll"]
+deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LogExpFunctions]]
-deps = ["ChainRulesCore", "ChangesOfVariables", "DocStringExtensions", "InverseFunctions", "IrrationalConstants", "LinearAlgebra"]
+deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]
 git-tree-sha1 = "a2d09619db4e765091ee5c6ffe8872849de0feea"
 uuid = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
 version = "0.3.28"
+
+    [deps.LogExpFunctions.extensions]
+    LogExpFunctionsChainRulesCoreExt = "ChainRulesCore"
+    LogExpFunctionsChangesOfVariablesExt = "ChangesOfVariables"
+    LogExpFunctionsInverseFunctionsExt = "InverseFunctions"
+
+    [deps.LogExpFunctions.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    ChangesOfVariables = "9e997f8a-9a97-42d5-a9f1-ce6bfc15e2c0"
+    InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -1174,7 +1210,7 @@ version = "1.1.9"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
-version = "2.28.0+0"
+version = "2.28.2+1"
 
 [[deps.Measures]]
 git-tree-sha1 = "c13304c81eec1ed3af7fc20e75fb6b26092a1102"
@@ -1192,7 +1228,7 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
-version = "2022.2.1"
+version = "2023.1.10"
 
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]
@@ -1213,12 +1249,12 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
-version = "0.3.20+0"
+version = "0.3.23+4"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
-version = "0.8.1+0"
+version = "0.8.1+2"
 
 [[deps.OpenSSL]]
 deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "OpenSSL_jll", "Sockets"]
@@ -1246,7 +1282,7 @@ version = "1.6.3"
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
-version = "10.40.0+0"
+version = "10.42.0+1"
 
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]
@@ -1266,9 +1302,9 @@ uuid = "30392449-352a-5448-841d-b1acce4e97dc"
 version = "0.43.4+0"
 
 [[deps.Pkg]]
-deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
+deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.8.0"
+version = "1.10.0"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Statistics"]
@@ -1287,6 +1323,20 @@ deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers"
 git-tree-sha1 = "442e1e7ac27dd5ff8825c3fa62fbd1e86397974b"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.40.4"
+
+    [deps.Plots.extensions]
+    FileIOExt = "FileIO"
+    GeometryBasicsExt = "GeometryBasics"
+    IJuliaExt = "IJulia"
+    ImageInTerminalExt = "ImageInTerminal"
+    UnitfulExt = "Unitful"
+
+    [deps.Plots.weakdeps]
+    FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+    GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
+    IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+    ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
+    Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -1321,7 +1371,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.Random]]
-deps = ["SHA", "Serialization"]
+deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[deps.RecipesBase]]
@@ -1387,12 +1437,14 @@ uuid = "a2af1166-a08f-5f64-846c-94a0d3cef48c"
 version = "1.2.1"
 
 [[deps.SparseArrays]]
-deps = ["LinearAlgebra", "Random"]
+deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+version = "1.10.0"
 
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+version = "1.10.0"
 
 [[deps.StatsAPI]]
 deps = ["LinearAlgebra"]
@@ -1406,15 +1458,20 @@ git-tree-sha1 = "5cf7606d6cef84b543b483848d4ae08ad9832b21"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.34.3"
 
+[[deps.SuiteSparse_jll]]
+deps = ["Artifacts", "Libdl", "libblastrampoline_jll"]
+uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
+version = "7.2.1+1"
+
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-version = "1.0.0"
+version = "1.0.3"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
-version = "1.10.1"
+version = "1.10.0"
 
 [[deps.TensorCore]]
 deps = ["LinearAlgebra"]
@@ -1427,10 +1484,13 @@ deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.TranscodingStreams]]
-deps = ["Random", "Test"]
 git-tree-sha1 = "a947ea21087caba0a798c5e494d0bb78e3a1a3a0"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 version = "0.10.9"
+weakdeps = ["Random", "Test"]
+
+    [deps.TranscodingStreams.extensions]
+    TestExt = ["Test", "Random"]
 
 [[deps.Tricks]]
 git-tree-sha1 = "eae1bb484cd63b36999ee58be2de6c178105112f"
@@ -1456,10 +1516,18 @@ uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.1"
 
 [[deps.Unitful]]
-deps = ["ConstructionBase", "Dates", "InverseFunctions", "LinearAlgebra", "Random"]
+deps = ["Dates", "LinearAlgebra", "Random"]
 git-tree-sha1 = "dd260903fdabea27d9b6021689b3cd5401a57748"
 uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
 version = "1.20.0"
+
+    [deps.Unitful.extensions]
+    ConstructionBaseUnitfulExt = "ConstructionBase"
+    InverseFunctionsUnitfulExt = "InverseFunctions"
+
+    [deps.Unitful.weakdeps]
+    ConstructionBase = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
+    InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
 
 [[deps.UnitfulLatexify]]
 deps = ["LaTeXStrings", "Latexify", "Unitful"]
@@ -1655,7 +1723,7 @@ version = "1.5.0+0"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
-version = "1.2.12+3"
+version = "1.2.13+1"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1694,9 +1762,9 @@ uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
 [[deps.libblastrampoline_jll]]
-deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.1.1+0"
+version = "5.8.0+1"
 
 [[deps.libevdev_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1737,12 +1805,12 @@ version = "1.1.6+0"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
-version = "1.48.0+0"
+version = "1.52.0+1"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
-version = "17.4.0+0"
+version = "17.4.0+2"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1778,20 +1846,20 @@ version = "1.4.1+1"
 # ╟─86e687c7-4052-4d11-9ef9-7ac6b59cb8ae
 # ╠═cdac9eca-48a6-44dd-9926-a1e0959c2c31
 # ╠═5c64daca-361a-4c3b-92e0-b179c834a63e
-# ╟─9cde569d-7db4-4c06-8e03-346b32afaa16
-# ╟─f2496da6-a024-44eb-b1ee-6cd5e213a86a
+# ╠═9cde569d-7db4-4c06-8e03-346b32afaa16
+# ╠═f2496da6-a024-44eb-b1ee-6cd5e213a86a
 # ╠═79dd50f1-bd99-4384-b691-4bdb73096161
-# ╟─45737508-e741-445d-86ef-850ab9915039
+# ╠═45737508-e741-445d-86ef-850ab9915039
 # ╠═88c296f4-51c7-4968-84d4-7d7d66288d8c
 # ╠═0d376fb5-3b55-4607-903b-1a1777f77215
-# ╟─5dedb5f1-1e4e-4b47-9e28-46d9d901f6ca
+# ╠═5dedb5f1-1e4e-4b47-9e28-46d9d901f6ca
 # ╠═636db2a4-c4f7-49ff-8cd6-9956e15e5f6e
 # ╟─b541204e-3054-4504-b8f4-913209f19913
-# ╟─1423d00d-8d72-4d84-ad47-95131d8b4bad
+# ╠═1423d00d-8d72-4d84-ad47-95131d8b4bad
 # ╠═6366c0dd-5ec4-435f-9b1e-27e5215f4cf9
-# ╟─7c5c7303-474f-4214-a26e-ff98bcc1272b
+# ╠═7c5c7303-474f-4214-a26e-ff98bcc1272b
 # ╠═e94003d4-580e-454e-9330-b35bfe0bfce0
-# ╟─70b0e880-be05-4170-98fc-9d0e2ff1df96
+# ╠═70b0e880-be05-4170-98fc-9d0e2ff1df96
 # ╠═e68d2aa6-f69b-47ad-9319-44a91d678097
 # ╟─12e18c54-1d43-4f23-89e1-f578f3f34cb0
 # ╠═559143b7-a4e1-4532-adde-523ba70e7d36
@@ -1837,12 +1905,19 @@ version = "1.4.1+1"
 # ╟─2e034e29-8755-43d5-b557-d247df23f50e
 # ╠═e3f7a77a-8c9e-4f15-af47-551fd959b2a6
 # ╠═0f2aff9d-778b-4a08-9c33-c1866279c686
+# ╠═3c74c07d-98a5-48b8-bf6c-2a25e85597d5
+# ╠═76d61e6d-16e8-440d-99f7-51a3775694b9
+# ╠═47cd214a-ba2b-486f-b576-f2a583b50b7e
+# ╠═9f56480f-52b2-4770-bf6e-9d7676756a87
+# ╠═0c371cea-44f9-4703-964f-13d1a9f55535
 # ╠═48e93319-299b-40b9-bbf9-09d18d683c9c
 # ╠═fa1283d5-b3d5-46d4-a34c-4cddc32ab284
 # ╠═322ea469-2961-46b0-a93c-20e2c8f94328
+# ╠═cc45cdea-38c6-4c06-b62c-09a36559bfd6
+# ╟─beb7b5f4-ee86-4130-aa61-d3f8498ff4ed
 # ╠═ec5238e4-f445-491c-bd14-8e1aba59049f
-# ╠═cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
 # ╟─f3b4eba4-5471-441e-b199-69fd07f528e2
+# ╠═cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
 # ╠═c6739f52-f87f-4bef-8c32-ce3ec4942342
 # ╠═035f9794-43ea-4e19-860c-a66fd0ea1a14
 # ╠═57f30a3c-7d28-4819-958a-bf1859d6947c
@@ -1850,6 +1925,7 @@ version = "1.4.1+1"
 # ╠═f640df71-ae15-4b67-a30e-c806ea532a19
 # ╠═76d2cfde-bdd8-4e45-83dd-92d3c651691f
 # ╠═1e36bd1d-cb83-4e48-a5dc-f88bf04636ca
+# ╠═00ed2dc6-f770-49da-9eac-35042f437b6e
 # ╠═b088c77f-9732-4c63-88f9-9bcd911e461c
 # ╟─2e6521be-ff66-47a9-8c19-68216cb62f3d
 # ╠═149a64ba-6d5b-4416-bc2d-8e1ae897c71d
@@ -1863,7 +1939,9 @@ version = "1.4.1+1"
 # ╠═d7186b34-117c-4a11-8907-91766a038425
 # ╠═0f3b3f22-89f3-491d-be29-57438d83f4cd
 # ╠═2c0b579b-302c-458e-bfb0-75ce768de5bd
+# ╠═176bb2e7-dde9-4696-ab01-eea38a1081b8
 # ╠═b3321c01-db3d-42ed-9ea7-142e8773bc28
+# ╠═0736e6cc-9d23-47ff-8398-8c0ca4b1e452
 # ╟─0f5a46ab-6108-4683-80e0-8f1acaec7c7f
 # ╠═90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
 # ╠═8cc1e1ca-207e-4dc3-b860-2c5c2114a49a
@@ -1878,6 +1956,8 @@ version = "1.4.1+1"
 # ╠═d02b8c20-6e43-435c-ba9f-870b1bb5fae9
 # ╠═b5eb64a4-6572-405f-bed4-7e483f6e50e5
 # ╠═8bc03ce0-2fe3-45ca-9c1a-9bd2a98bc41e
+# ╠═61f1ef4a-8457-4b39-aba5-e760070df95d
+# ╠═b2d92744-576d-4611-af48-1ff6641a24e1
 # ╠═d1ca8fb0-580f-4625-aba3-dd18e054ee48
 # ╠═9fc3a808-5a53-44e9-9f45-5939d9064c30
 # ╠═1603ceb6-e8a8-486e-8bff-c721b57ab2eb
@@ -1888,13 +1968,8 @@ version = "1.4.1+1"
 # ╠═8efda77f-e3d5-4866-8b64-159b6c3a6114
 # ╠═d9f9542f-8d4f-4c0c-b4ea-986eefc07636
 # ╠═17eeffee-701d-4251-aca7-308e456487da
-# ╠═a4e1bde7-2de3-4df9-8dc3-f25aafac7dfd
 # ╠═65f92119-b389-491c-b809-fab91636c53a
 # ╠═9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
-# ╟─6c256b8c-96ca-402e-9826-c0f140295f66
-# ╠═47aae1fe-5c76-4f47-ab94-d8c784c59c35
-# ╠═2db6eff5-e28a-4594-a13b-3ed429d47140
-# ╠═6b95a054-c3f7-4777-bbcd-ccbd12741234
 # ╟─fad551be-abbc-45c6-b08c-5e8d4ddccdb0
 # ╠═fbd9a83b-17b4-47db-a46e-e7a9037b9090
 # ╟─26f43214-3b99-4c99-9512-398a28f9ae0a
