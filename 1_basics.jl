@@ -130,6 +130,24 @@ end
 # ╔═╡ 70b0e880-be05-4170-98fc-9d0e2ff1df96
 md"## Type structure"
 
+# ╔═╡ 808d8684-e857-46b8-835f-6056079b1e77
+md"Type signatures (declarations) in the form `binder :: type`"
+
+# ╔═╡ 52f340d8-1242-4a1f-9bca-164816bd1896
+
+
+# ╔═╡ 6d3abfce-8de4-45aa-9646-940fe329cf7a
+md"Function with parameter and return types explicit"
+
+# ╔═╡ d10c97a6-64c7-4adf-bf76-c25e19f7f215
+# Function with parameter and return types explicit
+function double(x :: Int) :: Int
+	x * 2
+end
+
+# ╔═╡ 7e773d44-9823-4753-8a4f-ca31ec5afb85
+md"We can query the type of an expression using `typeof`"
+
 # ╔═╡ e68d2aa6-f69b-47ad-9319-44a91d678097
 Tz = typeof(z)
 
@@ -748,7 +766,7 @@ PlutoUI = "~0.7.59"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.4"
+julia_version = "1.8.5"
 manifest_format = "2.0"
 project_hash = "d5be2c1efeddaf18a4d70ea211137e85ab4d3f80"
 
@@ -1829,6 +1847,11 @@ version = "1.4.1+1"
 # ╟─7c5c7303-474f-4214-a26e-ff98bcc1272b
 # ╠═e94003d4-580e-454e-9330-b35bfe0bfce0
 # ╟─70b0e880-be05-4170-98fc-9d0e2ff1df96
+# ╟─808d8684-e857-46b8-835f-6056079b1e77
+# ╠═52f340d8-1242-4a1f-9bca-164816bd1896
+# ╟─6d3abfce-8de4-45aa-9646-940fe329cf7a
+# ╠═d10c97a6-64c7-4adf-bf76-c25e19f7f215
+# ╟─7e773d44-9823-4753-8a4f-ca31ec5afb85
 # ╠═e68d2aa6-f69b-47ad-9319-44a91d678097
 # ╟─12e18c54-1d43-4f23-89e1-f578f3f34cb0
 # ╠═559143b7-a4e1-4532-adde-523ba70e7d36
