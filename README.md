@@ -38,9 +38,6 @@ After a webpage for the Pluto Notebook session has poped up in your browser, ope
 
 ## FAQ
 
-### In what order should I read the notebooks in this repository?
-`1_basics.jl`, `2_image_process.jl`, `3_ebm.jl`.
-
 ### How to type Unicode characters?
 Type the corresponding LaTeX-like character sequence (starting with `\`), followed by a `tab`.
 
