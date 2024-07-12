@@ -12,7 +12,7 @@ begin
 	include("utils.jl")  # load local source file
 	using .Utilities  # "utils.jl" has a module called "Utilities"
 
-	TableOfContents(aside=true, depth=4)  # imported from PlutoUI
+	TableOfContents(aside=true, depth=3)  # imported from PlutoUI
 end
 
 # ╔═╡ a9561c08-2b07-4590-b901-d9cbd60355ee
@@ -40,9 +40,6 @@ md"""
 # ╔═╡ 4efa23f3-e705-469e-8e82-fb6d0e4589a3
 md"## Basic Calculation"
 
-# ╔═╡ 52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
-(1 + 2) * 3 ^ 2
-
 # ╔═╡ 1cd98952-cd47-4632-a71a-903f1809d6be
 md"`@show` is a macro that prints expressions and their evaluated values. Read more about macros [here](https://docs.julialang.org/en/v1/manual/metaprogramming/#man-macros)."
 
@@ -61,9 +58,6 @@ z == -1 ? print("Hurray!") : print("Why?")  # ternary operator
 # ╔═╡ 86e687c7-4052-4d11-9ef9-7ac6b59cb8ae
 md"It's a common problem of floating point arithmetic. [All positional (base-N) number systems share this problem with precision](https://stackoverflow.com/questions/588004/is-floating-point-math-broken?rq=1)."
 
-# ╔═╡ cdac9eca-48a6-44dd-9926-a1e0959c2c31
-(@show 0.1 + 0.2) == 0.3
-
 # ╔═╡ 5c64daca-361a-4c3b-92e0-b179c834a63e
 z ≈ -1 ? print("Hurray!") : print("Why?")  # \approx <tab> => ≈
 
@@ -73,28 +67,17 @@ md"## Compound Expressions and Local Scope"
 # ╔═╡ f2496da6-a024-44eb-b1ee-6cd5e213a86a
 md"**Local binding with `let`**"
 
+# ╔═╡ 79dd50f1-bd99-4384-b691-4bdb73096161
+let θ = rand(), z = exp(im * θ)  # let...end binds variables locally
+	# θ is a random float number in [0, 1)
+	@show θ abs(z) angle(z) cos(θ) real(z) sin(θ) imag(z)
+end
+
 # ╔═╡ 45737508-e741-445d-86ef-850ab9915039
 md"**Non-local binding via `begin`**"
 
-# ╔═╡ 88c296f4-51c7-4968-84d4-7d7d66288d8c
-begin # after executing `a` and `b` will now be in the global scope. 
-	a = 1
-	b = 2
-	a + b
-end
-
-# ╔═╡ 0d376fb5-3b55-4607-903b-1a1777f77215
-a
-
 # ╔═╡ 5dedb5f1-1e4e-4b47-9e28-46d9d901f6ca
 md"`begin...end` can be treated as an expression: it has a value"
-
-# ╔═╡ 636db2a4-c4f7-49ff-8cd6-9956e15e5f6e
-three = begin
-	c = 1
-	d = 2
-	c + d
-end
 
 # ╔═╡ b541204e-3054-4504-b8f4-913209f19913
 md"## Control Structures"
@@ -145,9 +128,6 @@ md"""ComplexF64 is a *composite* type as it is a collection of named fields.
 
 The curly brackets in `Complex{Float64}` means `Complex` is a parametric type, and what's inside the following braces (e.g. `Float64`) is its parameter."""
 
-# ╔═╡ 559143b7-a4e1-4532-adde-523ba70e7d36
-typeof(1+im)
-
 # ╔═╡ 8af405f5-01c3-45e3-8451-3e3ac287466f
 for s in fieldnames(Tz)
 	println("z.", s, " = ", getfield(z, s))  # `println` prints a newline at the end
@@ -161,11 +141,6 @@ fieldnames(Float64)  # primitive type (no fields)
 
 # ╔═╡ 79305e1d-a394-4247-b459-cd70a1d29213
 md"The results above are tuples. Tuple is an `immutable` type, which means its items cannot be modified."
-
-# ╔═╡ c88262d4-ba12-4955-9022-7724909231ee
-let t = (1, 2, 3, 4)
-	t[1] += 1
-end
 
 # ╔═╡ ccd1d5e8-88b6-40af-a850-e16deb9718e9
 md"**While Loop:**"
@@ -241,27 +216,6 @@ end
 
 # ╔═╡ 4a851df6-3894-42a9-9acd-eb25a56f5535
 md"### Higher Order Functions"
-
-# ╔═╡ 1396345b-8abf-48ac-8bfa-6c641a395c2c
-begin
-	inc = x -> x + 1  # anonymous function
-	
-	double(f) = x -> f(f(x))  # a shorthand of `function double(f) ... end`
-	@show double(inc)(0)
-	
-	triple(f) = f ∘ f ∘ f  # \circ <tab> => ∘ (function composition)
-	@show triple(inc)(0)
-
-	@show double(triple)(double)(inc)(0)  # 2 ^ (3 ^ 2)
-end
-
-# ╔═╡ ef02cbb9-11af-49e9-a996-f2c44c9c1191
-begin
-	nfold(f, n) = reduce(∘, Iterators.repeated(f, n))  # generalize double and triple
-	est_pi = nfold(x -> x + sin(x), 5)
-	println(est_pi(1))
-	md"(Optional) Estimate π using fixed point iteration (click the eye to show the cell):"
-end
 
 # ╔═╡ c7bff4de-88ca-4264-bf83-4a2f08728395
 md"### Recursive Functions"
@@ -365,17 +319,164 @@ md"### Define Custom Types"
 # ╔═╡ e3f7a77a-8c9e-4f15-af47-551fd959b2a6
 abstract type Distribution end
 
+# ╔═╡ 0f2aff9d-778b-4a08-9c33-c1866279c686
+begin
+	abstract type AbstractNormal <: Distribution end
+	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √(2π))  # \sqrt => √
+end
+
+# ╔═╡ 47cd214a-ba2b-486f-b576-f2a583b50b7e
+begin  # method overloading
+	Statistics.mean(p::AbstractNormal) = p.μ
+	Statistics.std(p::AbstractNormal) = p.σ
+	Statistics.var(p::AbstractNormal) = p.σ ^ 2
+
+	function Base.:+(p1::T, p2::T) where {T<:AbstractNormal}  # operator overloading
+		T(mean(p1) .+ mean(p2), √(var(p1) + var(p2)))
+	end
+end
+
+# ╔═╡ 52ab5184-2f0f-11ef-3034-8fd6a5c8a2cb
+(1 + 2) * 3 ^ 2
+
+# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
+@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
+
+# ╔═╡ cdac9eca-48a6-44dd-9926-a1e0959c2c31
+(@show 0.1 + 0.2) == 0.3
+
+# ╔═╡ 88c296f4-51c7-4968-84d4-7d7d66288d8c
+begin # after executing `a` and `b` will now be in the global scope. 
+	a = 1
+	b = 2
+	a + b
+end
+
+# ╔═╡ 0d376fb5-3b55-4607-903b-1a1777f77215
+a
+
+# ╔═╡ 636db2a4-c4f7-49ff-8cd6-9956e15e5f6e
+three = begin
+	c = 1
+	d = 2
+	c + d
+end
+
+# ╔═╡ 559143b7-a4e1-4532-adde-523ba70e7d36
+typeof(1+im)
+
+# ╔═╡ c88262d4-ba12-4955-9022-7724909231ee
+let t = (1, 2, 3, 4)
+	t[1] += 1
+end
+
+# ╔═╡ 1396345b-8abf-48ac-8bfa-6c641a395c2c
+begin
+	inc = x -> x + 1  # anonymous function
+	
+	double(f) = x -> f(f(x))  # a shorthand of `function double(f) ... end`
+	@show double(inc)(0)
+	
+	triple(f) = f ∘ f ∘ f  # \circ <tab> => ∘ (function composition)
+	@show triple(inc)(0)
+
+	@show double(triple)(double)(inc)(0)  # 2 ^ (3 ^ 2)
+end
+
+# ╔═╡ ef02cbb9-11af-49e9-a996-f2c44c9c1191
+begin
+	nfold(f, n) = reduce(∘, Iterators.repeated(f, n))  # generalize double and triple
+	est_pi = nfold(x -> x + sin(x), 5)
+	println(est_pi(1))
+	md"(Optional) Estimate π using fixed point iteration (click the eye to show the cell):"
+end
+
+# ╔═╡ 76d61e6d-16e8-440d-99f7-51a3775694b9
+mean(1:10)
+
+# ╔═╡ 9f56480f-52b2-4770-bf6e-9d7676756a87
+methods(mean)
+
+# ╔═╡ 0c371cea-44f9-4703-964f-13d1a9f55535
+methodswith(AbstractNormal)
+
+# ╔═╡ 48e93319-299b-40b9-bbf9-09d18d683c9c
+struct NormalUntyped <: AbstractNormal
+	μ
+	σ
+end
+
+# ╔═╡ fa1283d5-b3d5-46d4-a34c-4cddc32ab284
+fieldtypes(NormalUntyped)
+
+# ╔═╡ 322ea469-2961-46b0-a93c-20e2c8f94328
+p1 = NormalUntyped(0, 1)
+
+# ╔═╡ b13074cb-0a3a-48b7-97ac-b9ef93fa184a
+mean(p1)
+
+# ╔═╡ cc45cdea-38c6-4c06-b62c-09a36559bfd6
+@which mean(p1)
+
+# ╔═╡ 12de0996-71cb-4f72-8415-a82a2356662e
+
+
 # ╔═╡ beb7b5f4-ee86-4130-aa61-d3f8498ff4ed
 md"In multiple dispatch, Julia determines which method to call based on the numbers and types of input arguments."
+
+# ╔═╡ ec5238e4-f445-491c-bd14-8e1aba59049f
+p1(0)
 
 # ╔═╡ f3b4eba4-5471-441e-b199-69fd07f528e2
 md"A piece of Julia code is called 'type-stable' if all input and output variables have a concrete type, either by explicit declaration or by inference from the Julia compiler. Type-stable code will run much faster as the compiler can generate statically typed code and optimize it at compile-time."
 
+# ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
+@code_warntype p1(0)
+
+# ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
+@code_llvm p1(0)
+
+# ╔═╡ 035f9794-43ea-4e19-860c-a66fd0ea1a14
+struct Normal <: AbstractNormal
+	μ :: Float64
+	σ :: Float64
+end
+
+# ╔═╡ 57f30a3c-7d28-4819-958a-bf1859d6947c
+p2 = Normal(0, 1)
+
+# ╔═╡ ed7082dc-cd39-4488-842c-1f05968224bf
+Normal(-1, 3) + Normal(3, 4)
+
+# ╔═╡ 024aa7d5-a569-4639-851f-b7d491855202
+@code_warntype p2(0)
+
+# ╔═╡ f640df71-ae15-4b67-a30e-c806ea532a19
+@code_llvm p2(0)
+
 # ╔═╡ a4c7126d-57dd-4542-bcc4-d01cf657759a
 md"Parametric types like `Complex{T}` allow parametric polymorphism."
 
+# ╔═╡ 76d2cfde-bdd8-4e45-83dd-92d3c651691f
+struct NormalParametric{T} <: AbstractNormal
+	μ :: T
+	σ :: T
+end
+
+# ╔═╡ 1e36bd1d-cb83-4e48-a5dc-f88bf04636ca
+p3 = NormalParametric(0f0, 1f0)  # float32 versions of 0e0 and 1e0
+
+# ╔═╡ b088c77f-9732-4c63-88f9-9bcd911e461c
+@code_warntype p3(0)
+
 # ╔═╡ 74c57fe8-e369-44f1-a51e-8365e4ffed5d
 md"An advantage of parametric types is that a single piece of code can handle a variety of concrete types. This is called `generic programming`."
+
+# ╔═╡ 00ed2dc6-f770-49da-9eac-35042f437b6e
+p4 = NormalParametric([0.0, 0.1], [0.5, 1.0])
+
+# ╔═╡ e7007dcd-2501-4298-9650-dee92e0efde1
+rand(p4, 10)
 
 # ╔═╡ 2e6521be-ff66-47a9-8c19-68216cb62f3d
 md"We can see that the length of the LLVM bitcodes generated from a piece of type-stable Julia code is much shorter than its type-instable version. The following example will compare their performance."
@@ -384,6 +485,15 @@ md"We can see that the length of the LLVM bitcodes generated from a piece of typ
 function probability(P::Distribution, lo::Float64, hi::Float64; dx=1e-6)
 	sum(P(x) for x in lo:dx:hi) * dx
 end
+
+# ╔═╡ d00e9d96-59c7-4bd6-9667-340505d5ed5f
+@time probability(p1, -1.96, 1.96)
+
+# ╔═╡ 8e8a900f-1d6c-4d65-afda-b03e64f3c9c8
+@time probability(p2, -1.96, 1.96)
+
+# ╔═╡ af5fffbd-baf5-46e4-b285-3a98a5d01e55
+@time probability(p3, -1.96, 1.96)
 
 # ╔═╡ 7b6e1d43-c72c-4bd9-b493-838b05e845c4
 md"## Collection Data Types"
@@ -417,6 +527,9 @@ length(v)
 
 # ╔═╡ 2c0b579b-302c-458e-bfb0-75ce768de5bd
 v .+ 2  # broadcasting
+
+# ╔═╡ 176bb2e7-dde9-4696-ab01-eea38a1081b8
+-v ./ 2v  # multiply a number and a variable by juxtaposition (higher priority)
 
 # ╔═╡ b3321c01-db3d-42ed-9ea7-142e8773bc28
 sqrt.(v)
@@ -474,85 +587,6 @@ end
 # ╔═╡ d02b8c20-6e43-435c-ba9f-870b1bb5fae9
 zeros(3, 3)  # or ones
 
-# ╔═╡ 27be59f3-4a50-4518-bacc-6850025e7aa5
-md"More on array concatenation at [https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation](https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation)."
-
-# ╔═╡ fad551be-abbc-45c6-b08c-5e8d4ddccdb0
-md"## Generic Functions of Iterables"
-
-# ╔═╡ 26f43214-3b99-4c99-9512-398a28f9ae0a
-md"""
-!!! danger "Task"
-	Generate a 2×1000 random matrix of float numbers from the normal distribution ``N(\mu, \sigma)`` where ``\mu`` is the first column of `S` and ``\sigma`` is the second column of `S`, and assign it to `Q`.
-"""
-
-# ╔═╡ 24077fc9-4d06-4b80-91be-321a7bb0fe5c
-S = [2.0 1.2; -1.0 0.6]
-
-# ╔═╡ b226106d-6f21-4d72-951c-c4d9d01cbbcb
-Q = missing  # replace missing with your answer
-
-# ╔═╡ aa0c8fec-254b-4805-bf07-b1ce7266685c
-begin
-	md"(Show this cell for a sample solution)"
-	# p_ex = NormalParametric(S[:,1], S[:,2])
-	# Q = rand(p_ex, 1000)
-end
-
-# ╔═╡ 8615c4ca-7e2b-49fb-bb0f-078347a7c56b
-md"""
-!!! danger "Task"
-	Calculate the `mean` and `std` of each row of `Q` and concatenate them horizontally. Compare the result with `S`.
-"""
-
-# ╔═╡ be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
-begin
-	md"(Show this cell for a sample solution)"
-	# [mean(Q, dims=2) std(Q, dims=2)]
-end
-
-# ╔═╡ 66cae8d2-8e20-4b1e-9dae-e120eee4d944
-md"## Linear Algebra"
-
-# ╔═╡ 5af22ae0-effd-4589-bd1f-d375299b6848
-M = rand(3, 3)
-
-# ╔═╡ 5ee4f31b-ebae-4d8f-8ccc-6df671de6965
-begin
-	using LinearAlgebra
-	rank(M), tr(M), det(M), diag(M)
-end
-
-# ╔═╡ 50c86554-ff09-4e4a-94e8-0f30b83e8655
-@show 3+4 3*4 3/4 3÷4 4%3 3^4 3<4 3>=4 3==4 3!=4;
-
-# ╔═╡ 0f2aff9d-778b-4a08-9c33-c1866279c686
-begin
-	abstract type AbstractNormal <: Distribution end
-	(p::AbstractNormal)(x) = exp(-0.5((x-p.μ)/p.σ)^2) / (p.σ * √(2π))  # \sqrt => √
-end
-
-# ╔═╡ 47cd214a-ba2b-486f-b576-f2a583b50b7e
-begin  # method overloading
-	Statistics.mean(p::AbstractNormal) = p.μ
-	Statistics.std(p::AbstractNormal) = p.σ
-	Statistics.var(p::AbstractNormal) = p.σ ^ 2
-	Base.rand(p::AbstractNormal, dims::Integer...) =
-		randn(size(p.μ)..., dims...) .* p.σ .+ p.μ
-end
-
-# ╔═╡ 79dd50f1-bd99-4384-b691-4bdb73096161
-let θ = rand(), z = exp(im * θ)  # let...end binds variables locally
-	# θ is a random float number in [0, 1)
-	@show θ abs(z) angle(z) cos(θ) real(z) sin(θ) imag(z)
-end
-
-# ╔═╡ 76d61e6d-16e8-440d-99f7-51a3775694b9
-mean(1:10)
-
-# ╔═╡ 9f56480f-52b2-4770-bf6e-9d7676756a87
-methods(mean)
-
 # ╔═╡ b5eb64a4-6572-405f-bed4-7e483f6e50e5
 rand(2, 2, 2)
 
@@ -583,17 +617,23 @@ reshape(A, :, 3)  # same as A.reshape(-1, 3) in numpy
 # ╔═╡ 9bb81880-067c-4bde-a12f-c37eb4be2846
 [A A]  # concat horizontally (same as hcat(A, A) and [A;; A])
 
+# ╔═╡ 27be59f3-4a50-4518-bacc-6850025e7aa5
+md"More on array concatenation at [https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation](https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation)."
+
 # ╔═╡ 61f1ef4a-8457-4b39-aba5-e760070df95d
 A .+ [1, 2, 3]
 
 # ╔═╡ 3d8c4cc1-7c02-453f-a6dd-106b1390896a
 A .+ [1 2]
 
+# ╔═╡ 8efda77f-e3d5-4866-8b64-159b6c3a6114
+transpose(A)
+
+# ╔═╡ d9f9542f-8d4f-4c0c-b4ea-986eefc07636
+A'  # adjoint: complex conjugate followed by transpose
+
 # ╔═╡ 12008adf-5162-484c-af6b-30b2d43f46b5
 sum(A, dims=2)  # sum along the 2nd axis
-
-# ╔═╡ a5717c60-1abe-4164-a4c0-45708212f95d
-B = copy(A)
 
 # ╔═╡ 65f92119-b389-491c-b809-fab91636c53a
 mean(A)
@@ -601,89 +641,8 @@ mean(A)
 # ╔═╡ 9cc9456e-fdac-4f56-89c4-e3ddf8a5f0af
 mean(A, dims=1)
 
-# ╔═╡ 0c371cea-44f9-4703-964f-13d1a9f55535
-methodswith(AbstractNormal)
-
-# ╔═╡ 48e93319-299b-40b9-bbf9-09d18d683c9c
-struct NormalUntyped <: AbstractNormal
-	μ
-	σ
-end
-
-# ╔═╡ fa1283d5-b3d5-46d4-a34c-4cddc32ab284
-fieldtypes(NormalUntyped)
-
-# ╔═╡ 322ea469-2961-46b0-a93c-20e2c8f94328
-p1 = NormalUntyped(0, 1)
-
-# ╔═╡ b13074cb-0a3a-48b7-97ac-b9ef93fa184a
-mean(p1)
-
-# ╔═╡ cc45cdea-38c6-4c06-b62c-09a36559bfd6
-@which mean(p1)
-
-# ╔═╡ 12de0996-71cb-4f72-8415-a82a2356662e
-rand(p1, 5)
-
-# ╔═╡ ec5238e4-f445-491c-bd14-8e1aba59049f
-p1(0)
-
-# ╔═╡ cfeb3928-cc2f-47a3-8a9b-e17eabd79a33
-@code_warntype p1(0)
-
-# ╔═╡ c6739f52-f87f-4bef-8c32-ce3ec4942342
-@code_llvm p1(0)
-
-# ╔═╡ d00e9d96-59c7-4bd6-9667-340505d5ed5f
-@time probability(p1, -1.96, 1.96)
-
-# ╔═╡ 035f9794-43ea-4e19-860c-a66fd0ea1a14
-struct Normal <: AbstractNormal
-	μ :: Float64
-	σ :: Float64
-end
-
-# ╔═╡ 57f30a3c-7d28-4819-958a-bf1859d6947c
-p2 = Normal(0, 1)
-
-# ╔═╡ 024aa7d5-a569-4639-851f-b7d491855202
-@code_warntype p2(0)
-
-# ╔═╡ f640df71-ae15-4b67-a30e-c806ea532a19
-@code_llvm p2(0)
-
-# ╔═╡ 8e8a900f-1d6c-4d65-afda-b03e64f3c9c8
-@time probability(p2, -1.96, 1.96)
-
-# ╔═╡ 76d2cfde-bdd8-4e45-83dd-92d3c651691f
-struct NormalParametric{T} <: AbstractNormal
-	μ :: T
-	σ :: T
-end
-
-# ╔═╡ 1e36bd1d-cb83-4e48-a5dc-f88bf04636ca
-p3 = NormalParametric(0f0, 1f0)  # float32 versions of 0e0 and 1e0
-
-# ╔═╡ b088c77f-9732-4c63-88f9-9bcd911e461c
-@code_warntype p3(0)
-
-# ╔═╡ af5fffbd-baf5-46e4-b285-3a98a5d01e55
-@time probability(p3, -1.96, 1.96)
-
-# ╔═╡ 00ed2dc6-f770-49da-9eac-35042f437b6e
-p4 = NormalParametric([0.0, 0.1], [0.5, 1.0])
-
-# ╔═╡ e7007dcd-2501-4298-9650-dee92e0efde1
-rand(p4, 10)
-
-# ╔═╡ 176bb2e7-dde9-4696-ab01-eea38a1081b8
--v ./ 2v  # multiply a number and a variable by juxtaposition (higher priority)
-
-# ╔═╡ 8efda77f-e3d5-4866-8b64-159b6c3a6114
-transpose(A)
-
-# ╔═╡ d9f9542f-8d4f-4c0c-b4ea-986eefc07636
-A'  # adjoint: complex conjugate followed by transpose
+# ╔═╡ a5717c60-1abe-4164-a4c0-45708212f95d
+B = copy(A)
 
 # ╔═╡ 17eeffee-701d-4251-aca7-308e456487da
 let C = reshape(B, 2, 3), D = B', E = B[1:2,:], F = @view B[1:2,:]
@@ -695,6 +654,21 @@ let C = reshape(B, 2, 3), D = B', E = B[1:2,:], F = @view B[1:2,:]
 	B, C, D, E, F
 end
 
+# ╔═╡ fad551be-abbc-45c6-b08c-5e8d4ddccdb0
+md"## Generic Functions of Iterables"
+
+# ╔═╡ 26f43214-3b99-4c99-9512-398a28f9ae0a
+md"""
+!!! danger "Task"
+	Generate a 2×1000 random matrix of float numbers from the normal distribution ``N(\mu, \sigma)`` where ``\mu`` is the first column of `S` and ``\sigma`` is the second column of `S`, and assign it to `Q`.
+"""
+
+# ╔═╡ 24077fc9-4d06-4b80-91be-321a7bb0fe5c
+S = [2.0 1.2; -1.0 0.6]
+
+# ╔═╡ b226106d-6f21-4d72-951c-c4d9d01cbbcb
+Q = missing  # replace missing with your answer
+
 # ╔═╡ 820f0070-98b9-4bf6-a8db-65383e7c3c17
 if !ismissing(Q)
 	using Plots
@@ -703,6 +677,40 @@ if !ismissing(Q)
 	plot(plt1, plt2, layout=(2, 1), legend=false, size=(600, 800))
 else
 	md"Some plots will be generated after you finish the tasks."
+end
+
+# ╔═╡ aa0c8fec-254b-4805-bf07-b1ce7266685c
+begin
+	md"(Show this cell for a sample solution)"
+	# function Base.rand(p::AbstractNormal, dims::Integer...)
+	# 	randn(size(p.μ)..., dims...) .* p.σ .+ p.μ
+	# end
+	# p_ex = NormalParametric(S[:,1], S[:,2])
+	# Q = rand(p_ex, 1000)
+end
+
+# ╔═╡ 8615c4ca-7e2b-49fb-bb0f-078347a7c56b
+md"""
+!!! danger "Task"
+	Calculate the `mean` and `std` of each row of `Q` and concatenate them horizontally. Compare the result with `S`.
+"""
+
+# ╔═╡ be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
+begin
+	md"(Show this cell for a sample solution)"
+	# [mean(Q, dims=2) std(Q, dims=2)]
+end
+
+# ╔═╡ 66cae8d2-8e20-4b1e-9dae-e120eee4d944
+md"## Linear Algebra"
+
+# ╔═╡ 5af22ae0-effd-4589-bd1f-d375299b6848
+M = rand(3, 3)
+
+# ╔═╡ 5ee4f31b-ebae-4d8f-8ccc-6df671de6965
+begin
+	using LinearAlgebra
+	rank(M), tr(M), det(M), diag(M)
 end
 
 # ╔═╡ 859c21c8-74cc-4db1-9a35-4e75e4a4ab66
@@ -1980,6 +1988,7 @@ version = "1.4.1+1"
 # ╠═c6739f52-f87f-4bef-8c32-ce3ec4942342
 # ╠═035f9794-43ea-4e19-860c-a66fd0ea1a14
 # ╠═57f30a3c-7d28-4819-958a-bf1859d6947c
+# ╠═ed7082dc-cd39-4488-842c-1f05968224bf
 # ╠═024aa7d5-a569-4639-851f-b7d491855202
 # ╠═f640df71-ae15-4b67-a30e-c806ea532a19
 # ╟─a4c7126d-57dd-4542-bcc4-d01cf657759a
@@ -2048,7 +2057,7 @@ version = "1.4.1+1"
 # ╠═b226106d-6f21-4d72-951c-c4d9d01cbbcb
 # ╠═aa0c8fec-254b-4805-bf07-b1ce7266685c
 # ╟─8615c4ca-7e2b-49fb-bb0f-078347a7c56b
-# ╠═be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
+# ╟─be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
 # ╟─820f0070-98b9-4bf6-a8db-65383e7c3c17
 # ╟─66cae8d2-8e20-4b1e-9dae-e120eee4d944
 # ╠═5af22ae0-effd-4589-bd1f-d375299b6848

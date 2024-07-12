@@ -54,9 +54,6 @@ md"More information on how to use dataframes in Julia, in comparison with Pandas
 # ╔═╡ 52891ead-46a3-4ceb-8be9-e6539fb5aa54
 md"#### Fit a cubic curve to the CO2 time series"
 
-# ╔═╡ cf34b409-c007-4458-814d-40c383f18542
-md"We assume net-zero can be achieved by 2050."
-
 # ╔═╡ 8264a6cf-803c-4f37-b516-b82be1000a38
 begin
 	CO2_PreIndust = first(CO2_ts).CO2
@@ -67,7 +64,7 @@ begin
 		y = CO2_ts[:, "CO2"] .- CO2_PreIndust
 		p = X \ y  # equivalent to pinv(X) * y, gives the least squares approximation
 	end
-	CO2(1850:1900)
+	CO2(2017:2027)
 end
 
 # ╔═╡ f539ddd6-041f-4b84-91c0-aca74131c960
@@ -3248,7 +3245,6 @@ version = "1.4.1+1"
 # ╠═d6ecc837-be55-4db7-bac7-8446e7a3cfa2
 # ╟─96e1e5c6-f4b2-48f1-8a85-c031c915e1d5
 # ╟─52891ead-46a3-4ceb-8be9-e6539fb5aa54
-# ╟─cf34b409-c007-4458-814d-40c383f18542
 # ╠═8264a6cf-803c-4f37-b516-b82be1000a38
 # ╠═f539ddd6-041f-4b84-91c0-aca74131c960
 # ╟─e39a69fe-0c82-482d-9a69-a5b028610c62
