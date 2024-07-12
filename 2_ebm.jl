@@ -276,6 +276,8 @@ The following figure shows global warming predictions in the [IPCC 6th Assessmen
 # ╔═╡ 587767ef-3a3a-4e29-9427-7d8fcb806abd
 md"""## Further Reading
 
+- [The Fast Track to Julia](https://cheatsheet.juliadocs.org/)
+- [Introduction to Computational Thinking at MIT](https://computationalthinking.mit.edu/)
 - [A Degree of Concern: Why Global Temperatures Matter](https://climate.nasa.gov/news/2865/a-degree-of-concern-why-global-temperatures-matter/)
 - [What is the Paris climate agreement and why does 1.5C matter?](https://www.bbc.co.uk/news/science-environment-35073297)
 - [Why did the IPCC choose 2° C as the goal for limiting global warming?](https://climate.mit.edu/ask-mit/why-did-ipcc-choose-2deg-c-goal-limiting-global-warming)
