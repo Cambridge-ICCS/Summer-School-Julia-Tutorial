@@ -391,6 +391,11 @@ begin
 	md"(Optional) Estimate π using fixed point iteration (click the eye to show the cell):"
 end
 
+# ╔═╡ a3fe5049-4dcb-4071-9618-6b637b20fcc7
+function sample(p::AbstractNormal, dims::Integer...)
+	randn(size(p.μ)..., dims...) .* p.σ .+ p.μ
+end
+
 # ╔═╡ 76d61e6d-16e8-440d-99f7-51a3775694b9
 mean(1:10)
 
@@ -415,11 +420,11 @@ p1 = NormalUntyped(0, 1)
 # ╔═╡ b13074cb-0a3a-48b7-97ac-b9ef93fa184a
 mean(p1)
 
+# ╔═╡ eeb1f9c3-6342-4ff3-a731-77ec4a55ebd1
+sample(p1, 5)
+
 # ╔═╡ cc45cdea-38c6-4c06-b62c-09a36559bfd6
 @which mean(p1)
-
-# ╔═╡ 12de0996-71cb-4f72-8415-a82a2356662e
-
 
 # ╔═╡ beb7b5f4-ee86-4130-aa61-d3f8498ff4ed
 md"In multiple dispatch, Julia determines which method to call based on the numbers and types of input arguments."
@@ -475,8 +480,8 @@ md"An advantage of parametric types is that a single piece of code can handle a 
 # ╔═╡ 00ed2dc6-f770-49da-9eac-35042f437b6e
 p4 = NormalParametric([0.0, 0.1], [0.5, 1.0])
 
-# ╔═╡ e7007dcd-2501-4298-9650-dee92e0efde1
-rand(p4, 10)
+# ╔═╡ 0f7f260c-fbb2-4661-be71-86fe23a51d92
+sample(p4, 5)
 
 # ╔═╡ 2e6521be-ff66-47a9-8c19-68216cb62f3d
 md"We can see that the length of the LLVM bitcodes generated from a piece of type-stable Julia code is much shorter than its type-instable version. The following example will compare their performance."
@@ -682,11 +687,8 @@ end
 # ╔═╡ aa0c8fec-254b-4805-bf07-b1ce7266685c
 begin
 	md"(Show this cell for a sample solution)"
-	# function Base.rand(p::AbstractNormal, dims::Integer...)
-	# 	randn(size(p.μ)..., dims...) .* p.σ .+ p.μ
-	# end
 	# p_ex = NormalParametric(S[:,1], S[:,2])
-	# Q = rand(p_ex, 1000)
+	# Q = sample(p_ex, 1000)
 end
 
 # ╔═╡ 8615c4ca-7e2b-49fb-bb0f-078347a7c56b
@@ -1970,6 +1972,7 @@ version = "1.4.1+1"
 # ╟─2e034e29-8755-43d5-b557-d247df23f50e
 # ╠═e3f7a77a-8c9e-4f15-af47-551fd959b2a6
 # ╠═0f2aff9d-778b-4a08-9c33-c1866279c686
+# ╠═a3fe5049-4dcb-4071-9618-6b637b20fcc7
 # ╠═3c74c07d-98a5-48b8-bf6c-2a25e85597d5
 # ╠═76d61e6d-16e8-440d-99f7-51a3775694b9
 # ╠═47cd214a-ba2b-486f-b576-f2a583b50b7e
@@ -1979,8 +1982,8 @@ version = "1.4.1+1"
 # ╠═fa1283d5-b3d5-46d4-a34c-4cddc32ab284
 # ╠═322ea469-2961-46b0-a93c-20e2c8f94328
 # ╠═b13074cb-0a3a-48b7-97ac-b9ef93fa184a
+# ╠═eeb1f9c3-6342-4ff3-a731-77ec4a55ebd1
 # ╠═cc45cdea-38c6-4c06-b62c-09a36559bfd6
-# ╠═12de0996-71cb-4f72-8415-a82a2356662e
 # ╟─beb7b5f4-ee86-4130-aa61-d3f8498ff4ed
 # ╠═ec5238e4-f445-491c-bd14-8e1aba59049f
 # ╟─f3b4eba4-5471-441e-b199-69fd07f528e2
@@ -1997,7 +2000,7 @@ version = "1.4.1+1"
 # ╠═b088c77f-9732-4c63-88f9-9bcd911e461c
 # ╟─74c57fe8-e369-44f1-a51e-8365e4ffed5d
 # ╠═00ed2dc6-f770-49da-9eac-35042f437b6e
-# ╠═e7007dcd-2501-4298-9650-dee92e0efde1
+# ╠═0f7f260c-fbb2-4661-be71-86fe23a51d92
 # ╟─2e6521be-ff66-47a9-8c19-68216cb62f3d
 # ╠═149a64ba-6d5b-4416-bc2d-8e1ae897c71d
 # ╠═d00e9d96-59c7-4bd6-9667-340505d5ed5f
@@ -2055,7 +2058,7 @@ version = "1.4.1+1"
 # ╟─26f43214-3b99-4c99-9512-398a28f9ae0a
 # ╠═24077fc9-4d06-4b80-91be-321a7bb0fe5c
 # ╠═b226106d-6f21-4d72-951c-c4d9d01cbbcb
-# ╠═aa0c8fec-254b-4805-bf07-b1ce7266685c
+# ╟─aa0c8fec-254b-4805-bf07-b1ce7266685c
 # ╟─8615c4ca-7e2b-49fb-bb0f-078347a7c56b
 # ╟─be7f3b8d-70e6-4ec3-a98f-07fbe17fb06a
 # ╟─820f0070-98b9-4bf6-a8db-65383e7c3c17
