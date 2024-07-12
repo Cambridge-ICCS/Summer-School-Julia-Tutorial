@@ -67,6 +67,9 @@ begin
 	CO2(2017:2027)
 end
 
+# ╔═╡ aa1a215a-3a32-48d9-a7f6-8af49a703354
+CO2_coefs
+
 # ╔═╡ f539ddd6-041f-4b84-91c0-aca74131c960
 begin
 	years = 1850:2030
@@ -130,7 +133,7 @@ begin
 		a => 5.,     # CO2 forcing coefficient [W/m^2]
 		α => 0.3,    # albedo
 		C => 51.,    # atmosphere and upper-ocean heat capacity
-		S => 1368.,  # solar insolation
+		S => 1368.,  # solar insolation [W/m^2]
 		B => -1.3,   # climate feedback parameter [W/m^2/°C]
 		T_0 => T0,   # preindustrial time (assume thermal equilibrium)
 	]
@@ -197,7 +200,7 @@ begin
 
 	params, reconstruct = Flux.destructure(nn)
 
-	"The outgoing thermal radiation term `G(T, t)` estimated by the NN."
+	"The outgoing thermal radiation term `G_NN(T, t)` estimated by the NN."
 	function nn_term(nn::Chain, T, t)
 		x = (t - 1850) / 200
 		c = nn([x, x^2, x^3])
@@ -3246,6 +3249,7 @@ version = "1.4.1+1"
 # ╟─96e1e5c6-f4b2-48f1-8a85-c031c915e1d5
 # ╟─52891ead-46a3-4ceb-8be9-e6539fb5aa54
 # ╠═8264a6cf-803c-4f37-b516-b82be1000a38
+# ╠═aa1a215a-3a32-48d9-a7f6-8af49a703354
 # ╠═f539ddd6-041f-4b84-91c0-aca74131c960
 # ╟─e39a69fe-0c82-482d-9a69-a5b028610c62
 # ╠═c5d362b6-e0ed-4742-9ec6-1d1a9d03ac58
