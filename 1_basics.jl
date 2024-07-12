@@ -150,7 +150,7 @@ typeof(1+im)
 
 # ╔═╡ 8af405f5-01c3-45e3-8451-3e3ac287466f
 for s in fieldnames(Tz)
-	println("z.", s, " = ", getfield(z, s))
+	println("z.", s, " = ", getfield(z, s))  # `println` prints a newline at the end
 end
 
 # ╔═╡ a292b548-502b-455b-9ed8-15843b0930dc
