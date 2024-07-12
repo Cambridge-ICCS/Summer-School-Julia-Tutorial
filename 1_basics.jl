@@ -12,7 +12,7 @@ begin
 	include("utils.jl")  # load local source file
 	using .Utilities  # "utils.jl" has a module called "Utilities"
 
-	TableOfContents(aside=true)  # imported from PlutoUI
+	TableOfContents(aside=true, depth=4)  # imported from PlutoUI
 end
 
 # ╔═╡ a9561c08-2b07-4590-b901-d9cbd60355ee
@@ -68,7 +68,7 @@ md"It's a common problem of floating point arithmetic. [All positional (base-N) 
 z ≈ -1 ? print("Hurray!") : print("Why?")  # \approx <tab> => ≈
 
 # ╔═╡ 9cde569d-7db4-4c06-8e03-346b32afaa16
-md"## Compound expressions and binding"
+md"## Compound Expressions and Local Scope"
 
 # ╔═╡ f2496da6-a024-44eb-b1ee-6cd5e213a86a
 md"**Local binding with `let`**"
@@ -190,10 +190,12 @@ md"""
 """
 
 # ╔═╡ 8d8c7053-1a23-485f-90c5-2db999f7581d
-md"(Show this cell for a sample solution)"
-# for T in fieldtypes(typeof(z))
-# 	println(fieldtypes(T) == () ? "primitive" : "composite")
-# end
+begin
+	md"(Show this cell for a sample solution)"
+	# for T in fieldtypes(typeof(z))
+	# 	println(fieldtypes(T) == () ? "primitive" : "composite")
+	# end
+end
 
 # ╔═╡ b5b168db-b896-41bb-afeb-08e328d7b28e
 md"## Function Definition"
@@ -386,11 +388,23 @@ end
 # ╔═╡ 7b6e1d43-c72c-4bd9-b493-838b05e845c4
 md"## Collection Data Types"
 
+# ╔═╡ 63eddb5a-960c-43c6-9425-5caa40f4802f
+md"### Range"
+
+# ╔═╡ 51c754f6-ba17-4936-8e1e-89899634e37d
+md"### Array"
+
 # ╔═╡ aa08b116-025a-43cd-8f0d-74e035b9746d
-md"**Vector:**"
+md"#### Vector"
 
 # ╔═╡ 69283b2e-bd47-4c3c-890f-677b253183e7
 v = [1, 2, 3, 4, 5]
+
+# ╔═╡ 760ff5fd-689b-4afe-9336-cc480fb6b486
+let r = 1:2:5
+	@show v[r] r.start r.stop r.step
+	collect(r)  # convert to array
+end
 
 # ╔═╡ a2c92fca-fbab-4396-b472-a53d7a858abe
 typeof(v)
@@ -431,17 +445,8 @@ md"Julia adopts [column major order](https://en.wikipedia.org/wiki/Row-_and_colu
 # ╔═╡ 071a0163-3071-4398-bc46-d12c11bbcba0
 hcat(v[1:3], v[1:2:end-1], v[end:-2:1])  # concatenate horizontally
 
-# ╔═╡ 4aa0d597-49b7-4e8f-807e-0181f6d75dae
-md"**Range:**"
-
-# ╔═╡ 760ff5fd-689b-4afe-9336-cc480fb6b486
-let r = 1:2:5
-	@show v[r] r.start r.stop r.step
-	collect(r)  # convert to array
-end
-
 # ╔═╡ ce603931-baa5-48aa-ba13-82b458962ddf
-md"**Matrix:**"
+md"#### Matrix"
 
 # ╔═╡ 3cfce228-b634-4e31-b3f3-ddadb6c7a53d
 Array{Int, 2}
@@ -473,7 +478,7 @@ zeros(3, 3)  # or ones
 md"More on array concatenation at [https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation](https://docs.julialang.org/en/v1/manual/arrays/#man-array-concatenation)."
 
 # ╔═╡ fad551be-abbc-45c6-b08c-5e8d4ddccdb0
-md"**Generic functions of iterable types (Polymorphism):**"
+md"## Generic Functions of Iterables"
 
 # ╔═╡ 26f43214-3b99-4c99-9512-398a28f9ae0a
 md"""
@@ -1990,6 +1995,9 @@ version = "1.4.1+1"
 # ╠═8e8a900f-1d6c-4d65-afda-b03e64f3c9c8
 # ╠═af5fffbd-baf5-46e4-b285-3a98a5d01e55
 # ╟─7b6e1d43-c72c-4bd9-b493-838b05e845c4
+# ╟─63eddb5a-960c-43c6-9425-5caa40f4802f
+# ╠═760ff5fd-689b-4afe-9336-cc480fb6b486
+# ╟─51c754f6-ba17-4936-8e1e-89899634e37d
 # ╟─aa08b116-025a-43cd-8f0d-74e035b9746d
 # ╠═69283b2e-bd47-4c3c-890f-677b253183e7
 # ╠═a2c92fca-fbab-4396-b472-a53d7a858abe
@@ -2006,8 +2014,6 @@ version = "1.4.1+1"
 # ╠═8cc1e1ca-207e-4dc3-b860-2c5c2114a49a
 # ╠═90a98f2a-6d97-4697-a4a7-ab1cac19d9e1
 # ╠═071a0163-3071-4398-bc46-d12c11bbcba0
-# ╟─4aa0d597-49b7-4e8f-807e-0181f6d75dae
-# ╠═760ff5fd-689b-4afe-9336-cc480fb6b486
 # ╟─ce603931-baa5-48aa-ba13-82b458962ddf
 # ╠═3cfce228-b634-4e31-b3f3-ddadb6c7a53d
 # ╠═6b3a83eb-e316-46b5-a097-233145ab1bcc
