@@ -6,7 +6,7 @@
 
 ![GitHub](https://img.shields.io/github/license/Cambridge-ICCS/Summer-School-Julia-Tutorial)
 
-This is an intensive 2-hour workshop for the Julia language, including 3 web-based Pluto notebooks covering concepts from basic to intermediate level in Julia. It assumes that the attendees have some basic familiarity with programming. It also has an emphasis on scientific computing, so it would be beneficial if you have some experience in this field as well. The goal of the workshop is to help you gain experience and have fun in Julia programming.
+This is an intensive 90 minute workshop for the Julia language, including 3 web-based Pluto notebooks covering concepts from basic to intermediate level in Julia. It assumes that the attendees have some basic familiarity with programming. It also has an emphasis on scientific computing, so it would be beneficial if you have some experience in this field as well. The goal of the workshop is to help you gain experience and have fun in Julia programming.
 
 To participate in this workshop, we recommend that you follow these steps to get started with a Julia programming environment:
 
@@ -26,11 +26,12 @@ In your command line, run `julia` to open an interactive REPL (read-evaluate-pri
 
 ### Install Julia Packages
 
-In the Julia REPL session, you can install packages by entering `]` (which changes the prompt to `pkg>`) followed by `add PACKAGE`. Now try to install the web-based notebook package `Pluto`. `Pluto` is similar to the `Jupyter` notebook (which supports both Python and Julia), but it has some advantages like reactivity and reproducibility).
+In the Julia REPL session, you can install packages by entering `]` (which changes the prompt to `pkg>`) followed by `add PACKAGE`. Now try to install the web-based notebook package `Pluto`. `Pluto` is similar to the `Jupyter` notebook (which supports both Python and Julia), but it has some advantages like reactivity and reproducibility). Do these steps to install Pluto: Go into the package mode, `add Pluto`.
+
 
 ### Run a Pluto Notebook Session
 
-Enter a backspace to return to the normal mode from the package mode. Then run `using Pluto; Pluto.run()` to open a Pluto Notebook session (a webpage will automatically pop up). 
+Enter a backspace to return to the normal mode from the package mode. Then run either `import Pluto`, or `using Pluto; Pluto.run()` to open a Pluto Notebook session (a webpage will automatically pop up). 
 
 ### Run the Notebooks in this Repository
 
