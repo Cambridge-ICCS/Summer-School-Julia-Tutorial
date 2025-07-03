@@ -1,6 +1,7 @@
-<img src="https://cambridge-iccs.github.io/assets/images/iccs-logo.png"  width="355" align="left">
+<img src="https://cambridge-iccs.github.io/assets/images/iccs-logo.png"  width="50%" align="left" style='clear:both'>
 
-<br><br><br><br><br>
+
+<br><br><br><br>
 
 # Introduction to Computational Science in Julia
 
